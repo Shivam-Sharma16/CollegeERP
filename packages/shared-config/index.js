@@ -1,1 +1,18 @@
-module.exports = {};
+const ROLES = {
+  ADMIN: 'ADMIN',
+  HOD: 'HOD',
+  FACULTY: 'FACULTY',
+  STUDENT: 'STUDENT',
+  STAFF: 'STAFF'
+};
+
+const SCOPE_LEVELS = {
+  GLOBAL: 'GLOBAL',
+  DEPARTMENT: 'DEPARTMENT',
+  SECTION: 'SECTION'
+};
+
+module.exports = {
+  ROLES,
+  SCOPE_LEVELS
+};
