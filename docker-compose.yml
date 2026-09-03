@@ -1,0 +1,127 @@
+version: '3.8'
+
+services:
+  mongo:
+    image: mongo:7
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  web:
+    build:
+      context: ./apps/web
+    ports:
+      - "5173:5173"
+    environment:
+      - NODE_ENV=development
+
+
+  gateway:
+    build:
+      context: ./services/gateway
+    ports:
+      - "4000:4000"
+    env_file:
+      - ./services/gateway/.env
+    depends_on:
+      - mongo
+
+  auth-service:
+    build:
+      context: ./services/auth-service
+    ports:
+      - "4001:4001"
+    env_file:
+      - ./services/auth-service/.env
+    depends_on:
+      - mongo
+
+  user-service:
+    build:
+      context: ./services/user-service
+    ports:
+      - "4002:4002"
+    env_file:
+      - ./services/user-service/.env
+    depends_on:
+      - mongo
+
+  academic-service:
+    build:
+      context: ./services/academic-service
+    ports:
+      - "4003:4003"
+    env_file:
+      - ./services/academic-service/.env
+    depends_on:
+      - mongo
+
+  attendance-service:
+    build:
+      context: ./services/attendance-service
+    ports:
+      - "4004:4004"
+    env_file:
+      - ./services/attendance-service/.env
+    depends_on:
+      - mongo
+      - redis
+  results-service:
+    build:
+      context: ./services/results-service
+    ports:
+      - "4005:4005"
+    env_file:
+      - ./services/results-service/.env
+    depends_on:
+      - mongo
+
+  fees-service:
+    build:
+      context: ./services/fees-service
+    ports:
+      - "4006:4006"
+    env_file:
+      - ./services/fees-service/.env
+    depends_on:
+      - mongo
+
+  notice-service:
+    build:
+      context: ./services/notice-service
+    ports:
+      - "4007:4007"
+    env_file:
+      - ./services/notice-service/.env
+    depends_on:
+      - mongo
+
+  notification-service:
+    build:
+      context: ./services/notification-service
+    ports:
+      - "4008:4008"
+    env_file:
+      - ./services/notification-service/.env
+    depends_on:
+      - mongo
+      - redis
+  ai-agent-service:
+    build:
+      context: ./services/ai-agent-service
+    ports:
+      - "4009:4009"
+    env_file:
+      - ./services/ai-agent-service/.env
+    depends_on:
+      - mongo
+
+
+volumes:
+  mongo_data:

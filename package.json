@@ -1,0 +1,24 @@
+{
+  "name": "college-erp-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "services/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:gateway": "npm run dev --workspace=services/gateway",
+    "dev:auth-service": "npm run dev --workspace=services/auth-service",
+    "dev:user-service": "npm run dev --workspace=services/user-service",
+    "dev:academic-service": "npm run dev --workspace=services/academic-service",
+    "dev:attendance-service": "npm run dev --workspace=services/attendance-service",
+    "dev:results-service": "npm run dev --workspace=services/results-service",
+    "dev:fees-service": "npm run dev --workspace=services/fees-service",
+    "dev:notice-service": "npm run dev --workspace=services/notice-service",
+    "dev:notification-service": "npm run dev --workspace=services/notification-service",
+    "dev:ai-agent-service": "npm run dev --workspace=services/ai-agent-service",
+    "dev:web": "npm run dev --workspace=apps/web",
+    "test": "npm test --workspaces --if-present"
+  }
+}
