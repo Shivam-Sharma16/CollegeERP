@@ -1,5 +1,7 @@
 const mongoose = require('mongoose');
 const Year = require('../models/Year.model');
+const TeachingAssignment = require('../models/TeachingAssignment.model');
+const SectionAssignment = require('../models/SectionAssignment.model');
 
 /**
  * Resolves the entire department tree (Years -> Semesters -> Sections) in a single aggregation pipeline.
@@ -44,6 +46,80 @@ const resolveDeptTree = async (departmentId) => {
   ]);
 };
 
+const getFacultyLoad = async (facultyId) => {
+  const facId = new mongoose.Types.ObjectId(facultyId);
+  return await TeachingAssignment.aggregate([
+    { $match: { facultyId: facId } },
+    {
+      $lookup: {
+        from: 'subjects',
+        localField: 'subjectId',
+        foreignField: '_id',
+        as: 'subject'
+      }
+    },
+    { $unwind: '$subject' },
+    {
+      $lookup: {
+        from: 'departments',
+        localField: 'subject.departmentId',
+        foreignField: '_id',
+        as: 'department'
+      }
+    },
+    { $unwind: { path: '$department', preserveNullAndEmptyArrays: true } },
+    {
+      $lookup: {
+        from: 'sections',
+        localField: 'sectionId',
+        foreignField: '_id',
+        as: 'section'
+      }
+    },
+    { $unwind: '$section' },
+    {
+      $project: {
+        _id: 1,
+        facultyId: 1,
+        academicYearLabel: 1,
+        subject: {
+          _id: 1,
+          name: 1,
+          code: 1,
+          credits: 1
+        },
+        section: {
+          _id: 1,
+          name: 1
+        },
+        department: {
+          _id: 1,
+          name: 1,
+          code: 1
+        }
+      }
+    }
+  ]);
+};
+
+const getSectionCC = async (sectionId, semesterId) => {
+  const secId = new mongoose.Types.ObjectId(sectionId);
+  const semId = new mongoose.Types.ObjectId(semesterId);
+  const now = new Date();
+
+  return await SectionAssignment.findOne({
+    sectionId: secId,
+    semesterId: semId,
+    validFrom: { $lte: now },
+    $or: [
+      { validTo: null },
+      { validTo: { $gt: now } }
+    ]
+  });
+};
+
 module.exports = {
-  resolveDeptTree
+  resolveDeptTree,
+  getFacultyLoad,
+  getSectionCC
 };
