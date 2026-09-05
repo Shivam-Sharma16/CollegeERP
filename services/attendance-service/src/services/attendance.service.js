@@ -1,6 +1,28 @@
 const mongoose = require('mongoose');
 const LectureSession = require('../models/LectureSession.model');
 const AttendanceRecord = require('../models/AttendanceRecord.model');
+const env = require('../config/env');
+
+/**
+ * Fire-and-forget HTTP POST to the notification-service internal event endpoint.
+ * If the call fails for any reason, it logs a warning but does NOT throw —
+ * attendance recording must not be coupled to notification delivery.
+ */
+function notifyUser(userId, type, payload) {
+  if (!env.INTERNAL_SERVICE_KEY) return; // skip if not configured
+
+  const url = `${env.NOTIFICATION_SERVICE_URL}/internal/events`;
+  fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-internal-key': env.INTERNAL_SERVICE_KEY,
+    },
+    body: JSON.stringify({ userId: userId.toString(), type, payload }),
+  }).catch((err) => {
+    console.warn(`[attendance-service] Failed to notify user ${userId}:`, err.message);
+  });
+}
 
 // Haversine distance in meters
 function getDistance(lat1, lon1, lat2, lon2) {
@@ -77,6 +99,14 @@ const verifyCheckIn = async ({ lectureSessionId, studentId, qrToken, deviceFinge
   });
   
   await record.save();
+
+  // Notify the student about their attendance status (fire-and-forget)
+  notifyUser(studentId, 'ATTENDANCE_MARKED', {
+    sessionId: session._id,
+    subject: session.subject || null,
+    status: record.status,
+    verificationMethod: record.verificationMethod,
+  });
 
   return record;
 };

@@ -20,9 +20,7 @@ const initSocket = (server) => {
     }
 
     try {
-      // In a microservices environment, verify against the shared JWT_SECRET
-      const secret = process.env.JWT_SECRET || 'fallback_secret';
-      const decoded = jwt.verify(token, secret);
+      const decoded = jwt.verify(token, env.JWT_SECRET);
       socket.userId = decoded.userId || decoded.id; // Support different standard payloads
       next();
     } catch (err) {

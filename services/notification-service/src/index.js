@@ -9,6 +9,8 @@ const connectDB = require('./config/db');
 const { initSocket } = require('./socket');
 
 const healthRoute = require('./routes/health.route');
+const notificationRoute = require('./routes/notification.route');
+const internalRoute = require('./routes/internal.route');
 
 const app = express();
 const server = http.createServer(app);
@@ -18,13 +20,16 @@ app.use(cors());
 app.use(morgan('dev'));
 app.use(express.json());
 
-// Mount health route
+// Health
 app.use('/', healthRoute);
 
-// Placeholder for feature routes
-// app.use('/api/notification', require('./routes/notification.route'));
+// Public REST routes — require user JWT
+app.use('/api/notifications', notificationRoute);
 
-// Initialize Socket.IO
+// Internal routes — require x-internal-key header (service-to-service only)
+app.use('/internal', internalRoute);
+
+// Initialize Socket.IO (JWT-authenticated handshake, room-per-user)
 initSocket(server);
 
 connectDB();
