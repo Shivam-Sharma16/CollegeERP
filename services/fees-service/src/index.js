@@ -19,7 +19,7 @@ app.use(express.json());
 app.use('/', healthRoute);
 
 // Placeholder for feature routes
-// app.use('/api/fees', require('./routes/fees.route'));
+app.use('/api/fees', require('./routes/fees.route'));
 
 connectDB();
 
