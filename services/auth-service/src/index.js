@@ -10,10 +10,13 @@ const connectDB = require('./config/db');
 const healthRoute = require('./routes/health.route');
 const authRoute = require('./routes/auth.route');
 
+const { setupSecurity } = require('@college-erp/shared-utils');
+
 const app = express();
 
-app.use(helmet());
-app.use(cors());
+// 1. Core security (Helmet + CORS)
+setupSecurity(app);
+
 app.use(morgan('dev'));
 app.use(express.json());
 app.use(cookieParser());

@@ -1,4 +1,6 @@
 const { requirePermission } = require('./rbac');
+const { setupSecurity } = require('./security');
+const { logAudit } = require('./audit');
 
 const success = (data) => ({
   success: true,
@@ -13,5 +15,7 @@ const fail = (message) => ({
 module.exports = {
   success,
   fail,
-  requirePermission
+  requirePermission,
+  setupSecurity,
+  logAudit
 };

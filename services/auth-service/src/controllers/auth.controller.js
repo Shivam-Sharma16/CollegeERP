@@ -4,6 +4,8 @@ const User = require('../models/User.model');
 const RoleAssignment = require('../models/RoleAssignment.model');
 const env = require('../config/env');
 
+const { logAudit } = require('@college-erp/shared-utils');
+
 const BCRYPT_COST = 12;
 
 const generateTokens = (userId) => {
@@ -47,6 +49,14 @@ const superadminSignup = async (req, res) => {
       roles: ['SUPERADMIN']
     });
 
+    await logAudit(
+      req, 
+      'SUPERADMIN_CREATED', 
+      user._id.toString(), 
+      'User', 
+      { email: user.email }
+    );
+
     res.status(201).json({ message: 'Superadmin created successfully', userId: user._id });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -83,6 +93,14 @@ const registerStudent = async (req, res) => {
       sectionId,
       validFrom: new Date()
     });
+
+    await logAudit(
+      req, 
+      'STUDENT_CREATED', 
+      user._id.toString(), 
+      'User', 
+      { email: user.email, departmentId, sectionId }
+    );
 
     res.status(201).json({ message: 'Student registered successfully', userId: user._id });
   } catch (error) {
