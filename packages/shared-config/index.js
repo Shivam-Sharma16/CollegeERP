@@ -1,7 +1,9 @@
 const ROLES = {
+  SUPERADMIN: 'SUPERADMIN',
   ADMIN: 'ADMIN',
   HOD: 'HOD',
   FACULTY: 'FACULTY',
+  CC: 'CC',
   STUDENT: 'STUDENT',
   STAFF: 'STAFF'
 };

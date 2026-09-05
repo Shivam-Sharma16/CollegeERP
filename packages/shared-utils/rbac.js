@@ -81,9 +81,17 @@ const requirePermission = (action, resourceType) => {
           break;
         }
 
-        // HOD: pass only if target's departmentId === HOD's assignment scopeId
+        // HOD: two cases:
+        // (a) target context has a departmentId that matches the HOD's own -> authorized
+        // (b) resourceType is 'Department' (HOD creating sub-staff) -> authorized as long as HOD has
+        //     any department assignment. The controller enforces the actual scope — it IGNORES body.departmentId
+        //     and hard-codes req.effectiveRoles departmentId. So we trust the controller here.
         if (scope.role === 'HOD') {
           if (targetContext.type === 'departmentId' && targetContext.value === scope.departmentId) {
+            isAuthorized = true;
+            break;
+          }
+          if (resourceType === 'Department' && scope.departmentId) {
             isAuthorized = true;
             break;
           }

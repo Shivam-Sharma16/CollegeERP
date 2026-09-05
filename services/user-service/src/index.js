@@ -1,25 +1,26 @@
 require('dotenv').config();
 const express = require('express');
-const helmet = require('helmet');
-const cors = require('cors');
 const morgan = require('morgan');
+const { setupSecurity } = require('@college-erp/shared-utils');
 const env = require('./config/env');
 const connectDB = require('./config/db');
 
 const healthRoute = require('./routes/health.route');
+const departmentRoute = require('./routes/department.route');
+const userRoute = require('./routes/user.route');
 
 const app = express();
 
-app.use(helmet());
-app.use(cors());
+setupSecurity(app);
 app.use(morgan('dev'));
 app.use(express.json());
 
 // Mount health route
 app.use('/', healthRoute);
 
-// Placeholder for feature routes
-// app.use('/api/user', require('./routes/user.route'));
+// Feature routes
+app.use('/departments', departmentRoute);
+app.use('/users', userRoute);
 
 connectDB();
 
