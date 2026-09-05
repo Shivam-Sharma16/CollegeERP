@@ -18,8 +18,8 @@ app.use(express.json());
 // Mount health route
 app.use('/', healthRoute);
 
-// Placeholder for feature routes
-// app.use('/api/notice', require('./routes/notice.route'));
+// Feature routes
+app.use('/api/notice', require('./routes/notice.route'));
 
 connectDB();
 
