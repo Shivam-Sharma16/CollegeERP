@@ -5,6 +5,7 @@ const env = cleanEnv(process.env, {
   MONGO_URI: str(),
   JWT_ACCESS_SECRET: str(),
   JWT_REFRESH_SECRET: str(),
+  SUPERADMIN_SETUP_KEY: str(),
 });
 
 module.exports = env;
