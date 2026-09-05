@@ -11,7 +11,9 @@ const healthRoute = require('./routes/health.route');
 const yearRoute = require('./routes/year.route');
 const semesterRoute = require('./routes/semester.route');
 const sectionRoute = require('./routes/section.route');
-const subjectRoute = require('./routes/subject.route');
+const subjectRoute           = require('./routes/subject.route');
+const teachingRoute          = require('./routes/teaching.route');
+const sectionAssignmentRoute = require('./routes/sectionAssignment.route');
 
 const app = express();
 
@@ -24,7 +26,9 @@ app.use('/', healthRoute);
 app.use('/years', yearRoute);
 app.use('/semesters', semesterRoute);
 app.use('/sections', sectionRoute);
-app.use('/subjects', subjectRoute);
+app.use('/subjects',           subjectRoute);
+app.use('/teaching-assignments', teachingRoute);
+app.use('/section-assignments',  sectionAssignmentRoute);
 
 connectDB();
 
