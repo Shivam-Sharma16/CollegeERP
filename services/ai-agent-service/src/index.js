@@ -1,12 +1,13 @@
 require('dotenv').config();
 const express = require('express');
-const helmet = require('helmet');
-const cors = require('cors');
-const morgan = require('morgan');
-const env = require('./config/env');
+const helmet  = require('helmet');
+const cors    = require('cors');
+const morgan  = require('morgan');
+const env     = require('./config/env');
 const connectDB = require('./config/db');
 
 const healthRoute = require('./routes/health.route');
+const agentRoute  = require('./routes/agent.route');
 
 const app = express();
 
@@ -15,14 +16,20 @@ app.use(cors());
 app.use(morgan('dev'));
 app.use(express.json());
 
-// Mount health route
+// Health check
 app.use('/', healthRoute);
 
-// Placeholder for feature routes
-// app.use('/api/ai-agent', require('./routes/ai-agent.route'));
+// Agent endpoints — JWT authenticated
+app.use('/api/agents', agentRoute);
+
+// Global error handler
+app.use((err, req, res, _next) => {
+  console.error('[ai-agent-service] Unhandled error:', err.message);
+  res.status(500).json({ success: false, error: 'Internal server error' });
+});
 
 connectDB();
 
 app.listen(env.PORT, () => {
-  console.log(`[${env.PORT}] ${'ai-agent-service'} started`);
+  console.log(`[${env.PORT}] ai-agent-service started`);
 });
