@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { useAuth } from './hooks/useAuth';
+import { ToastProvider } from './components/ui/ToastContext';
 
 import LoginPage        from './pages/LoginPage';
 import AdminDashboard   from './pages/AdminDashboard';
@@ -28,8 +29,9 @@ function RootRedirect() {
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <Routes>
+    <ToastProvider>
+      <BrowserRouter>
+        <Routes>
         {/* ── Public ──────────────────────────────────────────────────── */}
         <Route path="/login"        element={<LoginPage />} />
         <Route path="/unauthorized" element={<UnauthorizedPage />} />
@@ -80,6 +82,7 @@ export default function App() {
         {/* ── 404 fallback ─────────────────────────────────────────────── */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-    </BrowserRouter>
+      </BrowserRouter>
+    </ToastProvider>
   );
 }
