@@ -116,9 +116,88 @@ const createCC = (req, res) => {
   );
 };
 
+const onboardStudent = async (req, res) => {
+  try {
+    const { name, email, password } = req.body;
+    if (!name || !email || !password) {
+      return res.status(400).json(fail('Name, email, and password are required'));
+    }
+
+    if (!req.user.roles.includes('CC')) {
+      return res.status(403).json(fail('You do not have permission to onboard a student'));
+    }
+
+    const ccRole = req.effectiveRoles?.find(r => r.role === 'CC');
+    if (!ccRole || !ccRole.sectionId || !ccRole.departmentId) {
+      return res.status(403).json(fail('You are not assigned to a section'));
+    }
+
+    const existing = await User.findOne({ email });
+    if (existing) {
+      return res.status(409).json(fail('User with this email already exists'));
+    }
+
+    const passwordHash = await bcrypt.hash(password, BCRYPT_COST);
+    const user = await User.create({
+      name,
+      email,
+      passwordHash,
+      roles: [] // Managed by RoleAssignment
+    });
+
+    await RoleAssignment.create({
+      userId: user._id,
+      role: 'STUDENT',
+      departmentId: ccRole.departmentId,
+      sectionId: ccRole.sectionId,
+      validFrom: new Date()
+    });
+
+    await logAudit(req, 'STUDENT_CREATED_BY_CC', user._id.toString(), 'User', { email, departmentId: ccRole.departmentId, sectionId: ccRole.sectionId });
+
+    res.status(201).json(success({ userId: user._id, role: 'STUDENT' }));
+  } catch (err) {
+    console.error('[UserController] Failed to onboard student:', err);
+    res.status(500).json(fail('Internal server error'));
+  }
+};
+
+const listStudents = async (req, res) => {
+  try {
+    const ccRole = req.effectiveRoles?.find(r => r.role === 'CC');
+    if (!ccRole || !ccRole.sectionId) {
+      return res.status(403).json(fail('You are not assigned to a section'));
+    }
+
+    // Find all users who have an active STUDENT role for this section
+    const assignments = await RoleAssignment.find({
+      role: 'STUDENT',
+      sectionId: ccRole.sectionId,
+      $or: [{ validTo: null }, { validTo: { $gt: new Date() } }]
+    }).populate('userId', 'name email isActive');
+
+    const students = assignments
+      .filter(a => a.userId && a.userId.isActive)
+      .map(a => ({
+        _id: a.userId._id,
+        name: a.userId.name,
+        email: a.userId.email,
+        departmentId: a.departmentId,
+        sectionId: a.sectionId
+      }));
+
+    res.status(200).json(success(students));
+  } catch (err) {
+    console.error('[UserController] Failed to list students:', err);
+    res.status(500).json(fail('Internal server error'));
+  }
+};
+
 module.exports = {
   createAdmin,
   createHOD,
   createFaculty,
-  createCC
+  createCC,
+  onboardStudent,
+  listStudents
 };

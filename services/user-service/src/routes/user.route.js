@@ -14,5 +14,7 @@ router.post('/admins', requirePermission('write', 'Institution'), userController
 router.post('/hods', requirePermission('write', 'Institution'), userController.createHOD);
 router.post('/faculty', requirePermission('write', 'Department'), userController.createFaculty);
 router.post('/cc', requirePermission('write', 'Department'), userController.createCC);
+router.post('/students', requirePermission('write', 'Section'), userController.onboardStudent);
+router.get('/students', requirePermission('read', 'Section'), userController.listStudents);
 
 module.exports = router;

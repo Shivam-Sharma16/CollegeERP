@@ -10,6 +10,7 @@ import AdminDashboard   from './pages/AdminDashboard';
 import FacultyDashboard from './pages/FacultyDashboard';
 import StudentDashboard from './pages/StudentDashboard';
 import HodDashboard     from './pages/HodDashboard';
+import CcDashboard      from './pages/CcDashboard';
 import UnauthorizedPage from './pages/UnauthorizedPage';
 
 /**
@@ -26,6 +27,7 @@ function RootRedirect() {
   if (roles.includes('SUPERADMIN') || roles.includes('ADMIN'))  return <Navigate to="/admin"   replace />;
   if (roles.includes('HOD'))                                     return <Navigate to="/hod"     replace />;
   if (roles.includes('FACULTY'))                                 return <Navigate to="/faculty" replace />;
+  if (roles.includes('CC'))                                      return <Navigate to="/cc"      replace />;
   return <Navigate to="/student" replace />;
 }
 
@@ -69,6 +71,16 @@ export default function App() {
           element={
             <ProtectedRoute allowedRoles={['FACULTY', 'HOD', 'ADMIN', 'SUPERADMIN']}>
               <FacultyDashboard />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* ── Class Coordinator (CC) ───────────────────────────────────── */}
+        <Route
+          path="/cc/*"
+          element={
+            <ProtectedRoute allowedRoles={['CC', 'HOD', 'ADMIN', 'SUPERADMIN']}>
+              <CcDashboard />
             </ProtectedRoute>
           }
         />

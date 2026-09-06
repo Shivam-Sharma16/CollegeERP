@@ -18,7 +18,7 @@ import { baseQuery } from './baseQuery';
 export const usersApi = createApi({
   reducerPath: 'usersApi',
   baseQuery,
-  tagTypes: ['Admin', 'Hod', 'Faculty', 'Cc'],
+  tagTypes: ['Admin', 'Hod', 'Faculty', 'Cc', 'Student'],
 
   endpoints: (builder) => ({
 
@@ -105,6 +105,23 @@ export const usersApi = createApi({
             ]
           : [{ type: 'Cc', id: 'LIST' }],
     }),
+    /** POST /api/users/students — CC only */
+    onboardStudent: builder.mutation({
+      query: (body) => ({ url: '/api/users/students', method: 'POST', body }),
+      invalidatesTags: [{ type: 'Student', id: 'LIST' }],
+    }),
+
+    /** GET /api/users/students */
+    listStudents: builder.query({
+      query: (params = {}) => ({ url: '/api/users/students', params }),
+      providesTags: (result) =>
+        result?.data
+          ? [
+              ...result.data.map(({ _id }) => ({ type: 'Student', id: _id })),
+              { type: 'Student', id: 'LIST' },
+            ]
+          : [{ type: 'Student', id: 'LIST' }],
+    }),
   }),
 });
 
@@ -113,8 +130,10 @@ export const {
   useCreateHodMutation,
   useCreateFacultyMutation,
   useCreateCcMutation,
+  useOnboardStudentMutation,
   useListAdminsQuery,
   useListHodsQuery,
   useListFacultyQuery,
   useListCcQuery,
+  useListStudentsQuery,
 } = usersApi;

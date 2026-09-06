@@ -54,10 +54,10 @@ export default function StudentRegisterPage() {
         email,
         password,
         enrollmentNumber,
-        department: departmentId,
+        departmentId: departmentId,
         year: yearId,
         semester: semesterId,
-        section: sectionId,
+        sectionId: sectionId,
       }).unwrap();
       navigate('/login', { replace: true });
     } catch { /* error handled by UI */ }
