@@ -1,10 +1,15 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useMemo } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { motion, AnimatePresence } from 'framer-motion';
+import * as LucideIcons from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useLogoutMutation } from '../api/authApi';
+import { selectSidebarCollapsed, toggleSidebar } from '../features/ui/sidebarSlice';
+import { NAV_ITEMS } from '../config/navigation';
 import styles from '../styles/Dashboard.module.css';
 
-// Import newly created UI components
+// Import UI components
 import { Button } from './ui/Button';
 import { Card } from './ui/Card';
 import { Table } from './ui/Table';
@@ -12,15 +17,21 @@ import { Modal } from './ui/Modal';
 import { Skeleton } from './ui/Skeleton';
 import { useToast } from './ui/ToastContext';
 
-/**
- * Reusable dashboard shell used as the placeholder for every role dashboard.
- * Replace the inner content as feature pages are built out in later phases.
- */
-export function DashboardShell({ title, subtitle, icon, navLinks = [] }) {
+// Safe icon renderer
+function Icon({ name }) {
+  const LucideIcon = LucideIcons[name] || LucideIcons.Circle;
+  return <LucideIcon size={18} />;
+}
+
+export function DashboardShell({ title, subtitle, icon }) {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const dispatch = useDispatch();
   const [logout] = useLogoutMutation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  
+  const collapsed = useSelector(selectSidebarCollapsed);
   
   // UI Demo state
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -32,6 +43,56 @@ export function DashboardShell({ title, subtitle, icon, navLinks = [] }) {
     try { await logout().unwrap(); } catch { /* authSlice already cleared optimistically */ }
     navigate('/login', { replace: true });
   }
+
+  // --- Dynamic Navigation Logic ---
+  const userRoles = useMemo(() => {
+    return user?.roles?.map(r => r.toLowerCase()) || [];
+  }, [user]);
+
+  const accessibleNavItems = useMemo(() => {
+    return NAV_ITEMS.filter(item => 
+      item.roles.some(role => userRoles.includes(role))
+    );
+  }, [userRoles]);
+
+  const personalItems = accessibleNavItems.filter(item => item.key === 'dashboard' || item.key === 'profile');
+  const roleItems = accessibleNavItems.filter(item => item.key !== 'dashboard' && item.key !== 'profile');
+
+  const hasMultipleRoles = userRoles.length > 1;
+
+  // Attempt to match the current path. Fallback to exact match or prefix match.
+  const activeKey = useMemo(() => {
+    const current = NAV_ITEMS.find(item => location.pathname.startsWith(item.path));
+    return current ? current.key : null;
+  }, [location.pathname]);
+
+  const renderNavItem = (item) => {
+    const isActive = activeKey === item.key;
+    return (
+      <button
+        key={item.key}
+        className={`${styles.navItem} ${isActive ? styles.navItemActive : ''}`}
+        onClick={() => {
+          setMobileMenuOpen(false);
+          navigate(item.path);
+        }}
+        title={collapsed ? item.label : undefined}
+      >
+        {isActive && (
+          <motion.div
+            layoutId="activeNav"
+            className={styles.activeIndicator}
+            initial={false}
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+          />
+        )}
+        <div className={styles.navItemContent}>
+          <span className={styles.navIcon}><Icon name={item.icon} /></span>
+          {!collapsed && <span>{item.label}</span>}
+        </div>
+      </button>
+    );
+  };
 
   const demoColumns = [
     { key: 'id', label: 'ID', sortable: true },
@@ -57,47 +118,68 @@ export function DashboardShell({ title, subtitle, icon, navLinks = [] }) {
   return (
     <div className={styles.layout}>
       {/* ── Sidebar ─────────────────────────────────────────────────────── */}
-      <aside className={`${styles.sidebar} ${mobileMenuOpen ? styles.sidebarOpen : ''}`}>
-        <div className={styles.sidebarHeader}>
+      <aside 
+        className={`${styles.sidebar} ${mobileMenuOpen ? styles.sidebarOpen : ''}`} 
+        style={{ width: collapsed ? '72px' : '240px' }}
+      >
+        <div className={styles.sidebarHeader} style={{ justifyContent: collapsed ? 'center' : 'flex-start' }}>
           <button 
             className={styles.menuBtn} 
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-label="Toggle menu"
           >
-            ☰
+            <LucideIcons.Menu size={20} />
           </button>
-          <span className={styles.sidebarIcon}>{icon}</span>
-          <span className={styles.sidebarTitle}>{title}</span>
+          {!collapsed && <span className={styles.sidebarIcon}>{icon}</span>}
+          {!collapsed && <span className={styles.sidebarTitle}>{title}</span>}
+          
+          <button 
+            onClick={() => dispatch(toggleSidebar())} 
+            style={{ marginLeft: collapsed ? '0' : 'auto', background: 'transparent', color: 'var(--color-text-muted)', border: 'none', cursor: 'pointer' }}
+            title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          >
+            {collapsed ? <LucideIcons.ChevronRight size={18} /> : <LucideIcons.ChevronLeft size={18} />}
+          </button>
         </div>
 
+        {hasMultipleRoles && !collapsed && (
+          <div className={styles.roleSwitcher}>
+            <span>Active Roles: {userRoles.length}</span>
+            <LucideIcons.ChevronDown size={14} />
+          </div>
+        )}
+
         <nav className={styles.nav}>
-          {navLinks.map((link) => (
-            <button
-              key={link.label}
-              className={styles.navItem}
-              onClick={() => {
-                setMobileMenuOpen(false);
-                navigate(link.to);
-              }}
-            >
-              <span className={styles.navIcon}>{link.icon}</span>
-              {link.label}
-            </button>
-          ))}
+          <AnimatePresence>
+            {personalItems.length > 0 && personalItems.map(renderNavItem)}
+            
+            {roleItems.length > 0 && personalItems.length > 0 && (
+              <div className={styles.navDivider} />
+            )}
+            
+            {roleItems.length > 0 && roleItems.map(renderNavItem)}
+          </AnimatePresence>
         </nav>
 
-        <div className={styles.sidebarFooter}>
-          <div className={styles.userInfo}>
-            <div className={styles.avatar}>
+        <div className={styles.sidebarFooter} style={{ padding: collapsed ? 'var(--spacing-4) 0' : 'var(--spacing-4)', alignItems: collapsed ? 'center' : 'stretch' }}>
+          {!collapsed && (
+            <div className={styles.userInfo}>
+              <div className={styles.avatar}>
+                {(user?.name ?? 'U')[0].toUpperCase()}
+              </div>
+              <div>
+                <div className={styles.userName}>{user?.name ?? 'User'}</div>
+                <div className={styles.userEmail}>{user?.email ?? ''}</div>
+              </div>
+            </div>
+          )}
+          {collapsed && (
+            <div className={styles.avatar} style={{ marginBottom: '16px' }} title={user?.name ?? 'User'}>
               {(user?.name ?? 'U')[0].toUpperCase()}
             </div>
-            <div>
-              <div className={styles.userName}>{user?.name ?? 'User'}</div>
-              <div className={styles.userEmail}>{user?.email ?? ''}</div>
-            </div>
-          </div>
-          <button className={styles.logoutBtn} onClick={handleLogout}>
-            Sign out
+          )}
+          <button className={styles.logoutBtn} onClick={handleLogout} title={collapsed ? "Sign out" : undefined}>
+            {collapsed ? <LucideIcons.LogOut size={16} style={{ margin: '0 auto' }} /> : 'Sign out'}
           </button>
         </div>
       </aside>

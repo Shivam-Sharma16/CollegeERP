@@ -103,23 +103,68 @@
   font-weight: 500;
   border-radius: var(--radius-sm);
   text-align: left;
-  transition: background var(--transition), color var(--transition);
+  transition: color var(--transition);
+  position: relative;
+  overflow: hidden;
 }
 
 .navItem:hover {
-  background: var(--color-surface-elevated);
   color: var(--color-text);
 }
 
 .navItemActive {
-  background: color-mix(in srgb, var(--color-primary) 12%, transparent);
   color: var(--color-primary-light);
+}
+
+.navItemContent {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+  position: relative;
+  z-index: 1;
 }
 
 .navIcon {
   font-size: 1rem;
   width: 1.2rem;
   text-align: center;
+}
+
+.activeIndicator {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: color-mix(in srgb, var(--color-primary) 12%, transparent);
+  border-left: 3px solid var(--color-primary);
+  border-radius: var(--radius-sm);
+  z-index: 0;
+}
+
+.navDivider {
+  height: 1px;
+  background: var(--color-border);
+  margin: var(--spacing-2) var(--spacing-3);
+  opacity: 0.5;
+}
+
+.roleSwitcher {
+  margin: var(--spacing-4) var(--spacing-4) 0;
+  padding: var(--spacing-2) var(--spacing-3);
+  background: var(--color-surface-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  font-size: var(--text-xs);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+}
+
+.roleSwitcher:hover {
+  border-color: var(--color-primary);
 }
 
 /* ── Sidebar footer / user info ───────────────────────────────────────────── */

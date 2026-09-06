@@ -83,16 +83,21 @@ export const store = configureStore({
 // ── Enable refetchOnFocus / refetchOnReconnect behaviours ─────────────────────
 setupListeners(store.dispatch);
 
-// ── Persist auth slice to localStorage on every change ────────────────────────
+// ── Persist auth & sidebar slices to localStorage on every change ─────────────
 const AUTH_KEY = 'erp_auth';
+const SIDEBAR_KEY = 'erp_sidebar';
+
 store.subscribe(() => {
-  const { auth } = store.getState();
+  const { auth, sidebar } = store.getState();
   try {
     if (auth.token) {
       localStorage.setItem(AUTH_KEY, JSON.stringify({ token: auth.token, user: auth.user }));
     } else {
       localStorage.removeItem(AUTH_KEY);
     }
+    
+    // Persist sidebar state
+    localStorage.setItem(SIDEBAR_KEY, JSON.stringify({ collapsed: sidebar.collapsed }));
   } catch { /* quota exceeded or private browsing — silently ignore */ }
 });
 

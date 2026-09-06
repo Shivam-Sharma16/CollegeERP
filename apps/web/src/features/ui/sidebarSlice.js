@@ -9,8 +9,21 @@
 
 import { createSlice } from '@reduxjs/toolkit';
 
+const SIDEBAR_KEY = 'erp_sidebar';
+
+function loadFromStorage() {
+  try {
+    const raw = localStorage.getItem(SIDEBAR_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+const stored = loadFromStorage();
+
 const initialState = {
-  collapsed: false,
+  collapsed: stored?.collapsed ?? false,
   activeKey:  null,   // e.g. 'attendance', 'results', 'fees'
 };
 
