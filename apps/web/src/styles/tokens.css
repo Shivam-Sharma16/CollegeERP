@@ -63,9 +63,20 @@
   --color-success:           #10b981;
   --color-warning:           #f59e0b;
 
-  /* ── Typography ────────────────────────────────────────────────────────── */
+  /* ── Typography (Fluid via clamp) ──────────────────────────────────────── */
   --font-heading: 'Inter', system-ui, sans-serif;
   --font-body:    'Inter', system-ui, sans-serif;
+
+  /* Fluid scale: min size at 320px width to max size at 1440px width */
+  --text-xs:   clamp(0.75rem, 0.71rem + 0.18vw, 0.875rem);
+  --text-sm:   clamp(0.875rem, 0.84rem + 0.18vw, 1rem);
+  --text-base: clamp(1rem, 0.96rem + 0.18vw, 1.125rem);
+  --text-lg:   clamp(1.125rem, 1.09rem + 0.18vw, 1.25rem);
+  --text-xl:   clamp(1.25rem, 1.18rem + 0.36vw, 1.5rem);
+  --text-2xl:  clamp(1.5rem, 1.36rem + 0.71vw, 2rem);
+  --text-3xl:  clamp(1.875rem, 1.7rem + 0.89vw, 2.5rem);
+  --text-4xl:  clamp(2.25rem, 2.04rem + 1.07vw, 3rem);
+  --text-5xl:  clamp(3rem, 2.71rem + 1.43vw, 4rem);
 
   /* ── Spacing ───────────────────────────────────────────────────────────── */
   --spacing-1:  0.25rem;   /*  4 px */
@@ -89,4 +100,10 @@
 
   /* ── Motion ────────────────────────────────────────────────────────────── */
   --transition: 160ms ease;
+
+  /* ── Breakpoints (Reference / JS usage) ────────────────────────────────── */
+  --bp-sm: 480px;
+  --bp-md: 768px;
+  --bp-lg: 1024px;
+  --bp-xl: 1440px;
 }

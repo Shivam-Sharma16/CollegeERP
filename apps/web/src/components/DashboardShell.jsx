@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useLogoutMutation } from '../api/authApi';
@@ -11,6 +12,7 @@ export function DashboardShell({ title, subtitle, icon, navLinks = [] }) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [logout] = useLogoutMutation();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   async function handleLogout() {
     try { await logout().unwrap(); } catch { /* authSlice already cleared optimistically */ }
@@ -20,8 +22,15 @@ export function DashboardShell({ title, subtitle, icon, navLinks = [] }) {
   return (
     <div className={styles.layout}>
       {/* ── Sidebar ─────────────────────────────────────────────────────── */}
-      <aside className={styles.sidebar}>
+      <aside className={`${styles.sidebar} ${mobileMenuOpen ? styles.sidebarOpen : ''}`}>
         <div className={styles.sidebarHeader}>
+          <button 
+            className={styles.menuBtn} 
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label="Toggle menu"
+          >
+            ☰
+          </button>
           <span className={styles.sidebarIcon}>{icon}</span>
           <span className={styles.sidebarTitle}>{title}</span>
         </div>
@@ -31,7 +40,10 @@ export function DashboardShell({ title, subtitle, icon, navLinks = [] }) {
             <button
               key={link.label}
               className={styles.navItem}
-              onClick={() => navigate(link.to)}
+              onClick={() => {
+                setMobileMenuOpen(false);
+                navigate(link.to);
+              }}
             >
               <span className={styles.navIcon}>{link.icon}</span>
               {link.label}
