@@ -1,0 +1,26 @@
+import { useNavigate } from 'react-router-dom';
+import authStore from '../store/authStore';
+import styles from '../styles/Dashboard.module.css';
+
+export default function UnauthorizedPage() {
+  const navigate = useNavigate();
+
+  function handleLogout() {
+    authStore.logout();
+    navigate('/login', { replace: true });
+  }
+
+  return (
+    <div className={styles.placeholder}>
+      <div className={styles.placeholderIcon}>🚫</div>
+      <h1>Access Denied</h1>
+      <p>You don't have permission to view this page.</p>
+      <div className={styles.actions}>
+        <button className={styles.btn} onClick={() => navigate(-1)}>Go back</button>
+        <button className={`${styles.btn} ${styles.btnSecondary}`} onClick={handleLogout}>
+          Log out
+        </button>
+      </div>
+    </div>
+  );
+}
