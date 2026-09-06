@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import api from '../api/client';
-import authStore from '../store/authStore';
+import { useLoginMutation } from '../api/authApi';
 import styles from '../styles/Login.module.css';
 
 export default function LoginPage() {
@@ -11,22 +10,20 @@ export default function LoginPage() {
 
   const [email,    setEmail]    = useState('');
   const [password, setPassword] = useState('');
-  const [error,    setError]    = useState('');
-  const [loading,  setLoading]  = useState(false);
+
+  // RTK Query mutation — provides isLoading and error automatically.
+  // authApi.login's onQueryStarted dispatches setCredentials to authSlice
+  // so ProtectedRoute selectors update before we navigate.
+  const [login, { isLoading, error }] = useLoginMutation();
+
+  const errorMessage = error?.data?.message ?? error?.data?.error ?? error?.error ?? '';
 
   async function handleSubmit(e) {
     e.preventDefault();
-    setError('');
-    setLoading(true);
     try {
-      const res = await api.post('/api/auth/login', { email, password });
-      authStore.login(res.data.token, res.data.user);
+      await login({ email, password }).unwrap();
       navigate(from, { replace: true });
-    } catch (err) {
-      setError(err.message ?? 'Login failed');
-    } finally {
-      setLoading(false);
-    }
+    } catch { /* error rendered from RTK Query's `error` state */ }
   }
 
   return (
@@ -65,14 +62,16 @@ export default function LoginPage() {
             />
           </div>
 
-          {error && <p className={styles.error} role="alert">{error}</p>}
+          {errorMessage && (
+            <p className={styles.error} role="alert">{errorMessage}</p>
+          )}
 
           <button
             className={styles.submit}
             type="submit"
-            disabled={loading}
+            disabled={isLoading}
           >
-            {loading ? 'Signing in…' : 'Sign in'}
+            {isLoading ? 'Signing in…' : 'Sign in'}
           </button>
         </form>
       </div>

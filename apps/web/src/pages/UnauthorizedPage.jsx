@@ -1,12 +1,13 @@
 import { useNavigate } from 'react-router-dom';
-import authStore from '../store/authStore';
+import { useLogoutMutation } from '../api/authApi';
 import styles from '../styles/Dashboard.module.css';
 
 export default function UnauthorizedPage() {
   const navigate = useNavigate();
+  const [logout] = useLogoutMutation();
 
-  function handleLogout() {
-    authStore.logout();
+  async function handleLogout() {
+    try { await logout().unwrap(); } catch { /* optimistically cleared */ }
     navigate('/login', { replace: true });
   }
 

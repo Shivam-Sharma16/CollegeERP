@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import authStore from '../store/authStore';
+import { useLogoutMutation } from '../api/authApi';
 import styles from '../styles/Dashboard.module.css';
 
 /**
@@ -10,9 +10,10 @@ import styles from '../styles/Dashboard.module.css';
 export function DashboardShell({ title, subtitle, icon, navLinks = [] }) {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [logout] = useLogoutMutation();
 
-  function handleLogout() {
-    authStore.logout();
+  async function handleLogout() {
+    try { await logout().unwrap(); } catch { /* authSlice already cleared optimistically */ }
     navigate('/login', { replace: true });
   }
 
