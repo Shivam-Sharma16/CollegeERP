@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useLoginMutation } from '../api/authApi';
 import { useAppSelector } from '../store';
 import { selectInstitutionName, selectInstitutionLogo } from '../features/ui/themeSlice';
-import styles from '../styles/Login.module.css';
+import styles from './LoginPage.module.css';
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -45,9 +45,8 @@ export default function LoginPage() {
           <p className={styles.tagline}>Unified academic management</p>
         </div>
 
-        <form className={styles.form} onSubmit={handleSubmit}>
-          <div className={styles.field}>
-            <label htmlFor="email">Email address</label>
+        <form className={`${styles.form} ${errorMessage ? styles.shake : ''}`} onSubmit={handleSubmit}>
+          <div className={styles.floatingLabel}>
             <input
               id="email"
               type="email"
@@ -55,12 +54,12 @@ export default function LoginPage() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@college.edu"
+              placeholder=" "
             />
+            <label htmlFor="email">Email address</label>
           </div>
 
-          <div className={styles.field}>
-            <label htmlFor="password">Password</label>
+          <div className={styles.floatingLabel}>
             <input
               id="password"
               type="password"
@@ -68,8 +67,9 @@ export default function LoginPage() {
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
+              placeholder=" "
             />
+            <label htmlFor="password">Password</label>
           </div>
 
           {errorMessage && (

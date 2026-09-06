@@ -4,6 +4,8 @@ import { useAuth } from './hooks/useAuth';
 import { ToastProvider } from './components/ui/ToastContext';
 
 import LoginPage        from './pages/LoginPage';
+import StudentRegisterPage from './pages/StudentRegisterPage';
+import SuperadminSignupPage from './pages/SuperadminSignupPage';
 import AdminDashboard   from './pages/AdminDashboard';
 import FacultyDashboard from './pages/FacultyDashboard';
 import StudentDashboard from './pages/StudentDashboard';
@@ -34,6 +36,8 @@ export default function App() {
         <Routes>
         {/* ── Public ──────────────────────────────────────────────────── */}
         <Route path="/login"        element={<LoginPage />} />
+        <Route path="/register"     element={<StudentRegisterPage />} />
+        <Route path="/superadmin/signup" element={<SuperadminSignupPage />} />
         <Route path="/unauthorized" element={<UnauthorizedPage />} />
 
         {/* ── Root redirect ────────────────────────────────────────────── */}

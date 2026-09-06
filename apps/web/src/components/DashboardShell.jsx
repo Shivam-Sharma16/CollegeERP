@@ -7,7 +7,7 @@ import { useAuth } from '../hooks/useAuth';
 import { useLogoutMutation } from '../api/authApi';
 import { selectSidebarCollapsed, toggleSidebar } from '../features/ui/sidebarSlice';
 import { NAV_ITEMS } from '../config/navigation';
-import styles from '../styles/Dashboard.module.css';
+import styles from './DashboardShell.module.css';
 
 // Import UI components
 import { Button } from './ui/Button';

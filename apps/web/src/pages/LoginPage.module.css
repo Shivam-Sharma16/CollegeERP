@@ -76,39 +76,63 @@
   gap: var(--spacing-4);
 }
 
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-2);
+.shake {
+  animation: shake 0.4s ease-in-out;
 }
 
-.field label {
-  font-family: var(--font-body);
-  font-size: var(--text-sm);
-  font-weight: 500;
-  color: var(--color-text-muted);
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-5px); }
+  40%, 80% { transform: translateX(5px); }
 }
 
-.field input {
-  padding: .7rem var(--spacing-4);
+.floatingLabel {
+  position: relative;
+}
+
+.floatingLabel input,
+.floatingLabel select {
+  width: 100%;
+  padding: 1.5rem var(--spacing-4) 0.5rem;
   background: var(--color-surface-elevated);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   color: var(--color-text);
   font-family: var(--font-body);
   font-size: var(--text-base);
+  outline: none;
   transition: border-color var(--transition), box-shadow var(--transition);
 }
 
-.field input:focus {
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 20%, transparent);
-  outline: none;
+.floatingLabel select {
+  appearance: none;
+  padding-right: var(--spacing-8);
 }
 
-.field input::placeholder {
+.floatingLabel label {
+  position: absolute;
+  left: var(--spacing-4);
+  top: 1rem;
   color: var(--color-text-muted);
-  opacity: .6;
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  pointer-events: none;
+  transition: 0.2s ease all;
+}
+
+.floatingLabel input:focus,
+.floatingLabel select:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 20%, transparent);
+}
+
+.floatingLabel input:focus ~ label,
+.floatingLabel input:not(:placeholder-shown) ~ label,
+.floatingLabel select:focus ~ label,
+.floatingLabel select.hasValue ~ label {
+  top: 0.4rem;
+  font-size: 0.75rem;
+  color: var(--color-primary);
 }
 
 /* ── Error message ────────────────────────────────────────────────────────── */

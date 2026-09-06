@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useLogoutMutation } from '../api/authApi';
-import styles from '../styles/Dashboard.module.css';
+import styles from './UnauthorizedPage.module.css';
 
 export default function UnauthorizedPage() {
   const navigate = useNavigate();
