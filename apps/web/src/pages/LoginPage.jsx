@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useLoginMutation } from '../api/authApi';
+import { useAppSelector } from '../store';
+import { selectInstitutionName, selectInstitutionLogo } from '../features/ui/themeSlice';
 import styles from '../styles/Login.module.css';
 
 export default function LoginPage() {
@@ -10,6 +12,10 @@ export default function LoginPage() {
 
   const [email,    setEmail]    = useState('');
   const [password, setPassword] = useState('');
+
+  // Get dynamic institution data
+  const institutionName = useAppSelector(selectInstitutionName);
+  const institutionLogo = useAppSelector(selectInstitutionLogo);
 
   // RTK Query mutation — provides isLoading and error automatically.
   // authApi.login's onQueryStarted dispatches setCredentials to authSlice
@@ -30,8 +36,12 @@ export default function LoginPage() {
     <div className={styles.page}>
       <div className={styles.card}>
         <div className={styles.logoWrap}>
-          <div className={styles.logo}>🎓</div>
-          <h1 className={styles.appName}>College ERP</h1>
+          {institutionLogo ? (
+            <img src={institutionLogo} alt={institutionName} className={styles.institutionLogo} />
+          ) : (
+            <div className={styles.logo}>🎓</div>
+          )}
+          <h1 className={styles.appName}>{institutionName}</h1>
           <p className={styles.tagline}>Unified academic management</p>
         </div>
 

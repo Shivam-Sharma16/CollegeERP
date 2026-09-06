@@ -1,0 +1,92 @@
+/**
+ * tokens.css — Single source of truth for all design tokens.
+ *
+ * Rules:
+ *   1. Every visual value used anywhere in the app MUST live here as a
+ *      CSS custom property. No hardcoded hex, px, or font names in
+ *      component stylesheets.
+ *   2. The `themeSlice` / `loadTheme` thunk writes inline overrides onto
+ *      :root at runtime, which override these defaults. Changing only
+ *      `public/theme.config.json` re-skins the entire app.
+ *   3. Derived tokens (e.g. --color-primary-light, alpha variants) are
+ *      computed here using the canonical base tokens via color-mix or
+ *      rgba() fallbacks.
+ *
+ * ── Token inventory ────────────────────────────────────────────────────────
+ *
+ *  Color
+ *    --color-primary          Main brand colour (buttons, links, accents)
+ *    --color-primary-light    Lightened variant for hover states / text
+ *    --color-secondary        Complementary accent (gradients, highlights)
+ *    --color-surface          Card / sidebar background
+ *    --color-surface-elevated Inputs, nested panels (slightly lighter)
+ *    --color-bg               Page canvas
+ *    --color-border           Dividers, input outlines
+ *    --color-text             Body copy
+ *    --color-text-muted       Labels, placeholders, secondary text
+ *    --color-danger           Errors, destructive actions
+ *    --color-success          Confirmations, success states
+ *    --color-warning          Warnings, caution states
+ *
+ *  Typography
+ *    --font-heading           Headings (h1–h4, .pageTitle, .appName)
+ *    --font-body              Body text, labels, inputs
+ *
+ *  Spacing  (0.25 rem increments, multiples of 4 px)
+ *    --spacing-1 … --spacing-8
+ *
+ *  Border radius
+ *    --radius-sm   Small: chips, badges, inputs
+ *    --radius-md   Default: cards, modals, dropdowns
+ *    --radius-lg   Large: sheets, hero panels
+ *
+ *  Shadow
+ *    --shadow-sm / --shadow-md / --shadow-lg
+ *
+ *  Motion
+ *    --transition  Default easing for micro-animations
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+:root {
+
+  /* ── Colour ────────────────────────────────────────────────────────────── */
+  --color-primary:           #6366f1;
+  --color-primary-light:     #818cf8;
+  --color-secondary:         #22d3ee;
+  --color-surface:           #1a1d2e;
+  --color-surface-elevated:  #232741;
+  --color-bg:                #0f1117;
+  --color-border:            #2e3455;
+  --color-text:              #e2e8f0;
+  --color-text-muted:        #94a3b8;
+  --color-danger:            #f43f5e;
+  --color-success:           #10b981;
+  --color-warning:           #f59e0b;
+
+  /* ── Typography ────────────────────────────────────────────────────────── */
+  --font-heading: 'Inter', system-ui, sans-serif;
+  --font-body:    'Inter', system-ui, sans-serif;
+
+  /* ── Spacing ───────────────────────────────────────────────────────────── */
+  --spacing-1:  0.25rem;   /*  4 px */
+  --spacing-2:  0.5rem;    /*  8 px */
+  --spacing-3:  0.75rem;   /* 12 px */
+  --spacing-4:  1rem;      /* 16 px */
+  --spacing-5:  1.25rem;   /* 20 px */
+  --spacing-6:  1.5rem;    /* 24 px */
+  --spacing-7:  1.75rem;   /* 28 px */
+  --spacing-8:  2rem;      /* 32 px */
+
+  /* ── Border radius ─────────────────────────────────────────────────────── */
+  --radius-sm:  6px;
+  --radius-md:  12px;
+  --radius-lg:  20px;
+
+  /* ── Shadow ────────────────────────────────────────────────────────────── */
+  --shadow-sm:  0 1px 3px  rgba(0, 0, 0, .40);
+  --shadow-md:  0 4px 16px rgba(0, 0, 0, .50);
+  --shadow-lg:  0 8px 32px rgba(0, 0, 0, .60);
+
+  /* ── Motion ────────────────────────────────────────────────────────────── */
+  --transition: 160ms ease;
+}

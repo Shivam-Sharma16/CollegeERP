@@ -1,13 +1,15 @@
 /* ── Login page ───────────────────────────────────────────────────────────── */
+/* All values reference tokens.css canonical variables.                       */
+/* To re-skin: change only theme.config.json — zero edits needed here.        */
 
 .page {
   min-height: 100vh;
   display: grid;
   place-items: center;
   background:
-    radial-gradient(ellipse 80% 60% at 50% -10%, rgba(99,102,241,.25), transparent),
+    radial-gradient(ellipse 80% 60% at 50% -10%, color-mix(in srgb, var(--color-primary) 25%, transparent), transparent),
     var(--color-bg);
-  padding: var(--space-4);
+  padding: var(--spacing-4);
 }
 
 .card {
@@ -15,8 +17,8 @@
   max-width: 420px;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  padding: var(--space-8) var(--space-8);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-8);
   box-shadow: var(--shadow-lg);
   animation: slideUp .35s ease;
 }
@@ -26,26 +28,34 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* Logo block */
+/* ── Logo block ───────────────────────────────────────────────────────────── */
 .logoWrap {
   text-align: center;
-  margin-bottom: var(--space-8);
+  margin-bottom: var(--spacing-8);
 }
 
 .logo {
   font-size: 3rem;
   line-height: 1;
-  margin-bottom: var(--space-3);
+  margin-bottom: var(--spacing-3);
+}
+
+.institutionLogo {
+  max-height: 56px;
+  width: auto;
+  margin-bottom: var(--spacing-3);
+  object-fit: contain;
 }
 
 .appName {
+  font-family: var(--font-heading);
   font-size: 1.75rem;
   font-weight: 700;
-  background: linear-gradient(135deg, var(--color-primary-h), var(--color-accent));
+  background: linear-gradient(135deg, var(--color-primary-light), var(--color-secondary));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  margin-bottom: var(--space-1);
+  margin-bottom: var(--spacing-1);
 }
 
 .tagline {
@@ -53,38 +63,40 @@
   font-size: .875rem;
 }
 
-/* Form */
+/* ── Form ─────────────────────────────────────────────────────────────────── */
 .form {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: var(--spacing-4);
 }
 
 .field {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: var(--spacing-2);
 }
 
 .field label {
+  font-family: var(--font-body);
   font-size: .85rem;
   font-weight: 500;
   color: var(--color-text-muted);
 }
 
 .field input {
-  padding: .7rem var(--space-4);
-  background: var(--color-surface-2);
+  padding: .7rem var(--spacing-4);
+  background: var(--color-surface-elevated);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   color: var(--color-text);
+  font-family: var(--font-body);
   font-size: .95rem;
   transition: border-color var(--transition), box-shadow var(--transition);
 }
 
 .field input:focus {
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(99,102,241,.2);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 20%, transparent);
   outline: none;
 }
 
@@ -93,25 +105,28 @@
   opacity: .6;
 }
 
+/* ── Error message ────────────────────────────────────────────────────────── */
 .error {
   font-size: .85rem;
   color: var(--color-danger);
-  background: rgba(244,63,94,.1);
-  border: 1px solid rgba(244,63,94,.25);
+  background: color-mix(in srgb, var(--color-danger) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-danger) 25%, transparent);
   border-radius: var(--radius-sm);
-  padding: var(--space-2) var(--space-3);
+  padding: var(--spacing-2) var(--spacing-3);
 }
 
+/* ── Submit button ────────────────────────────────────────────────────────── */
 .submit {
-  margin-top: var(--space-2);
+  margin-top: var(--spacing-2);
   padding: .8rem;
-  background: linear-gradient(135deg, var(--color-primary), #4f46e5);
+  background: linear-gradient(135deg, var(--color-primary), color-mix(in srgb, var(--color-primary) 80%, #000));
   color: #fff;
+  font-family: var(--font-body);
   font-weight: 600;
   font-size: 1rem;
   border-radius: var(--radius-sm);
   transition: opacity var(--transition), transform var(--transition);
-  box-shadow: 0 4px 14px rgba(99,102,241,.4);
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--color-primary) 40%, transparent);
 }
 
 .submit:hover:not(:disabled) {

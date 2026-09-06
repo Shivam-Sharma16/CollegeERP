@@ -1,0 +1,31 @@
+{
+  "institution": {
+    "name": "Global Tech University",
+    "logoUrl": "",
+    "faviconUrl": ""
+  },
+  "colors": {
+    "primary": "#3b82f6",
+    "primaryLight": "#60a5fa",
+    "secondary": "#f59e0b",
+    "surface": "#ffffff",
+    "surfaceElevated": "#f3f4f6",
+    "bg": "#f9fafb",
+    "border": "#e5e7eb",
+    "text": "#111827",
+    "textMuted": "#6b7280",
+    "danger": "#ef4444",
+    "success": "#10b981",
+    "warning": "#f59e0b"
+  },
+  "fonts": {
+    "heading": "Inter",
+    "body": "Inter",
+    "importUrl": "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+  },
+  "radius": {
+    "sm": "8px",
+    "md": "16px",
+    "lg": "24px"
+  }
+}
