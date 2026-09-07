@@ -18,6 +18,25 @@
   }
 }
 
+.adminLayout {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-6);
+}
+
+.adminTwoCol {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--spacing-6);
+  align-items: stretch;
+}
+
+@media (min-width: 1024px) {
+  .adminTwoCol {
+    grid-template-columns: 3fr 2fr;
+  }
+}
+
 .mainContent {
   display: flex;
   flex-direction: column;
@@ -67,4 +86,15 @@
 .loadingText {
   color: var(--color-text-muted);
   font-size: var(--text-sm);
+}
+
+.chartCol {
+  display: flex;
+  flex-direction: column;
+  min-height: 400px;
+}
+
+.tableCol {
+  display: flex;
+  flex-direction: column;
 }

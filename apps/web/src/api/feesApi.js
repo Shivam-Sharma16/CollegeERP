@@ -88,6 +88,15 @@ export const feesApi = createApi({
       query: (params = {}) => ({ url: '/api/fees/defaulters', params }),
       providesTags: [{ type: 'Defaulter', id: 'LIST' }],
     }),
+
+    /**
+     * GET /api/fees/collection-summary
+     * Returns total fees collected this month and trend.
+     */
+    getCollectionSummary: builder.query({
+      query: (params = {}) => ({ url: '/api/fees/collection-summary', params }),
+      providesTags: ['Payment'],
+    }),
   }),
 });
 
@@ -98,4 +107,5 @@ export const {
   useListPaymentsQuery,
   useGetReceiptUrlQuery,
   useGetDefaultersQuery,
+  useGetCollectionSummaryQuery,
 } = feesApi;

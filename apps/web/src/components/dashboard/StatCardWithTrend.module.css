@@ -1,0 +1,126 @@
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-4);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  height: 140px;
+}
+
+.errorCard {
+  border-color: color-mix(in srgb, var(--color-danger) 30%, var(--color-border));
+  background: color-mix(in srgb, var(--color-danger) 5%, var(--color-surface));
+  flex-direction: row;
+  align-items: center;
+  gap: var(--spacing-3);
+  justify-content: center;
+}
+
+.errorContent {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+}
+
+.errorTitle {
+  font-size: var(--text-sm);
+  color: var(--color-danger);
+  font-weight: 500;
+}
+
+.retryBtn {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--color-primary);
+  font-size: var(--text-xs);
+  cursor: pointer;
+  text-decoration: underline;
+  text-align: left;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-2);
+}
+
+.title {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  font-weight: 500;
+}
+
+.iconWrapper {
+  color: var(--color-text-muted);
+  opacity: 0.5;
+}
+
+.value {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--color-text);
+  font-family: var(--font-heading);
+  margin-bottom: auto;
+}
+
+.chartContainer {
+  height: 40px;
+  width: 100%;
+  margin-top: var(--spacing-2);
+}
+
+.noData {
+  font-size: var(--text-xs);
+  color: var(--color-border);
+}
+
+/* Skeleton */
+.skeletonHeader {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-2);
+}
+
+.skeletonTitle {
+  height: 14px;
+  width: 60%;
+  background: var(--color-surface-elevated);
+  border-radius: var(--radius-sm);
+  animation: pulse 1.5s infinite;
+}
+
+.skeletonIcon {
+  height: 18px;
+  width: 18px;
+  background: var(--color-surface-elevated);
+  border-radius: 50%;
+  animation: pulse 1.5s infinite;
+}
+
+.skeletonValue {
+  height: 28px;
+  width: 40%;
+  background: var(--color-surface-elevated);
+  border-radius: var(--radius-sm);
+  margin-bottom: auto;
+  animation: pulse 1.5s infinite;
+}
+
+.skeletonChart {
+  height: 40px;
+  width: 100%;
+  background: var(--color-surface-elevated);
+  border-radius: var(--radius-sm);
+  margin-top: var(--spacing-2);
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 0.6; }
+  50% { opacity: 1; }
+  100% { opacity: 0.6; }
+}

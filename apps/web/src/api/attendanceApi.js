@@ -132,6 +132,15 @@ export const attendanceApi = createApi({
         { type: 'AttendanceRecord', id: 'LIST' },
       ],
     }),
+
+    /**
+     * GET /api/attendance/institution-summary
+     * Returns institution-wide attendance metrics and trends.
+     */
+    getInstitutionAttendance: builder.query({
+      query: (params = {}) => ({ url: '/api/attendance/institution-summary', params }),
+      providesTags: ['AttendanceRecord'],
+    }),
   }),
 });
 
@@ -144,4 +153,5 @@ export const {
   useCheckInMutation,
   useGetSessionRecordsQuery,
   useOverrideRecordMutation,
+  useGetInstitutionAttendanceQuery,
 } = attendanceApi;
