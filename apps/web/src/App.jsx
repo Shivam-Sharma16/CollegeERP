@@ -16,6 +16,7 @@ import AdminNotices     from './pages/AdminNotices';
 import FacultyDashboard from './pages/FacultyDashboard';
 import StudentDashboard from './pages/StudentDashboard';
 import HodDashboard     from './pages/HodDashboard';
+import HodManagement    from './pages/HodManagement';
 import CcDashboard      from './pages/CcDashboard';
 import UnauthorizedPage from './pages/UnauthorizedPage';
 
@@ -123,6 +124,16 @@ export default function App() {
           element={
             <ProtectedRoute allowedRoles={['HOD', 'ADMIN', 'SUPERADMIN']}>
               <HodDashboard />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* ── HOD Management ──────────────────────────────────────────── */}
+        <Route
+          path="/hod/management"
+          element={
+            <ProtectedRoute allowedRoles={['HOD', 'ADMIN', 'SUPERADMIN']}>
+              <HodManagement />
             </ProtectedRoute>
           }
         />
