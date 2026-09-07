@@ -11,6 +11,8 @@ import SuperAdminManagement from './pages/SuperAdminManagement';
 import InstitutionSettings from './pages/InstitutionSettings';
 import AdminHodManagement from './pages/AdminHodManagement';
 import AdminReports     from './pages/AdminReports';
+import AdminFeePolicy   from './pages/AdminFeePolicy';
+import AdminNotices     from './pages/AdminNotices';
 import FacultyDashboard from './pages/FacultyDashboard';
 import StudentDashboard from './pages/StudentDashboard';
 import HodDashboard     from './pages/HodDashboard';
@@ -91,6 +93,26 @@ export default function App() {
           element={
             <ProtectedRoute allowedRoles={['ADMIN', 'HOD']}>
               <AdminReports />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* ── Fee Policy (ADMIN) ───────────────────────────────────────── */}
+        <Route
+          path="/fee-policy"
+          element={
+            <ProtectedRoute allowedRoles={['ADMIN']}>
+              <AdminFeePolicy />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* ── Institution Notices (ADMIN) ──────────────────────────────── */}
+        <Route
+          path="/notices"
+          element={
+            <ProtectedRoute allowedRoles={['ADMIN']}>
+              <AdminNotices />
             </ProtectedRoute>
           }
         />
