@@ -1,5 +1,5 @@
 import { DashboardShell } from '../components/DashboardShell';
-import { StatCard } from '../components/dashboard/StatCard';
+import { StatCard } from '../components/ui/StatCard';
 import { AnimatedTabs } from '../components/ui/AnimatedTabs';
 import { FacultyTab } from '../components/hod/FacultyTab';
 import { SubjectsTab } from '../components/hod/SubjectsTab';
