@@ -101,21 +101,27 @@ export function CreateUserModal({
         {showDepartmentSelect && (
           <div className={styles.field}>
             <label htmlFor="department">Department</label>
-            <select
-              id="department"
-              className={styles.input}
-              required
-              value={departmentId}
-              onChange={(e) => setDepartmentId(e.target.value)}
-              disabled={isLoading}
-            >
-              <option value="" disabled>Select Department</option>
-              {departments.map((dept) => (
-                <option key={dept._id} value={dept._id}>
-                  {dept.name} ({dept.code})
-                </option>
-              ))}
-            </select>
+            {departments.length === 0 ? (
+              <div style={{ padding: '12px', background: 'color-mix(in srgb, var(--color-warning) 15%, transparent)', color: 'var(--color-warning)', borderRadius: 'var(--radius-sm)', fontSize: '14px', border: '1px solid color-mix(in srgb, var(--color-warning) 30%, transparent)' }}>
+                No departments exist yet. Please contact a SuperAdmin to create a department before assigning an HOD.
+              </div>
+            ) : (
+              <select
+                id="department"
+                className={styles.input}
+                required
+                value={departmentId}
+                onChange={(e) => setDepartmentId(e.target.value)}
+                disabled={isLoading}
+              >
+                <option value="" disabled>Select Department</option>
+                {departments.map((dept) => (
+                  <option key={dept._id} value={dept._id}>
+                    {dept.name} ({dept.code})
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
         )}
 
@@ -159,7 +165,11 @@ export function CreateUserModal({
           <Button type="button" variant="ghost" onClick={onClose} disabled={isLoading}>
             Cancel
           </Button>
-          <Button type="submit" variant="primary" disabled={isLoading}>
+          <Button 
+            type="submit" 
+            variant="primary" 
+            disabled={isLoading || (showDepartmentSelect && departments.length === 0)}
+          >
             {isLoading ? 'Creating...' : `Create ${roleLabel}`}
           </Button>
         </div>

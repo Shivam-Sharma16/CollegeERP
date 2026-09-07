@@ -9,6 +9,7 @@ import SuperadminSignupPage from './pages/SuperadminSignupPage';
 import AdminDashboard   from './pages/AdminDashboard';
 import SuperAdminManagement from './pages/SuperAdminManagement';
 import InstitutionSettings from './pages/InstitutionSettings';
+import AdminHodManagement from './pages/AdminHodManagement';
 import FacultyDashboard from './pages/FacultyDashboard';
 import StudentDashboard from './pages/StudentDashboard';
 import HodDashboard     from './pages/HodDashboard';
@@ -73,7 +74,17 @@ export default function App() {
           }
         />
 
-        {/* ── HOD ─────────────────────────────────────────────────────── */}
+        {/* ── HOD Management (ADMIN, SUPERADMIN) ───────────────────────── */}
+        <Route
+          path="/hods"
+          element={
+            <ProtectedRoute allowedRoles={['ADMIN', 'SUPERADMIN']}>
+              <AdminHodManagement />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* ── HOD (Dashboard) ─────────────────────────────────────────── */}
         <Route
           path="/hod/*"
           element={
