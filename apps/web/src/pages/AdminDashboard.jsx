@@ -1,9 +1,8 @@
 import { useState } from 'react';
 import { DashboardShell } from '../components/DashboardShell';
 import { UsersTable } from '../components/users/UsersTable';
-import { CreateAdminModal } from '../components/users/CreateAdminModal';
 import { CreateHodModal } from '../components/users/CreateHodModal';
-import { useListAdminsQuery, useListHodsQuery } from '../api/usersApi';
+import { useListHodsQuery } from '../api/usersApi';
 import { useGetDashboardStatsQuery } from '../api/reportsApi';
 import { useGetRecentActivityQuery } from '../api/auditApi';
 import { useResolveDeptTreeQuery } from '../api/departmentsApi';
@@ -14,11 +13,6 @@ import { Timeline } from '../components/ui/Timeline';
 import { EmptyState } from '../components/ui/EmptyState';
 import { DepartmentTree } from '../components/departments/DepartmentTree';
 import styles from './AdminDashboard.module.css';
-
-const adminColumns = [
-  { key: 'name', header: 'Name' },
-  { key: 'email', header: 'Email' }
-];
 
 const hodColumns = [
   { key: 'name', header: 'Name' },
@@ -31,7 +25,6 @@ export default function AdminDashboard() {
   const isSuperAdmin = user?.roles?.includes('SUPERADMIN');
 
   // Existing Users Data
-  const { data: adminsData, isLoading: isLoadingAdmins } = useListAdminsQuery(undefined, { skip: !isSuperAdmin });
   const { data: hodsData, isLoading: isLoadingHods } = useListHodsQuery();
 
   // New SuperAdmin Data
@@ -39,7 +32,6 @@ export default function AdminDashboard() {
   const { data: auditData, isLoading: isLoadingAudit } = useGetRecentActivityQuery(undefined, { skip: !isSuperAdmin });
   const { data: treeData, isLoading: isLoadingTree } = useResolveDeptTreeQuery(undefined, { skip: !isSuperAdmin });
 
-  const [adminModalOpen, setAdminModalOpen] = useState(false);
   const [hodModalOpen, setHodModalOpen] = useState(false);
 
   const stats = statsData?.data || {};
@@ -47,7 +39,7 @@ export default function AdminDashboard() {
   const auditLogs = auditData?.data || [];
 
   return (
-    <DashboardShell title="Admin Dashboard" subtitle="System-wide management" icon="⚙️">
+    <DashboardShell title="Admin Dashboard" subtitle="System-wide overview" icon="⚙️">
       <div className={styles.dashboard}>
         {isSuperAdmin && (
           <div className={styles.superadminLayout}>
@@ -68,8 +60,8 @@ export default function AdminDashboard() {
                   <EmptyState 
                     title="No Departments Yet" 
                     description="Create your first department to start building the academic structure."
-                    actionLabel="Create Department"
-                    actionRoute="/admin/departments/new"
+                    actionLabel="Go to Management"
+                    actionRoute="/admin/management"
                   />
                 ) : (
                   departments.map(dept => (
@@ -92,17 +84,6 @@ export default function AdminDashboard() {
         )}
 
         <div className={styles.tablesSection}>
-          {isSuperAdmin && (
-            <UsersTable
-              title="Administrators"
-              data={adminsData?.data}
-              columns={adminColumns}
-              isLoading={isLoadingAdmins}
-              onCreate={() => setAdminModalOpen(true)}
-              createLabel="Create Admin"
-            />
-          )}
-
           <UsersTable
             title="Heads of Department (HOD)"
             data={hodsData?.data}
@@ -113,9 +94,6 @@ export default function AdminDashboard() {
           />
         </div>
 
-        {isSuperAdmin && (
-          <CreateAdminModal isOpen={adminModalOpen} onClose={() => setAdminModalOpen(false)} />
-        )}
         <CreateHodModal isOpen={hodModalOpen} onClose={() => setHodModalOpen(false)} />
       </div>
     </DashboardShell>

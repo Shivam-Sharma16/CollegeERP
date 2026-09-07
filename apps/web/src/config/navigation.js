@@ -1,7 +1,6 @@
 export const NAV_ITEMS = [
-  { key: "dashboard",      label: "Dashboard",          icon: "Home",       path: "/dashboard",              roles: ["superadmin","admin","hod","cc","faculty","student"] },
-  { key: "departments",    label: "Departments",         icon: "Building",   path: "/departments",            roles: ["superadmin"] },
-  { key: "admins",         label: "Admins",              icon: "ShieldUser", path: "/admins",                 roles: ["superadmin"] },
+  { key: "dashboard",      label: "Dashboard",          icon: "Home",       path: "/admin",                  roles: ["superadmin","admin","hod","cc","faculty","student"] },
+  { key: "management",     label: "Management",         icon: "Building",   path: "/admin/management",       roles: ["superadmin"] },
   { key: "settings",       label: "Institution Settings",icon: "Settings",   path: "/settings",               roles: ["superadmin"] },
   { key: "hods",           label: "HODs",                icon: "UserTie",    path: "/hods",                   roles: ["admin"] },
   { key: "reports",        label: "Reports",             icon: "BarChart",   path: "/reports",                roles: ["admin","hod"] },

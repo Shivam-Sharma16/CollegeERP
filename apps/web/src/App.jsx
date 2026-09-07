@@ -7,6 +7,7 @@ import LoginPage        from './pages/LoginPage';
 import StudentRegisterPage from './pages/StudentRegisterPage';
 import SuperadminSignupPage from './pages/SuperadminSignupPage';
 import AdminDashboard   from './pages/AdminDashboard';
+import SuperAdminManagement from './pages/SuperAdminManagement';
 import FacultyDashboard from './pages/FacultyDashboard';
 import StudentDashboard from './pages/StudentDashboard';
 import HodDashboard     from './pages/HodDashboard';
@@ -46,6 +47,14 @@ export default function App() {
         <Route path="/" element={<RootRedirect />} />
 
         {/* ── Admin (ADMIN, SUPERADMIN) ────────────────────────────────── */}
+        <Route
+          path="/admin/management"
+          element={
+            <ProtectedRoute allowedRoles={['SUPERADMIN']}>
+              <SuperAdminManagement />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/admin/*"
           element={
