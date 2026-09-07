@@ -5,6 +5,7 @@ import { FacultyTab } from '../components/hod/FacultyTab';
 import { SubjectsTab } from '../components/hod/SubjectsTab';
 import { SectionsTab } from '../components/hod/SectionsTab';
 import { NoticesTab } from '../components/hod/NoticesTab';
+import { HodAnalyticsTab } from '../components/hod/HodAnalyticsTab';
 import { useGetHodDashboardStatsQuery } from '../api/reportsApi';
 import styles from './HodDashboard.module.css';
 
@@ -16,7 +17,8 @@ export default function HodDashboard() {
     { id: 'faculty', label: 'Faculty', content: <FacultyTab /> },
     { id: 'subjects', label: 'Subjects', content: <SubjectsTab /> },
     { id: 'sections', label: 'Sections', content: <SectionsTab /> },
-    { id: 'notices', label: 'Notices', content: <NoticesTab /> }
+    { id: 'notices', label: 'Notices', content: <NoticesTab /> },
+    { id: 'analytics', label: 'Analytics', content: <HodAnalyticsTab /> }
   ];
 
   return (

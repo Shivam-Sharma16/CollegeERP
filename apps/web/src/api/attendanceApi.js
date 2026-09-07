@@ -150,6 +150,15 @@ export const attendanceApi = createApi({
       query: (params = {}) => ({ url: '/api/attendance/reports/trend', params }),
       providesTags: ['AttendanceRecord'],
     }),
+
+    /**
+     * GET /api/attendance/reports/section-comparison
+     * Returns attendance comparison across sections.
+     */
+    getSectionComparison: builder.query({
+      query: (params = {}) => ({ url: '/api/attendance/reports/section-comparison', params }),
+      providesTags: ['AttendanceRecord'],
+    }),
   }),
 });
 
@@ -164,4 +173,5 @@ export const {
   useOverrideRecordMutation,
   useGetInstitutionAttendanceQuery,
   useGetTrendQuery,
+  useGetSectionComparisonQuery,
 } = attendanceApi;

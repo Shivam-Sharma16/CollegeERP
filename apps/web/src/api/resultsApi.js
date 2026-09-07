@@ -116,6 +116,15 @@ export const resultsApi = createApi({
       query: (params = {}) => ({ url: '/api/results/reports/distribution', params }),
       providesTags: ['Mark'],
     }),
+
+    /**
+     * GET /api/results/reports/subject-averages
+     * Returns average marks grouped by subject for HOD analytics.
+     */
+    getSubjectAverages: builder.query({
+      query: (params = {}) => ({ url: '/api/results/reports/subject-averages', params }),
+      providesTags: ['Mark'],
+    }),
   }),
 });
 
@@ -129,4 +138,5 @@ export const {
   useListMarksQuery,
   useGetTranscriptQuery,
   useGetDistributionQuery,
+  useGetSubjectAveragesQuery,
 } = resultsApi;
