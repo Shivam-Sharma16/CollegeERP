@@ -1,0 +1,61 @@
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-5);
+  min-width: 350px;
+}
+
+.summaryGrid {
+  display: grid;
+  grid-template-columns: 80px 1fr;
+  gap: var(--spacing-2);
+  font-size: var(--text-sm);
+}
+
+.summaryLabel {
+  color: var(--color-text-muted);
+  font-weight: 500;
+}
+
+.summaryValue {
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+.statusBox {
+  padding: var(--spacing-3);
+  background: color-mix(in srgb, var(--color-bg) 50%, var(--color-surface));
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  text-align: center;
+  font-size: var(--text-sm);
+}
+
+.conflictAlert {
+  display: flex;
+  gap: var(--spacing-3);
+  padding: var(--spacing-3);
+  background: color-mix(in srgb, var(--color-danger) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-danger) 30%, transparent);
+  border-radius: var(--radius-sm);
+  color: var(--color-danger);
+}
+
+.conflictAlert strong {
+  display: block;
+  font-size: var(--text-sm);
+  margin-bottom: 2px;
+}
+
+.conflictAlert p {
+  margin: 0;
+  font-size: var(--text-xs);
+  line-height: 1.4;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-3);
+  margin-top: var(--spacing-2);
+}

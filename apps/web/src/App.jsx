@@ -18,6 +18,7 @@ import StudentDashboard from './pages/StudentDashboard';
 import HodDashboard     from './pages/HodDashboard';
 import HodManagement    from './pages/HodManagement';
 import HodAcademicStructure from './pages/HodAcademicStructure';
+import HodTeachingAssignments from './pages/HodTeachingAssignments';
 import CcDashboard      from './pages/CcDashboard';
 import UnauthorizedPage from './pages/UnauthorizedPage';
 
@@ -145,6 +146,16 @@ export default function App() {
           element={
             <ProtectedRoute allowedRoles={['HOD', 'ADMIN', 'SUPERADMIN']}>
               <HodAcademicStructure />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* ── HOD Teaching Assignments ───────────────────────────────────── */}
+        <Route
+          path="/assignments"
+          element={
+            <ProtectedRoute allowedRoles={['HOD', 'ADMIN', 'SUPERADMIN']}>
+              <HodTeachingAssignments />
             </ProtectedRoute>
           }
         />
