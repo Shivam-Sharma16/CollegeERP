@@ -42,6 +42,7 @@ import { notificationApi } from '../api/notificationApi';
 import { aiAgentApi }      from '../api/aiAgentApi';
 import { reportsApi }      from '../api/reportsApi';
 import { auditApi }        from '../api/auditApi';
+import { settingsApi }     from '../api/settingsApi';
 
 // ── Store ──────────────────────────────────────────────────────────────────────
 export const store = configureStore({
@@ -66,6 +67,7 @@ export const store = configureStore({
     [aiAgentApi.reducerPath]:      aiAgentApi.reducer,
     [reportsApi.reducerPath]:      reportsApi.reducer,
     [auditApi.reducerPath]:        auditApi.reducer,
+    [settingsApi.reducerPath]:     settingsApi.reducer,
   },
 
   middleware: (getDefaultMiddleware) =>
@@ -83,6 +85,7 @@ export const store = configureStore({
       aiAgentApi.middleware,
       reportsApi.middleware,
       auditApi.middleware,
+      settingsApi.middleware,
     ),
 });
 

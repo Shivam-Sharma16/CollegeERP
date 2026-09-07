@@ -1,0 +1,298 @@
+.layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--spacing-6);
+  align-items: start;
+}
+
+@media (min-width: 1024px) {
+  .layout {
+    grid-template-columns: 3fr 2fr;
+  }
+}
+
+.settingsCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-5);
+}
+
+.sectionTitle {
+  font-size: var(--text-lg);
+  font-weight: 600;
+  font-family: var(--font-heading);
+  color: var(--color-text);
+  margin-bottom: var(--spacing-2);
+}
+
+.divider {
+  border: 0;
+  border-top: 1px solid var(--color-border);
+  margin: var(--spacing-2) 0;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+}
+
+.fieldRow {
+  display: flex;
+  gap: var(--spacing-6);
+  flex-wrap: wrap;
+}
+
+.fieldRow > .field {
+  flex: 1;
+  min-width: 200px;
+}
+
+.field label {
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--color-text);
+}
+
+.input {
+  padding: var(--spacing-2) var(--spacing-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-size: var(--text-base);
+  width: 100%;
+}
+
+.uploadRow {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+}
+
+.uploadStatus {
+  font-size: var(--text-xs);
+  color: var(--color-success);
+  font-weight: 500;
+}
+
+.colorRow {
+  display: flex;
+  gap: var(--spacing-6);
+  flex-wrap: wrap;
+}
+
+.colorGroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+  flex: 1;
+  min-width: 200px;
+}
+
+.colorInputs {
+  display: flex;
+  gap: var(--spacing-3);
+}
+
+.colorSwatch {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  background: none;
+}
+
+.colorSwatch::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.colorSwatch::-webkit-color-swatch {
+  border: none;
+  border-radius: calc(var(--radius-sm) - 1px);
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: var(--spacing-6);
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--spacing-4);
+}
+
+/* ── PREVIEW COLUMN ──────────────────────────────────────────────────────── */
+
+.previewCol {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+  position: sticky;
+  top: var(--spacing-6);
+}
+
+.previewHeader {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+}
+
+.previewNote {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  text-align: center;
+  font-style: italic;
+}
+
+.previewContainer {
+  display: flex;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  height: 400px;
+  background: var(--color-bg);
+  box-shadow: var(--shadow-sm);
+}
+
+.mockSidebar {
+  width: 140px;
+  background: var(--color-surface);
+  border-right: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+}
+
+.mockLogoArea {
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.mockLogoPlaceholder {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  background: var(--color-border);
+  flex-shrink: 0;
+}
+
+.mockLogoImg {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.mockInstName {
+  font-size: 10px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--color-text);
+}
+
+.mockNav {
+  padding: 12px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.mockNavItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  font-size: 11px;
+  color: var(--color-text-muted);
+}
+
+.mockNavItemActive {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  font-size: 11px;
+  position: relative;
+}
+
+.mockIcon {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  background: var(--color-text-muted);
+}
+
+.mockActiveIndicator {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+}
+
+.mockMain {
+  flex: 1;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.mockHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.mockTitle {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.mockPrimaryBtn {
+  border: none;
+  color: white;
+  padding: 6px 12px;
+  font-size: 11px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.mockCard {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mockSkeleton {
+  height: 10px;
+  background: var(--color-surface-elevated);
+  border-radius: 4px;
+}
+
+.mockSecondaryArea {
+  margin-top: 8px;
+  display: flex;
+}
+
+.mockSecondaryBadge {
+  font-size: 10px;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-weight: 500;
+}
