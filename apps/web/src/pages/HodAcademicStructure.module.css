@@ -1,0 +1,46 @@
+.splitPanel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-6);
+}
+
+@media (min-width: 1024px) {
+  .splitPanel {
+    flex-direction: row;
+    align-items: flex-start;
+  }
+}
+
+.leftPanel, .rightPanel {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-5);
+  box-shadow: var(--shadow-sm);
+  flex: 1;
+}
+
+.leftPanel {
+  flex: 0 0 350px; /* Fixed width for the tree */
+}
+
+.panelTitle {
+  font-size: var(--text-lg);
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: var(--spacing-4);
+  padding-bottom: var(--spacing-3);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.loading {
+  padding: var(--spacing-8);
+  text-align: center;
+  color: var(--color-text-muted);
+}
+
+.error {
+  padding: var(--spacing-8);
+  text-align: center;
+  color: var(--color-danger);
+}
