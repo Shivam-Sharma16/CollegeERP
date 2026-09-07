@@ -1,2 +1,15 @@
-/* Hod Dashboard specific styles */
-.dashboard {}
+.dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-6);
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--spacing-4);
+}
+
+.tabsSection {
+  margin-top: var(--spacing-2);
+}

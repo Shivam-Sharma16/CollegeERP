@@ -11,7 +11,11 @@ export const reportsApi = createApi({
       query: () => '/api/reports/dashboard-stats',
       providesTags: ['DashboardStats'],
     }),
+    getHodDashboardStats: builder.query({
+      query: () => '/api/reports/hod-stats',
+      providesTags: ['DashboardStats'],
+    }),
   }),
 });
 
-export const { useGetDashboardStatsQuery } = reportsApi;
+export const { useGetDashboardStatsQuery, useGetHodDashboardStatsQuery } = reportsApi;

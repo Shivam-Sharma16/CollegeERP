@@ -1,51 +1,58 @@
-import { useState } from 'react';
 import { DashboardShell } from '../components/DashboardShell';
-import { UsersTable } from '../components/users/UsersTable';
-import { CreateFacultyModal } from '../components/users/CreateFacultyModal';
-import { CreateCcModal } from '../components/users/CreateCcModal';
-import { useListFacultyQuery, useListCcQuery } from '../api/usersApi';
+import { StatCard } from '../components/dashboard/StatCard';
+import { AnimatedTabs } from '../components/ui/AnimatedTabs';
+import { FacultyTab } from '../components/hod/FacultyTab';
+import { SubjectsTab } from '../components/hod/SubjectsTab';
+import { SectionsTab } from '../components/hod/SectionsTab';
+import { NoticesTab } from '../components/hod/NoticesTab';
+import { useGetHodDashboardStatsQuery } from '../api/reportsApi';
 import styles from './HodDashboard.module.css';
 
-const facultyColumns = [
-  { key: 'name', header: 'Name' },
-  { key: 'email', header: 'Email' }
-];
-
-const ccColumns = [
-  { key: 'name', header: 'Name' },
-  { key: 'email', header: 'Email' }
-];
-
 export default function HodDashboard() {
-  const { data: facultyData, isLoading: isLoadingFaculty } = useListFacultyQuery();
-  const { data: ccData, isLoading: isLoadingCc } = useListCcQuery();
+  const { data: statsData, isLoading: isLoadingStats } = useGetHodDashboardStatsQuery();
+  const stats = statsData?.data || {};
 
-  const [facultyModalOpen, setFacultyModalOpen] = useState(false);
-  const [ccModalOpen, setCcModalOpen] = useState(false);
+  const tabs = [
+    { id: 'faculty', label: 'Faculty', content: <FacultyTab /> },
+    { id: 'subjects', label: 'Subjects', content: <SubjectsTab /> },
+    { id: 'sections', label: 'Sections', content: <SectionsTab /> },
+    { id: 'notices', label: 'Notices', content: <NoticesTab /> }
+  ];
 
   return (
     <DashboardShell title="HOD Dashboard" subtitle="Department management" icon="🏛️">
-      <div className={styles.dashboard} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-6)' }}>
-        <UsersTable
-          title="Faculty Members"
-          data={facultyData?.data}
-          columns={facultyColumns}
-          isLoading={isLoadingFaculty}
-          onCreate={() => setFacultyModalOpen(true)}
-          createLabel="Create Faculty"
-        />
+      <div className={styles.dashboard}>
+        <div className={styles.statsGrid}>
+          <StatCard 
+            title="Faculty Count" 
+            value={stats.facultyCount || 0} 
+            icon="Users" 
+            isLoading={isLoadingStats} 
+            trend={+2}
+          />
+          <StatCard 
+            title="Students in Dept" 
+            value={stats.studentCount || 0} 
+            icon="UserCheck" 
+            isLoading={isLoadingStats} 
+          />
+          <StatCard 
+            title="Avg Attendance" 
+            value={`${stats.avgAttendance || 0}%`} 
+            icon="CheckSquare" 
+            isLoading={isLoadingStats} 
+          />
+          <StatCard 
+            title="Avg Marks" 
+            value={`${stats.avgMarks || 0}%`} 
+            icon="Award" 
+            isLoading={isLoadingStats} 
+          />
+        </div>
 
-        <UsersTable
-          title="Class Coordinators"
-          data={ccData?.data}
-          columns={ccColumns}
-          isLoading={isLoadingCc}
-          onCreate={() => setCcModalOpen(true)}
-          createLabel="Create CC"
-        />
-
-        <CreateFacultyModal isOpen={facultyModalOpen} onClose={() => setFacultyModalOpen(false)} />
-        <CreateCcModal isOpen={ccModalOpen} onClose={() => setCcModalOpen(false)} />
+        <div className={styles.tabsSection}>
+          <AnimatedTabs tabs={tabs} defaultTabId="faculty" />
+        </div>
       </div>
     </DashboardShell>
   );

@@ -1,0 +1,53 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.tabList {
+  display: flex;
+  gap: var(--spacing-6);
+  border-bottom: 1px solid var(--color-border);
+  margin-bottom: var(--spacing-6);
+  position: relative;
+}
+
+.tabButton {
+  background: none;
+  border: none;
+  padding: var(--spacing-3) var(--spacing-2);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  position: relative;
+  transition: color 0.2s ease;
+}
+
+.tabButton:hover {
+  color: var(--color-text);
+}
+
+.tabButton.active {
+  color: var(--color-primary);
+}
+
+.indicator {
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: var(--color-primary);
+  border-radius: 2px 2px 0 0;
+}
+
+.contentArea {
+  position: relative;
+  width: 100%;
+  flex: 1;
+}
+
+.tabContent {
+  width: 100%;
+}
