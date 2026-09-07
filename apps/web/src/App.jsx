@@ -10,6 +10,7 @@ import AdminDashboard   from './pages/AdminDashboard';
 import SuperAdminManagement from './pages/SuperAdminManagement';
 import InstitutionSettings from './pages/InstitutionSettings';
 import AdminHodManagement from './pages/AdminHodManagement';
+import AdminReports     from './pages/AdminReports';
 import FacultyDashboard from './pages/FacultyDashboard';
 import StudentDashboard from './pages/StudentDashboard';
 import HodDashboard     from './pages/HodDashboard';
@@ -80,6 +81,16 @@ export default function App() {
           element={
             <ProtectedRoute allowedRoles={['ADMIN', 'SUPERADMIN']}>
               <AdminHodManagement />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* ── Admin Reports (ADMIN, HOD) ───────────────────────────────── */}
+        <Route
+          path="/reports"
+          element={
+            <ProtectedRoute allowedRoles={['ADMIN', 'HOD']}>
+              <AdminReports />
             </ProtectedRoute>
           }
         />

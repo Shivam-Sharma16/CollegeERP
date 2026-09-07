@@ -1,0 +1,96 @@
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-5);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  height: 350px;
+}
+
+.title {
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: var(--spacing-4);
+}
+
+.content {
+  flex: 1;
+  position: relative;
+  min-height: 0; /* Important for flex children containing responsive charts */
+  display: flex;
+  flex-direction: column;
+}
+
+.emptyState {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-muted);
+  font-style: italic;
+  font-size: var(--text-sm);
+  background: var(--color-bg);
+  border-radius: var(--radius-sm);
+  border: 1px dashed var(--color-border);
+}
+
+.errorState {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-2);
+  color: var(--color-danger);
+  font-size: var(--text-sm);
+  background: color-mix(in srgb, var(--color-danger) 5%, var(--color-bg));
+  border-radius: var(--radius-sm);
+  border: 1px dashed color-mix(in srgb, var(--color-danger) 30%, transparent);
+}
+
+/* Skeleton loader matching a chart shape */
+.skeletonContainer {
+  flex: 1;
+  display: flex;
+  position: relative;
+  padding-left: 30px;
+  padding-bottom: 20px;
+}
+
+.skeletonChart {
+  flex: 1;
+  background: var(--color-surface-elevated);
+  border-radius: var(--radius-sm);
+  animation: pulse 1.5s infinite;
+}
+
+.skeletonAxisY {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 20px;
+  width: 20px;
+  background: var(--color-surface-elevated);
+  border-radius: var(--radius-sm);
+  animation: pulse 1.5s infinite;
+}
+
+.skeletonAxisX {
+  position: absolute;
+  left: 30px;
+  right: 0;
+  bottom: 0;
+  height: 10px;
+  background: var(--color-surface-elevated);
+  border-radius: var(--radius-sm);
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 0.4; }
+  50% { opacity: 0.8; }
+  100% { opacity: 0.4; }
+}

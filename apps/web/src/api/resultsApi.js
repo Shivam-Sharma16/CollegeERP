@@ -107,6 +107,15 @@ export const resultsApi = createApi({
       query: (studentId) => `/api/results/students/${studentId}/transcript`,
       providesTags: (_r, _e, studentId) => [{ type: 'Transcript', id: studentId }],
     }),
+
+    /**
+     * GET /api/results/reports/distribution
+     * Returns marks distribution histogram data based on filters.
+     */
+    getDistribution: builder.query({
+      query: (params = {}) => ({ url: '/api/results/reports/distribution', params }),
+      providesTags: ['Mark'],
+    }),
   }),
 });
 
@@ -119,4 +128,5 @@ export const {
   useEnterMarksBulkMutation,
   useListMarksQuery,
   useGetTranscriptQuery,
+  useGetDistributionQuery,
 } = resultsApi;

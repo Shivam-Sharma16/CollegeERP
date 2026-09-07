@@ -97,6 +97,15 @@ export const feesApi = createApi({
       query: (params = {}) => ({ url: '/api/fees/collection-summary', params }),
       providesTags: ['Payment'],
     }),
+
+    /**
+     * GET /api/fees/reports/collection-trend
+     * Returns fee collection trend over time based on filters.
+     */
+    getCollectionTrend: builder.query({
+      query: (params = {}) => ({ url: '/api/fees/reports/collection-trend', params }),
+      providesTags: ['Payment'],
+    }),
   }),
 });
 
@@ -108,4 +117,5 @@ export const {
   useGetReceiptUrlQuery,
   useGetDefaultersQuery,
   useGetCollectionSummaryQuery,
+  useGetCollectionTrendQuery,
 } = feesApi;
