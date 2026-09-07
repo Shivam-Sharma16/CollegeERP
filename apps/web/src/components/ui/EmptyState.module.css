@@ -1,0 +1,45 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-8) var(--spacing-4);
+  background: var(--color-surface);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-md);
+  text-align: center;
+}
+
+.illustration {
+  font-size: 3rem;
+  margin-bottom: var(--spacing-4);
+  opacity: 0.8;
+}
+
+.title {
+  font-size: var(--text-lg);
+  font-family: var(--font-heading);
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: var(--spacing-2);
+}
+
+.description {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  max-width: 400px;
+  margin-bottom: var(--spacing-6);
+}
+
+.actionButton {
+  background: var(--color-primary);
+  color: #fff;
+  font-weight: 500;
+  padding: var(--spacing-2) var(--spacing-5);
+  border-radius: var(--radius-sm);
+  transition: opacity var(--transition);
+}
+
+.actionButton:hover {
+  opacity: 0.9;
+}

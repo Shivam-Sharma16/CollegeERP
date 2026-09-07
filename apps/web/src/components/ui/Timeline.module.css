@@ -1,0 +1,83 @@
+.timeline {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  margin: var(--spacing-4) 0;
+}
+
+.timeline::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 9px;
+  width: 2px;
+  background: var(--color-border);
+}
+
+.item {
+  position: relative;
+  display: flex;
+  gap: var(--spacing-4);
+  padding-bottom: var(--spacing-5);
+}
+
+.item:last-child {
+  padding-bottom: 0;
+}
+
+.dot {
+  width: 20px;
+  height: 20px;
+  background: var(--color-surface);
+  border: 4px solid var(--color-primary);
+  border-radius: 50%;
+  flex-shrink: 0;
+  z-index: 1;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+}
+
+.time {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  font-family: monospace;
+}
+
+.desc {
+  font-size: var(--text-sm);
+  color: var(--color-text);
+}
+
+.empty {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  font-style: italic;
+  padding: var(--spacing-4) 0;
+}
+
+.skeleton {
+  background: var(--color-surface-elevated);
+  border-radius: var(--radius-sm);
+  animation: pulse 1.5s infinite ease-in-out;
+}
+
+.skeletonTime {
+  width: 100px;
+  height: 12px;
+}
+
+.skeletonDesc {
+  width: 180px;
+  height: 16px;
+}
+
+@keyframes pulse {
+  0% { opacity: 0.6; }
+  50% { opacity: 1; }
+  100% { opacity: 0.6; }
+}
