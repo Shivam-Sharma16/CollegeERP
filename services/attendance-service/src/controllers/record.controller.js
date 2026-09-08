@@ -1,9 +1,62 @@
 const mongoose = require('mongoose');
 const AttendanceRecord = require('../models/AttendanceRecord.model');
 const LectureSession = require('../models/LectureSession.model');
+const { getStudentAttendancePercent } = require('../services/attendance.service');
 const { success, fail, logAudit } = require('@college-erp/shared-utils');
 
 const VALID_STATUSES = ['present', 'absent', 'flagged'];
+
+/**
+ * GET /records/me
+ * Student fetches their own attendance records.
+ */
+const listOwnRecords = async (req, res) => {
+  try {
+    const studentId = req.user.userId;
+    const records = await AttendanceRecord.find({
+      studentId: new mongoose.Types.ObjectId(studentId)
+    })
+      .populate('lectureSessionId')
+      .sort({ createdAt: -1 });
+
+    res.json(success(records));
+  } catch (err) {
+    console.error(err);
+    res.status(500).json(fail('Internal server error'));
+  }
+};
+
+/**
+ * GET /summary/me
+ * Student gets personal attendance percentage & summary.
+ */
+const getOwnSummary = async (req, res) => {
+  try {
+    const studentId = req.user.userId;
+    const percentage = await getStudentAttendancePercent(studentId);
+    const totalRecords = await AttendanceRecord.countDocuments({
+      studentId: new mongoose.Types.ObjectId(studentId)
+    });
+    const presentRecords = await AttendanceRecord.countDocuments({
+      studentId: new mongoose.Types.ObjectId(studentId),
+      status: 'present'
+    });
+    const flaggedRecords = await AttendanceRecord.countDocuments({
+      studentId: new mongoose.Types.ObjectId(studentId),
+      status: 'flagged'
+    });
+
+    res.json(success({
+      overallPercentage: percentage,
+      totalRecords,
+      presentRecords,
+      flaggedRecords
+    }));
+  } catch (err) {
+    console.error(err);
+    res.status(500).json(fail('Internal server error'));
+  }
+};
 
 /**
  * POST /records/:id/override
@@ -61,4 +114,5 @@ const overrideRecord = async (req, res) => {
   }
 };
 
-module.exports = { overrideRecord };
+module.exports = { overrideRecord, listOwnRecords, getOwnSummary };
+

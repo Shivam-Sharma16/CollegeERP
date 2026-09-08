@@ -355,3 +355,10 @@
 .btnSecondary:hover {
   background: var(--color-border);
 }
+
+.contentWrapper {
+  flex: 1;
+  padding: var(--spacing-6);
+  width: 100%;
+}
+

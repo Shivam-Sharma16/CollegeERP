@@ -1,13 +1,15 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useLoginMutation } from '../api/authApi';
-import { useAppSelector } from '../store';
+import { useAppSelector, useAppDispatch } from '../store';
+import { setCredentials } from '../features/ui/authSlice';
 import { selectInstitutionName, selectInstitutionLogo } from '../features/ui/themeSlice';
 import styles from './LoginPage.module.css';
 
 export default function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
+  const dispatch = useAppDispatch();
   const from     = location.state?.from?.pathname ?? '/';
 
   const [email,    setEmail]    = useState('');
@@ -83,6 +85,39 @@ export default function LoginPage() {
           >
             {isLoading ? 'Signing in…' : 'Sign in'}
           </button>
+
+          <div style={{ marginTop: '1rem', borderTop: '1px solid rgba(255, 255, 255, 0.08)', paddingTop: '0.75rem', textAlign: 'center' }}>
+            <button
+              id="btn-demo-student-login"
+              type="button"
+              onClick={() => {
+                dispatch(setCredentials({
+                  token: 'mock-jwt-student-token',
+                  user: {
+                    id: '65e000000000000000000001',
+                    name: 'Alex Rivera',
+                    email: 'alex.rivera@college.edu',
+                    roles: ['STUDENT']
+                  }
+                }));
+                navigate('/attendance', { replace: true });
+              }}
+              style={{
+                width: '100%',
+                padding: '0.625rem 1rem',
+                borderRadius: '8px',
+                border: '1px dashed rgba(99, 102, 241, 0.5)',
+                background: 'rgba(99, 102, 241, 0.1)',
+                color: '#c7d2fe',
+                fontWeight: 600,
+                fontSize: '0.875rem',
+                cursor: 'pointer',
+                transition: 'all 0.2s'
+              }}
+            >
+              🎓 Quick Demo Student Login
+            </button>
+          </div>
         </form>
       </div>
     </div>

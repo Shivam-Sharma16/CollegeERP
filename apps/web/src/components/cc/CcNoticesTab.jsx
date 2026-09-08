@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { useCreateNoticeMutation, useListMyNoticesQuery } from '../../../api/noticeApi';
-import { Button } from '../../ui/Button';
-import { useToast } from '../../ui/ToastContext';
+import { useCreateNoticeMutation, useListMyNoticesQuery } from '../../api/noticeApi';
+import { Button } from '../ui/Button';
+import { useToast } from '../ui/ToastContext';
 import styles from './CcNoticesTab.module.css';
 
 export function CcNoticesTab() {

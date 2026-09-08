@@ -1,13 +1,15 @@
+import { useNavigate } from 'react-router-dom';
 import { DashboardShell } from '../components/DashboardShell';
 import { StatCard } from '../components/ui/StatCard';
 import { useGetOwnAttendanceSummaryQuery } from '../api/attendanceApi';
 import { useGetOwnGpaQuery } from '../api/resultsApi';
 import { useGetOwnFeeStatusQuery } from '../api/feesApi';
 import { useGetUnreadCountQuery } from '../api/notificationApi';
-import { CheckCircle, AlertTriangle, XCircle, FileText, Bell, CreditCard, Award } from 'lucide-react';
+import { CheckCircle, AlertTriangle, XCircle, FileText, Bell, CreditCard, Award, QrCode } from 'lucide-react';
 import styles from './StudentDashboard.module.css';
 
 export default function StudentDashboard() {
+  const navigate = useNavigate();
   const { data: attData, isLoading: isLoadingAtt } = useGetOwnAttendanceSummaryQuery();
   const { data: gpaData, isLoading: isLoadingGpa } = useGetOwnGpaQuery();
   const { data: feeData, isLoading: isLoadingFee } = useGetOwnFeeStatusQuery();
@@ -44,7 +46,12 @@ export default function StudentDashboard() {
         
         <div className={styles.statsGrid}>
           {/* Attendance Card */}
-          <div className={`${styles.statCard} ${styles.attendanceCard}`} style={{ '--att-color': attColor }}>
+          <div
+            className={`${styles.statCard} ${styles.attendanceCard}`}
+            style={{ '--att-color': attColor, cursor: 'pointer' }}
+            onClick={() => navigate('/attendance')}
+            title="Click to open QR Attendance Scanner"
+          >
             <div className={styles.cardHeader}>
               <span className={styles.cardTitle}>Overall Attendance</span>
               <AttIcon size={20} color={attColor} />
@@ -56,8 +63,11 @@ export default function StudentDashboard() {
                 <div className={styles.cardValue} style={{ color: attColor }}>
                   {attendancePercentage.toFixed(1)}%
                 </div>
-                <div className={styles.cardFooter} style={{ color: attColor }}>
-                  {attStatus}
+                <div className={styles.cardFooter} style={{ color: attColor, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span>{attStatus}</span>
+                  <span style={{ fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '4px', opacity: 0.9 }}>
+                    <QrCode size={14} /> Scan QR &rarr;
+                  </span>
                 </div>
               </>
             )}

@@ -19,7 +19,7 @@ import HodDashboard     from './pages/HodDashboard';
 import HodManagement    from './pages/HodManagement';
 import HodAcademicStructure from './pages/HodAcademicStructure';
 import HodTeachingAssignments from './pages/HodTeachingAssignments';
-import FacultyDashboard     from './pages/FacultyDashboard';
+import StudentAttendancePage from './pages/StudentAttendancePage';
 import LiveAttendanceSession from './pages/LiveAttendanceSession';
 import FacultyNotesPage     from './pages/FacultyNotesPage';
 import FacultyMarksEntryPage from './pages/FacultyMarksEntryPage';
@@ -227,6 +227,22 @@ export default function App() {
         />
 
         {/* ── Student ──────────────────────────────────────────────────── */}
+        <Route
+          path="/attendance"
+          element={
+            <ProtectedRoute allowedRoles={['STUDENT']}>
+              <StudentAttendancePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/student/attendance"
+          element={
+            <ProtectedRoute allowedRoles={['STUDENT']}>
+              <StudentAttendancePage />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/student/*"
           element={

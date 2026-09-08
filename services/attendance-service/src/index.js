@@ -21,6 +21,7 @@ app.use(express.json());
 app.use('/', healthRoute);
 app.use('/sessions', sessionRoute);
 app.use('/records',  recordRoute);
+app.use('/summary',  recordRoute);
 
 connectDB();
 

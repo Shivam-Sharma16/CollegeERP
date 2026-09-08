@@ -155,6 +155,24 @@ export const attendanceApi = createApi({
     }),
 
     /**
+     * GET /api/attendance/records/me
+     * Returns list of attendance records for the authenticated student.
+     */
+    listOwnRecords: builder.query({
+      query: (params = {}) => ({
+        url: '/api/attendance/records/me',
+        params,
+      }),
+      providesTags: (r) =>
+        r?.data
+          ? [
+              ...r.data.map(({ _id }) => ({ type: 'AttendanceRecord', id: _id })),
+              { type: 'AttendanceRecord', id: 'OWN_LIST' },
+            ]
+          : [{ type: 'AttendanceRecord', id: 'OWN_LIST' }],
+    }),
+
+    /**
      * GET /api/attendance/institution-summary
      * Returns institution-wide attendance metrics and trends.
      */
@@ -257,6 +275,7 @@ export const {
   useOverrideRecordMutation,
   useGetInstitutionAttendanceQuery,
   useGetOwnAttendanceSummaryQuery,
+  useListOwnRecordsQuery,
   useGetTrendQuery,
   useGetSubjectTrendQuery,
   useGetSectionComparisonQuery,

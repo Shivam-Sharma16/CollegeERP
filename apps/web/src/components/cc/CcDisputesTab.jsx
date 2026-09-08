@@ -1,9 +1,9 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useListFlaggedRecordsQuery, useResolveDisputeMutation } from '../../../api/attendanceApi';
-import { useGetMySectionQuery } from '../../../api/academicApi';
-import { Button } from '../../ui/Button';
-import { useToast } from '../../ui/ToastContext';
+import { useListFlaggedRecordsQuery, useResolveDisputeMutation } from '../../api/attendanceApi';
+import { useGetMySectionQuery } from '../../api/academicApi';
+import { Button } from '../ui/Button';
+import { useToast } from '../ui/ToastContext';
 import { Inbox, CheckCircle, XCircle } from 'lucide-react';
 import styles from './CcDisputesTab.module.css';
 

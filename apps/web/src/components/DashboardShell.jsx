@@ -23,7 +23,7 @@ function Icon({ name }) {
   return <LucideIcon size={18} />;
 }
 
-export function DashboardShell({ title, subtitle, icon }) {
+export function DashboardShell({ title, subtitle, icon, children }) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -196,41 +196,47 @@ export function DashboardShell({ title, subtitle, icon }) {
           </div>
         </header>
 
-        <div className={styles.placeholder} style={{ textAlign: 'left', alignItems: 'flex-start' }}>
-          <h2>Component Library Showcase</h2>
-          <p style={{ marginBottom: '20px' }}>Testing the new Phase 26 base UI components.</p>
-          
-          <div style={{ display: 'flex', gap: '16px', marginBottom: '24px', flexWrap: 'wrap' }}>
-            <Button variant="primary" onClick={() => setIsModalOpen(true)}>Open Modal</Button>
-            <Button variant="secondary" onClick={() => addToast({ type: 'success', title: 'Success', message: 'Action completed successfully.' })}>Toast Success</Button>
-            <Button variant="ghost" onClick={() => addToast({ type: 'info', title: 'Info', message: 'Here is some information.' })}>Toast Info</Button>
-            <Button variant="danger" onClick={() => addToast({ type: 'error', title: 'Error', message: 'Something went wrong!' })}>Toast Error</Button>
+        {children ? (
+          <div className={styles.contentWrapper}>
+            {children}
           </div>
+        ) : (
+          <div className={styles.placeholder} style={{ textAlign: 'left', alignItems: 'flex-start' }}>
+            <h2>Component Library Showcase</h2>
+            <p style={{ marginBottom: '20px' }}>Testing the new Phase 26 base UI components.</p>
+            
+            <div style={{ display: 'flex', gap: '16px', marginBottom: '24px', flexWrap: 'wrap' }}>
+              <Button variant="primary" onClick={() => setIsModalOpen(true)}>Open Modal</Button>
+              <Button variant="secondary" onClick={() => addToast({ type: 'success', title: 'Success', message: 'Action completed successfully.' })}>Toast Success</Button>
+              <Button variant="ghost" onClick={() => addToast({ type: 'info', title: 'Info', message: 'Here is some information.' })}>Toast Info</Button>
+              <Button variant="danger" onClick={() => addToast({ type: 'error', title: 'Error', message: 'Something went wrong!' })}>Toast Error</Button>
+            </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', width: '100%', marginBottom: '24px' }}>
-            <Card interactive>
-              <h3 style={{ marginBottom: '8px' }}>Interactive Card</h3>
-              <p>Hover me to see the lift animation and shadow effect.</p>
-            </Card>
-            <Card>
-              <h3 style={{ marginBottom: '16px' }}>Skeleton Loaders</h3>
-              <Skeleton height="20px" style={{ marginBottom: '8px' }} />
-              <Skeleton height="20px" width="80%" style={{ marginBottom: '8px' }} />
-              <Skeleton height="20px" width="60%" />
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', width: '100%', marginBottom: '24px' }}>
+              <Card interactive>
+                <h3 style={{ marginBottom: '8px' }}>Interactive Card</h3>
+                <p>Hover me to see the lift animation and shadow effect.</p>
+              </Card>
+              <Card>
+                <h3 style={{ marginBottom: '16px' }}>Skeleton Loaders</h3>
+                <Skeleton height="20px" style={{ marginBottom: '8px' }} />
+                <Skeleton height="20px" width="80%" style={{ marginBottom: '8px' }} />
+                <Skeleton height="20px" width="60%" />
+              </Card>
+            </div>
+
+            <Card style={{ width: '100%' }}>
+              <h3 style={{ marginBottom: '16px' }}>Data Table</h3>
+              <Table 
+                columns={demoColumns} 
+                data={demoData} 
+                sortColumn={sortCol}
+                sortDirection={sortDir}
+                onSort={handleSort}
+              />
             </Card>
           </div>
-
-          <Card style={{ width: '100%' }}>
-            <h3 style={{ marginBottom: '16px' }}>Data Table</h3>
-            <Table 
-              columns={demoColumns} 
-              data={demoData} 
-              sortColumn={sortCol}
-              sortDirection={sortDir}
-              onSort={handleSort}
-            />
-          </Card>
-        </div>
+        )}
       </main>
 
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Example Modal">

@@ -1,3 +1,7 @@
+process.env.PORT = '4004';
+process.env.MONGO_URI = 'mongodb://localhost:27017/test';
+process.env.REDIS_URL = 'redis://localhost:6379';
+
 const mongoose = require('mongoose');
 const { MongoMemoryServer } = require('mongodb-memory-server');
 const LectureSession = require('../models/LectureSession.model');

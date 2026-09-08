@@ -5,7 +5,12 @@ const ctrl = require('../controllers/record.controller');
 
 router.use(authenticate);
 
+// Student own records & summary
+router.get('/me', ctrl.listOwnRecords);
+router.get('/summary/me', ctrl.getOwnSummary);
+
 // Faculty-only override — ownership verified inside controller
 router.post('/:id/override', ctrl.overrideRecord);
 
 module.exports = router;
+
