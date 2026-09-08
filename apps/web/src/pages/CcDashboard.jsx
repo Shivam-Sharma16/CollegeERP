@@ -156,7 +156,7 @@ export default function CcDashboard() {
 
           <div 
             className={styles.quickLinkCard}
-            onClick={() => navigate('/dashboard/cc/disputes')}
+            onClick={() => navigate('/cc/workspace?tab=disputes')}
           >
             <div className={styles.quickLinkHeader}>
               <span className={styles.quickLinkIcon}>⚠️</span>

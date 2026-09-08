@@ -177,7 +177,40 @@ export const attendanceApi = createApi({
      */
     getPendingDisputesCount: builder.query({
       query: (sectionId) => `/api/attendance/sections/${sectionId}/disputes/pending-count`,
-      providesTags: ['AttendanceRecord'], // Use the same tag for now so that when records change/disputes resolve it updates
+      providesTags: ['AttendanceRecord'],
+    }),
+
+    /**
+     * GET /api/attendance/sections/:sectionId/flagged
+     * Returns list of flagged attendance records for a section
+     */
+    listFlaggedRecords: builder.query({
+      query: (sectionId) => `/api/attendance/sections/${sectionId}/flagged`,
+      providesTags: (r) =>
+        r?.data
+          ? [
+              ...r.data.map(({ _id }) => ({ type: 'AttendanceRecord', id: _id })),
+              { type: 'AttendanceRecord', id: 'FLAGGED_LIST' },
+            ]
+          : [{ type: 'AttendanceRecord', id: 'FLAGGED_LIST' }],
+    }),
+
+    /**
+     * POST /api/attendance/records/:recordId/resolve
+     * Resolves a flagged dispute
+     * Body: { resolution: 'approve' | 'reject' }
+     */
+    resolveDispute: builder.mutation({
+      query: ({ recordId, ...body }) => ({
+        url: `/api/attendance/records/${recordId}/resolve`,
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: (_r, _e, { recordId }) => [
+        { type: 'AttendanceRecord', id: recordId },
+        { type: 'AttendanceRecord', id: 'FLAGGED_LIST' },
+        { type: 'AttendanceRecord', id: 'LIST' },
+      ],
     }),
   }),
 });
@@ -196,4 +229,6 @@ export const {
   useGetSectionComparisonQuery,
   useGetSectionWeeklyAttendanceQuery,
   useGetPendingDisputesCountQuery,
+  useListFlaggedRecordsQuery,
+  useResolveDisputeMutation,
 } = attendanceApi;

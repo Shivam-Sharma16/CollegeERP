@@ -20,6 +20,7 @@ import HodManagement    from './pages/HodManagement';
 import HodAcademicStructure from './pages/HodAcademicStructure';
 import HodTeachingAssignments from './pages/HodTeachingAssignments';
 import CcDashboard      from './pages/CcDashboard';
+import CcWorkspace      from './pages/CcWorkspace';
 import UnauthorizedPage from './pages/UnauthorizedPage';
 
 /**
@@ -171,6 +172,14 @@ export default function App() {
         />
 
         {/* ── Class Coordinator (CC) ───────────────────────────────────── */}
+        <Route
+          path="/cc/workspace"
+          element={
+            <ProtectedRoute allowedRoles={['CC', 'HOD', 'ADMIN', 'SUPERADMIN']}>
+              <CcWorkspace />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/cc/*"
           element={
