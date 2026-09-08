@@ -78,6 +78,15 @@ export const feesApi = createApi({
       providesTags: (_r, _e, paymentId) => [{ type: 'Payment', id: paymentId }],
     }),
 
+    /**
+     * GET /api/fees/students/me/status
+     * Returns personal fee status for a student (pending amount, upcoming installments).
+     */
+    getOwnFeeStatus: builder.query({
+      query: () => '/api/fees/students/me/status',
+      providesTags: ['Payment', 'FeeStructure'],
+    }),
+
     // ── DEFAULTERS ────────────────────────────────────────────────────────────
 
     /**
@@ -118,4 +127,5 @@ export const {
   useGetDefaultersQuery,
   useGetCollectionSummaryQuery,
   useGetCollectionTrendQuery,
+  useGetOwnFeeStatusQuery,
 } = feesApi;

@@ -109,6 +109,15 @@ export const resultsApi = createApi({
     }),
 
     /**
+     * GET /api/results/students/me/gpa
+     * Returns personal GPA summary for a student.
+     */
+    getOwnGpa: builder.query({
+      query: () => '/api/results/students/me/gpa',
+      providesTags: ['Transcript'],
+    }),
+
+    /**
      * GET /api/results/reports/distribution
      * Returns marks distribution histogram data based on filters.
      */
@@ -155,6 +164,7 @@ export const {
   useBulkUpsertMarksMutation,
   useListMarksQuery,
   useGetTranscriptQuery,
+  useGetOwnGpaQuery,
   useGetDistributionQuery,
   useGetGradeDistributionQuery,
   useGetSubjectAveragesQuery,

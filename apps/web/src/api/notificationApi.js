@@ -46,6 +46,12 @@ export const notificationApi = createApi({
       query: () => ({ url: '/api/notifications/read-all', method: 'PATCH' }),
       invalidatesTags: [{ type: 'Notification', id: 'LIST' }],
     }),
+
+    /** GET /api/notifications/unread-count */
+    getUnreadCount: builder.query({
+      query: () => '/api/notifications/unread-count',
+      providesTags: ['Notification'],
+    }),
   }),
 });
 
@@ -53,4 +59,5 @@ export const {
   useListNotificationsQuery,
   useMarkReadMutation,
   useMarkAllReadMutation,
+  useGetUnreadCountQuery,
 } = notificationApi;

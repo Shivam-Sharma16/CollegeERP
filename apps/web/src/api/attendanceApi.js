@@ -146,6 +146,15 @@ export const attendanceApi = createApi({
     }),
 
     /**
+     * GET /api/attendance/summary/me
+     * Returns personal attendance summary for a student.
+     */
+    getOwnAttendanceSummary: builder.query({
+      query: () => '/api/attendance/summary/me',
+      providesTags: ['AttendanceRecord'],
+    }),
+
+    /**
      * GET /api/attendance/institution-summary
      * Returns institution-wide attendance metrics and trends.
      */
@@ -247,6 +256,7 @@ export const {
   useGetSessionRecordsQuery,
   useOverrideRecordMutation,
   useGetInstitutionAttendanceQuery,
+  useGetOwnAttendanceSummaryQuery,
   useGetTrendQuery,
   useGetSubjectTrendQuery,
   useGetSectionComparisonQuery,

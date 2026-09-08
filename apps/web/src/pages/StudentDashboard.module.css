@@ -1,2 +1,95 @@
-/* Student Dashboard specific styles */
-.dashboard {}
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-8);
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--spacing-6);
+}
+
+.statCard {
+  background: var(--surface-1);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.statCard:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.cardTitle {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-2);
+}
+
+.cardValue {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--text-1);
+  line-height: 1.2;
+}
+
+.cardFooter {
+  font-size: 0.875rem;
+  color: var(--text-3);
+  margin-top: auto;
+}
+
+.attendanceCard {
+  border-color: var(--att-color);
+  background: linear-gradient(to bottom right, var(--surface-1), var(--surface-2));
+}
+
+.attendanceCard .cardHeader {
+  color: var(--att-color);
+}
+
+.iconPrimary {
+  color: var(--primary-500);
+}
+
+.iconSuccess {
+  color: var(--success-500);
+}
+
+.iconWarning {
+  color: var(--warning-500);
+}
+
+.iconNeutral {
+  color: var(--text-3);
+}
+
+.textWarning {
+  color: var(--warning-700);
+  font-weight: 500;
+}
+
+.textSuccess {
+  color: var(--success-700);
+  font-weight: 500;
+}
+
+.loading {
+  font-size: 0.875rem;
+  color: var(--text-3);
+  font-style: italic;
+  padding: var(--spacing-4) 0;
+}
