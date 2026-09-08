@@ -118,6 +118,15 @@ export const resultsApi = createApi({
     }),
 
     /**
+     * GET /api/results/reports/grade-distribution
+     * Returns grade distribution specifically for a subject/section
+     */
+    getGradeDistribution: builder.query({
+      query: (params = {}) => ({ url: '/api/results/reports/grade-distribution', params }),
+      providesTags: ['Mark'],
+    }),
+
+    /**
      * GET /api/results/reports/subject-averages
      * Returns average marks grouped by subject for HOD analytics.
      */
@@ -147,6 +156,7 @@ export const {
   useListMarksQuery,
   useGetTranscriptQuery,
   useGetDistributionQuery,
+  useGetGradeDistributionQuery,
   useGetSubjectAveragesQuery,
   useGetSubjectPerformanceQuery,
 } = resultsApi;

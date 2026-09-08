@@ -164,6 +164,15 @@ export const attendanceApi = createApi({
     }),
 
     /**
+     * GET /api/attendance/reports/subject-trend
+     * Returns attendance trend over time for a specific subject (and optionally section).
+     */
+    getSubjectTrend: builder.query({
+      query: (params = {}) => ({ url: '/api/attendance/reports/subject-trend', params }),
+      providesTags: ['AttendanceRecord'],
+    }),
+
+    /**
      * GET /api/attendance/reports/section-comparison
      * Returns attendance comparison across sections.
      */
@@ -239,6 +248,7 @@ export const {
   useOverrideRecordMutation,
   useGetInstitutionAttendanceQuery,
   useGetTrendQuery,
+  useGetSubjectTrendQuery,
   useGetSectionComparisonQuery,
   useGetSectionWeeklyAttendanceQuery,
   useGetPendingDisputesCountQuery,

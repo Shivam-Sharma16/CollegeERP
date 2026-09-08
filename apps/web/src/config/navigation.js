@@ -14,6 +14,7 @@ export const NAV_ITEMS = [
   { key: "my-classes",     label: "My Classes",          icon: "Calendar",   path: "/my-classes",             roles: ["faculty"] },
   { key: "notes",          label: "Notes",               icon: "FileText",   path: "/faculty/notes",          roles: ["faculty"] },
   { key: "marks-entry",    label: "Marks Entry",         icon: "Edit",       path: "/marks-entry",            roles: ["faculty"] },
+  { key: "analytics",      label: "Subject Analytics",   icon: "BarChart2",  path: "/faculty/analytics",      roles: ["faculty"] },
   { key: "attendance",     label: "Attendance",          icon: "CheckSquare",path: "/attendance",             roles: ["student"] },
   { key: "results",        label: "Results",             icon: "Award",      path: "/results",                roles: ["student"] },
   { key: "fees",           label: "Fees",                icon: "CreditCard", path: "/fees",                   roles: ["student"] },
