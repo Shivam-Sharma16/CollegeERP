@@ -1,3 +1,170 @@
 .dashboard {
-  /* Future specific layout */
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-6);
+}
+
+.headerCard {
+  background: var(--surface-2);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-6);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: var(--shadow-sm);
+}
+
+.headerInfo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+}
+
+.sectionName {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-1);
+}
+
+.semesterLabel {
+  font-size: 0.875rem;
+  color: var(--text-2);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.studentCount {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  font-size: 0.875rem;
+  color: var(--text-2);
+  background: var(--surface-3);
+  padding: var(--spacing-1) var(--spacing-3);
+  border-radius: var(--radius-full);
+  margin-top: var(--spacing-2);
+}
+
+.progressContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-2);
+}
+
+.progressLabel {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-2);
+}
+
+.progressRing {
+  position: relative;
+  width: 80px;
+  height: 80px;
+}
+
+.progressRing svg {
+  transform: rotate(-90deg);
+  width: 100%;
+  height: 100%;
+}
+
+.progressRingCircleBg {
+  fill: none;
+  stroke: var(--surface-3);
+  stroke-width: 8;
+}
+
+.progressRingCircle {
+  fill: none;
+  stroke: var(--primary-500);
+  stroke-width: 8;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.5s ease-in-out;
+}
+
+.progressRingText {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--text-1);
+}
+
+.quickLinks {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--spacing-4);
+}
+
+.quickLinkCard {
+  background: var(--surface-2);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.quickLinkCard:hover {
+  border-color: var(--primary-500);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.quickLinkHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+  font-weight: 600;
+  color: var(--text-1);
+  font-size: 1.125rem;
+}
+
+.quickLinkIcon {
+  font-size: 1.5rem;
+}
+
+.quickLinkDesc {
+  font-size: 0.875rem;
+  color: var(--text-2);
+  margin: 0;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--primary-500);
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0 var(--spacing-2);
+  height: 24px;
+  border-radius: 12px;
+  margin-left: auto;
+}
+
+.badgeWarning {
+  background: var(--warning-500);
+  color: var(--warning-900);
+}
+
+.sectionHeader {
+  margin-top: var(--spacing-4);
+  margin-bottom: var(--spacing-2);
+  font-size: 1.25rem;
+  color: var(--text-1);
+  font-weight: 600;
 }

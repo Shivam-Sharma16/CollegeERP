@@ -159,6 +159,26 @@ export const attendanceApi = createApi({
       query: (params = {}) => ({ url: '/api/attendance/reports/section-comparison', params }),
       providesTags: ['AttendanceRecord'],
     }),
+
+    // ── CC DASHBOARD ──────────────────────────────────────────────────────────
+
+    /**
+     * GET /api/attendance/sections/:sectionId/weekly-attendance
+     * Returns the weekly attendance metrics (e.g. %)
+     */
+    getSectionWeeklyAttendance: builder.query({
+      query: (sectionId) => `/api/attendance/sections/${sectionId}/weekly-attendance`,
+      providesTags: ['AttendanceRecord'],
+    }),
+
+    /**
+     * GET /api/attendance/sections/:sectionId/disputes/pending-count
+     * Returns count of pending disputes for the given section
+     */
+    getPendingDisputesCount: builder.query({
+      query: (sectionId) => `/api/attendance/sections/${sectionId}/disputes/pending-count`,
+      providesTags: ['AttendanceRecord'], // Use the same tag for now so that when records change/disputes resolve it updates
+    }),
   }),
 });
 
@@ -174,4 +194,6 @@ export const {
   useGetInstitutionAttendanceQuery,
   useGetTrendQuery,
   useGetSectionComparisonQuery,
+  useGetSectionWeeklyAttendanceQuery,
+  useGetPendingDisputesCountQuery,
 } = attendanceApi;

@@ -121,6 +121,12 @@ export const academicApi = createApi({
       query: (id) => ({ url: `/api/academic/subjects/${id}`, method: 'DELETE' }),
       invalidatesTags: [{ type: 'Subject', id: 'LIST' }],
     }),
+
+    // ── CC SPECIFIC ───────────────────────────────────────────────────────────
+    getMySection: builder.query({
+      query: () => '/api/academic/sections/my-section',
+      providesTags: ['Section'],
+    }),
   }),
 });
 
@@ -145,4 +151,6 @@ export const {
   useCreateSubjectMutation,
   useUpdateSubjectMutation,
   useDeleteSubjectMutation,
+  // CC
+  useGetMySectionQuery,
 } = academicApi;
