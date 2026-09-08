@@ -57,6 +57,18 @@ export const attendanceApi = createApi({
       providesTags: (_r, _e, id) => [{ type: 'Session', id }],
     }),
 
+    /** GET /api/attendance/sessions/today */
+    getTodaysSessions: builder.query({
+      query: (params = {}) => ({ url: '/api/attendance/sessions/today', params }),
+      providesTags: (r) =>
+        r?.data
+          ? [
+              ...r.data.map(({ _id }) => ({ type: 'Session', id: _id })),
+              { type: 'Session', id: 'TODAY_LIST' },
+            ]
+          : [{ type: 'Session', id: 'TODAY_LIST' }],
+    }),
+
     /**
      * POST /api/attendance/sessions/:id/close
      * Faculty closes the session; triggers session.closed notification.
@@ -219,6 +231,7 @@ export const {
   useCreateSessionMutation,
   useListSessionsQuery,
   useGetSessionQuery,
+  useGetTodaysSessionsQuery,
   useCloseSessionMutation,
   useGetQrTokenQuery,
   useCheckInMutation,

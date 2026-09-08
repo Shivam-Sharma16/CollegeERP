@@ -125,6 +125,15 @@ export const resultsApi = createApi({
       query: (params = {}) => ({ url: '/api/results/reports/subject-averages', params }),
       providesTags: ['Mark'],
     }),
+
+    /**
+     * GET /api/results/reports/subject-performance
+     * Returns performance summary grouped by subject for a specific faculty.
+     */
+    getSubjectPerformance: builder.query({
+      query: (params = {}) => ({ url: '/api/results/reports/subject-performance', params }),
+      providesTags: ['Mark'],
+    }),
   }),
 });
 
@@ -139,4 +148,5 @@ export const {
   useGetTranscriptQuery,
   useGetDistributionQuery,
   useGetSubjectAveragesQuery,
+  useGetSubjectPerformanceQuery,
 } = resultsApi;
