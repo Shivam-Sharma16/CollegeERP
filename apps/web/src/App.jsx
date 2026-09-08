@@ -22,6 +22,7 @@ import HodTeachingAssignments from './pages/HodTeachingAssignments';
 import FacultyDashboard     from './pages/FacultyDashboard';
 import LiveAttendanceSession from './pages/LiveAttendanceSession';
 import FacultyNotesPage     from './pages/FacultyNotesPage';
+import FacultyMarksEntryPage from './pages/FacultyMarksEntryPage';
 import CcDashboard      from './pages/CcDashboard';
 import CcWorkspace      from './pages/CcWorkspace';
 import UnauthorizedPage from './pages/UnauthorizedPage';
@@ -170,6 +171,14 @@ export default function App() {
           element={
             <ProtectedRoute allowedRoles={['FACULTY', 'HOD', 'ADMIN', 'SUPERADMIN']}>
               <FacultyNotesPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/marks-entry"
+          element={
+            <ProtectedRoute allowedRoles={['FACULTY', 'HOD', 'ADMIN', 'SUPERADMIN']}>
+              <FacultyMarksEntryPage />
             </ProtectedRoute>
           }
         />

@@ -76,7 +76,7 @@ export const resultsApi = createApi({
      * Bulk mark entry. Body: { examTypeId, subjectId, entries: [{ studentId, marks }] }
      * Same server-side ownership validation applies.
      */
-    enterMarksBulk: builder.mutation({
+    bulkUpsertMarks: builder.mutation({
       query: (body) => ({ url: '/api/results/marks/bulk', method: 'POST', body }),
       invalidatesTags: [
         { type: 'Mark',       id: 'LIST' },
@@ -143,7 +143,7 @@ export const {
   useUpdateExamTypeMutation,
   useDeleteExamTypeMutation,
   useEnterMarksMutation,
-  useEnterMarksBulkMutation,
+  useBulkUpsertMarksMutation,
   useListMarksQuery,
   useGetTranscriptQuery,
   useGetDistributionQuery,

@@ -1,0 +1,279 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-8);
+}
+
+.topControls {
+  display: flex;
+  gap: var(--spacing-4);
+  background: var(--surface-1);
+  padding: var(--spacing-4) var(--spacing-6);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+  flex: 1;
+  max-width: 300px;
+}
+
+.field label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-2);
+}
+
+.field select {
+  padding: var(--spacing-2) var(--spacing-3);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+  color: var(--text-1);
+}
+
+.field select:focus {
+  outline: none;
+  border-color: var(--primary-500);
+}
+
+.promptState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--spacing-12);
+  background: var(--surface-1);
+  border-radius: var(--radius-lg);
+  border: 1px dashed var(--border-color);
+  color: var(--text-2);
+  min-height: 400px;
+}
+
+.promptIcon {
+  color: var(--primary-200);
+  margin-bottom: var(--spacing-4);
+}
+
+.promptState h2 {
+  margin: 0 0 var(--spacing-2);
+  color: var(--text-1);
+}
+
+.examBuilder {
+  background: var(--surface-1);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-6);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+}
+
+.examBuilderHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.examBuilderHeader h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: var(--text-1);
+}
+
+.weightageBadge {
+  background: var(--success-50);
+  color: var(--success-700);
+  padding: var(--spacing-1) var(--spacing-3);
+  border-radius: var(--radius-full);
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.3s;
+}
+
+.weightageBadge.weightageFull {
+  background: var(--warning-50);
+  color: var(--warning-700);
+}
+
+.examForm {
+  display: flex;
+  gap: var(--spacing-3);
+  align-items: center;
+}
+
+.examForm input {
+  flex: 1;
+  padding: var(--spacing-2) var(--spacing-3);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+  color: var(--text-1);
+}
+
+.examForm input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.examChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-3);
+  margin-top: var(--spacing-2);
+}
+
+.examChip {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+  background: var(--surface-2);
+  border: 1px solid var(--border-color);
+  padding: var(--spacing-2) var(--spacing-4);
+  border-radius: var(--radius-full);
+  font-size: 0.875rem;
+}
+
+.examChip strong {
+  color: var(--text-1);
+}
+
+.examChip span {
+  color: var(--text-3);
+}
+
+.gridContainer {
+  background: var(--surface-1);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-6);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+}
+
+.gridHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.gridHeader h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: var(--text-1);
+}
+
+.emptyState {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+  color: var(--warning-600);
+  background: var(--warning-50);
+  padding: var(--spacing-4);
+  border-radius: var(--radius-md);
+}
+
+.emptyState p {
+  margin: 0;
+}
+
+.tableWrapper {
+  overflow-x: auto;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+}
+
+.spreadsheet {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.spreadsheet th, .spreadsheet td {
+  padding: var(--spacing-3) var(--spacing-4);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.spreadsheet th {
+  background: var(--surface-2);
+  font-weight: 500;
+  color: var(--text-2);
+  font-size: 0.875rem;
+  white-space: nowrap;
+}
+
+.spreadsheet th:not(:first-child):not(:nth-child(2)) {
+  text-align: center;
+}
+
+.maxMarkLabel {
+  color: var(--text-3);
+  font-weight: normal;
+  font-size: 0.75rem;
+}
+
+.rollNoCell, .nameCell {
+  font-size: 0.875rem;
+  color: var(--text-1);
+  white-space: nowrap;
+}
+
+.nameCell {
+  font-weight: 500;
+  border-right: 2px solid var(--border-color); /* Separation from marks cols */
+}
+
+.inputCell {
+  position: relative;
+  text-align: center;
+  padding: 0 !important;
+  min-width: 100px;
+}
+
+.markInput {
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: transparent;
+  text-align: center;
+  font-size: 1rem;
+  color: var(--text-1);
+  padding: var(--spacing-3);
+}
+
+.markInput:focus {
+  outline: none;
+  background: var(--primary-50);
+}
+
+.inputError {
+  background: var(--danger-50) !important;
+  color: var(--danger-700);
+  font-weight: bold;
+}
+
+.errorTooltip {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--danger-600);
+  color: white;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 10;
+  margin-bottom: 4px;
+  box-shadow: var(--shadow-md);
+}
