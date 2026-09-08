@@ -1,0 +1,183 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-6);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--surface-1);
+  padding: var(--spacing-4) var(--spacing-6);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
+}
+
+.connectionStatus {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  font-size: 0.875rem;
+  font-weight: 500;
+  padding: var(--spacing-2) var(--spacing-3);
+  border-radius: var(--radius-full);
+}
+
+.connected {
+  background: var(--success-50);
+  color: var(--success-700);
+}
+
+.disconnected {
+  background: var(--warning-50);
+  color: var(--warning-700);
+}
+
+.mainContent {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-6);
+  align-items: start;
+}
+
+.qrPanel {
+  background: var(--surface-1);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-8);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  box-shadow: var(--shadow-sm);
+}
+
+.qrPanel h3 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: var(--text-1);
+}
+
+.qrPanel p {
+  margin: var(--spacing-2) 0 var(--spacing-8);
+  color: var(--text-2);
+  font-size: 0.875rem;
+}
+
+.qrWrapper {
+  background: white;
+  padding: var(--spacing-4);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  margin-bottom: var(--spacing-8);
+  min-height: 288px; /* 256 + 32 padding */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.qrPlaceholder {
+  color: var(--text-3);
+  font-style: italic;
+}
+
+.counterBadge {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  font-size: 1.125rem;
+  color: var(--text-1);
+  background: var(--surface-2);
+  padding: var(--spacing-3) var(--spacing-6);
+  border-radius: var(--radius-full);
+}
+
+.feedPanel {
+  background: var(--surface-1);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-6);
+  height: 600px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow-sm);
+}
+
+.feedPanel h3 {
+  margin: 0 0 var(--spacing-4);
+  font-size: 1.25rem;
+  color: var(--text-1);
+}
+
+.feedList {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+  padding-right: var(--spacing-2);
+}
+
+/* Custom scrollbar */
+.feedList::-webkit-scrollbar {
+  width: 6px;
+}
+.feedList::-webkit-scrollbar-track {
+  background: var(--surface-2);
+  border-radius: 8px;
+}
+.feedList::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 8px;
+}
+
+.emptyState {
+  text-align: center;
+  color: var(--text-3);
+  margin-top: var(--spacing-12);
+  font-style: italic;
+}
+
+.feedItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--surface-2);
+  padding: var(--spacing-3) var(--spacing-4);
+  border-radius: var(--radius-md);
+  border-left: 4px solid var(--primary-500);
+}
+
+.feedInfo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+}
+
+.studentName {
+  font-weight: 500;
+  color: var(--text-1);
+}
+
+.rollNum {
+  font-size: 0.75rem;
+  color: var(--text-2);
+  background: var(--surface-3);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  display: inline-block;
+  width: max-content;
+}
+
+.time {
+  font-size: 0.75rem;
+  color: var(--text-3);
+}
+
+@media (max-width: 1024px) {
+  .mainContent {
+    grid-template-columns: 1fr;
+  }
+}
