@@ -12,7 +12,7 @@ export const NAV_ITEMS = [
   { key: "roster",         label: "Student Roster",      icon: "List",       path: "/cc/roster",                 roles: ["cc"] },
   { key: "disputes",       label: "Attendance Disputes", icon: "Flag",       path: "/cc/workspace?tab=disputes", roles: ["cc"] },
   { key: "my-classes",     label: "My Classes",          icon: "Calendar",   path: "/my-classes",             roles: ["faculty"] },
-  { key: "notes",          label: "Notes",               icon: "FileText",   path: "/notes",                  roles: ["faculty"] },
+  { key: "notes",          label: "Notes",               icon: "FileText",   path: "/faculty/notes",          roles: ["faculty"] },
   { key: "marks-entry",    label: "Marks Entry",         icon: "Edit",       path: "/marks-entry",            roles: ["faculty"] },
   { key: "attendance",     label: "Attendance",          icon: "CheckSquare",path: "/attendance",             roles: ["student"] },
   { key: "results",        label: "Results",             icon: "Award",      path: "/results",                roles: ["student"] },

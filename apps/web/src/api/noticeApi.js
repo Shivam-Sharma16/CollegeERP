@@ -59,10 +59,10 @@ export const noticeApi = createApi({
 
     /**
      * POST /api/notices/notes
-     * Upload a study note. Body: { title, fileUrl, subjectId, targeting }
+     * Upload a study note. Body: FormData or { title, fileUrl, subjectId, targeting }
      * Scope clamped server-side to the uploader's section/department.
      */
-    createNote: builder.mutation({
+    uploadNote: builder.mutation({
       query: (body) => ({ url: '/api/notices/notes', method: 'POST', body }),
       invalidatesTags: [{ type: 'Note', id: 'LIST' }],
     }),
@@ -71,7 +71,7 @@ export const noticeApi = createApi({
      * GET /api/notices/notes?q=&subjectId=
      * Returns notes visible to the authenticated user.
      */
-    listNotes: builder.query({
+    listMyNotes: builder.query({
       query: (params = {}) => ({ url: '/api/notices/notes', params }),
       providesTags: (r) =>
         r?.data
@@ -88,6 +88,6 @@ export const {
   useCreateNoticeMutation,
   useListMyNoticesQuery,
   useGetNoticeQuery,
-  useCreateNoteMutation,
-  useListNotesQuery,
+  useUploadNoteMutation,
+  useListMyNotesQuery,
 } = noticeApi;

@@ -21,6 +21,7 @@ import HodAcademicStructure from './pages/HodAcademicStructure';
 import HodTeachingAssignments from './pages/HodTeachingAssignments';
 import FacultyDashboard     from './pages/FacultyDashboard';
 import LiveAttendanceSession from './pages/LiveAttendanceSession';
+import FacultyNotesPage     from './pages/FacultyNotesPage';
 import CcDashboard      from './pages/CcDashboard';
 import CcWorkspace      from './pages/CcWorkspace';
 import UnauthorizedPage from './pages/UnauthorizedPage';
@@ -164,6 +165,14 @@ export default function App() {
         />
 
         {/* ── Faculty ──────────────────────────────────────────────────── */}
+        <Route
+          path="/faculty/notes"
+          element={
+            <ProtectedRoute allowedRoles={['FACULTY', 'HOD', 'ADMIN', 'SUPERADMIN']}>
+              <FacultyNotesPage />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/faculty/attendance/session/:sessionId"
           element={
