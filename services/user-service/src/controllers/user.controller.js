@@ -118,9 +118,9 @@ const createCC = (req, res) => {
 
 const onboardStudent = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
-    if (!name || !email || !password) {
-      return res.status(400).json(fail('Name, email, and password are required'));
+    const { name, email, password, rollNumber } = req.body;
+    if (!name || !email || !password || !rollNumber) {
+      return res.status(400).json(fail('Name, email, roll number, and password are required'));
     }
 
     if (!req.user.roles.includes('CC')) {
@@ -132,15 +132,21 @@ const onboardStudent = async (req, res) => {
       return res.status(403).json(fail('You are not assigned to a section'));
     }
 
-    const existing = await User.findOne({ email });
-    if (existing) {
-      return res.status(409).json(fail('User with this email already exists'));
+    const existingEmail = await User.findOne({ email });
+    if (existingEmail) {
+      return res.status(409).json(fail('Email already exists', { field: 'email' }));
+    }
+
+    const existingRoll = await User.findOne({ rollNumber });
+    if (existingRoll) {
+      return res.status(409).json(fail('Roll number already exists', { field: 'rollNumber' }));
     }
 
     const passwordHash = await bcrypt.hash(password, BCRYPT_COST);
     const user = await User.create({
       name,
       email,
+      rollNumber,
       passwordHash,
       roles: [] // Managed by RoleAssignment
     });

@@ -112,7 +112,7 @@ export const usersApi = createApi({
     }),
 
     /** GET /api/users/students */
-    listStudents: builder.query({
+    listSectionStudents: builder.query({
       query: (params = {}) => ({ url: '/api/users/students', params }),
       providesTags: (result) =>
         result?.data
@@ -135,5 +135,5 @@ export const {
   useListHodsQuery,
   useListFacultyQuery,
   useListCcQuery,
-  useListStudentsQuery,
+  useListSectionStudentsQuery,
 } = usersApi;

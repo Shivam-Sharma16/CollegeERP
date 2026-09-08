@@ -8,10 +8,16 @@ const success = (data) => ({
   data
 });
 
-const fail = (message) => ({
-  success: false,
-  error: message
-});
+const fail = (message, data = null) => {
+  const response = {
+    success: false,
+    error: message
+  };
+  if (data) {
+    response.data = data;
+  }
+  return response;
+};
 
 module.exports = {
   success,
