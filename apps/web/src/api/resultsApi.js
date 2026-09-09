@@ -99,6 +99,15 @@ export const resultsApi = createApi({
     // ── TRANSCRIPT ────────────────────────────────────────────────────────────
 
     /**
+     * GET /api/results/students/me/transcript
+     * Returns personal transcript summary for a student.
+     */
+    getOwnTranscript: builder.query({
+      query: () => '/api/results/students/me/transcript',
+      providesTags: ['Transcript'],
+    }),
+
+    /**
      * GET /api/results/students/:studentId/transcript
      * Returns aggregated academic record across all exam types.
      * Students can query their own; HOD/ADMIN can query any student.
@@ -163,6 +172,7 @@ export const {
   useEnterMarksMutation,
   useBulkUpsertMarksMutation,
   useListMarksQuery,
+  useGetOwnTranscriptQuery,
   useGetTranscriptQuery,
   useGetOwnGpaQuery,
   useGetDistributionQuery,

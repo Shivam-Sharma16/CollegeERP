@@ -1,0 +1,288 @@
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 1rem 0;
+}
+
+.loading, .error, .empty {
+  text-align: center;
+  padding: 3rem;
+  color: var(--neutral-500);
+  background: var(--surface-100);
+  border-radius: 8px;
+  font-size: 1rem;
+}
+
+.error {
+  color: var(--danger-500);
+}
+
+.summaryHeader {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.gpaBadge, .creditsBadge {
+  background: var(--surface-100);
+  border: 1px solid var(--border-subtle);
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 120px;
+}
+
+.gpaLabel, .creditsLabel {
+  font-size: 0.875rem;
+  color: var(--neutral-500);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.25rem;
+}
+
+.gpaValue {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--primary-500);
+}
+
+.creditsValue {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--neutral-700);
+}
+
+.subjectList {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.subjectCard {
+  background: var(--surface-100);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+}
+
+.subjectCard:hover {
+  border-color: var(--primary-300);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.25rem 1.5rem;
+  cursor: pointer;
+  background: var(--surface-100);
+}
+
+.subjectInfo {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.iconWrapper {
+  background: var(--primary-50);
+  color: var(--primary-500);
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.subjectName {
+  margin: 0 0 0.25rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--neutral-800);
+}
+
+.subjectCode {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--neutral-500);
+}
+
+.gradeInfo {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.gradeValues {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  text-align: right;
+}
+
+.gradePercent {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--neutral-700);
+}
+
+.letterGrade {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--primary-500);
+  background: var(--primary-50);
+  padding: 0.25rem 0.75rem;
+  border-radius: 4px;
+  min-width: 48px;
+  text-align: center;
+}
+
+.expandBtn {
+  background: transparent;
+  border: none;
+  color: var(--neutral-400);
+  cursor: pointer;
+  padding: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s ease;
+}
+
+.expandBtn:hover {
+  color: var(--primary-500);
+}
+
+.cardExpanded {
+  padding: 1.5rem;
+  border-top: 1px solid var(--border-subtle);
+  background: var(--surface-50);
+}
+
+.breakdownTitle {
+  margin: 0 0 1rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--neutral-700);
+}
+
+.noBreakdown {
+  margin: 0;
+  color: var(--neutral-500);
+  font-size: 0.875rem;
+}
+
+/* Stacked Bar */
+.stackedBarContainer {
+  height: 12px;
+  background-color: var(--neutral-200);
+  border-radius: 6px;
+  display: flex;
+  overflow: hidden;
+  margin-bottom: 1.5rem;
+}
+
+.stackedSegment {
+  height: 100%;
+  transition: width 0.3s ease;
+}
+
+/* Breakdown List */
+.breakdownList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.breakdownItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px dashed var(--neutral-200);
+}
+
+.breakdownItem:last-child {
+  border-bottom: none;
+}
+
+.breakdownInfo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.legendDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.examName {
+  font-weight: 500;
+  color: var(--neutral-700);
+}
+
+.examWeight {
+  font-size: 0.875rem;
+  color: var(--neutral-500);
+}
+
+.examScore {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.marksObtained {
+  font-size: 0.875rem;
+  color: var(--neutral-600);
+  font-family: monospace;
+}
+
+.weightedContribution {
+  font-weight: 600;
+  color: var(--neutral-800);
+  min-width: 60px;
+  text-align: right;
+}
+
+.breakdownTotal {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 1rem;
+  margin-top: 0.5rem;
+  border-top: 2px solid var(--neutral-200);
+  font-weight: 700;
+  color: var(--neutral-800);
+}
+
+.totalValue {
+  font-size: 1.125rem;
+  color: var(--primary-500);
+}
+
+@media (max-width: 640px) {
+  .cardHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .gradeInfo {
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  .examScore {
+    gap: 0.75rem;
+  }
+}

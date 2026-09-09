@@ -47,24 +47,26 @@ const computeFinalGrade = async (studentId, subjectId) => {
     { $unwind: '$examType' },
     { $match: { 'examType.subjectId': new mongoose.Types.ObjectId(subjectId) } },
     {
-      $group: {
-        _id: null,
-        finalGrade: {
-          $sum: {
-            $multiply: [
-              { $divide: ['$marksObtained', '$examType.maxMarks'] },
-              '$examType.weightage'
-            ]
-          }
+      $project: {
+        examTypeName: '$examType.name',
+        weightage: '$examType.weightage',
+        marksObtained: '$marksObtained',
+        maxMarks: '$examType.maxMarks',
+        weightedScore: {
+          $multiply: [
+            { $divide: ['$marksObtained', '$examType.maxMarks'] },
+            '$examType.weightage'
+          ]
         }
       }
     }
   ]);
 
-  if (!result || result.length === 0) return 0;
+  if (!result || result.length === 0) return { finalGrade: 0, breakdown: [] };
   
-  // Return the percentage (0-100)
-  return result[0].finalGrade * 100;
+  // result is an array of projected documents
+  const finalGrade = result.reduce((sum, r) => sum + r.weightedScore, 0) * 100;
+  return { finalGrade, breakdown: result };
 };
 
 module.exports = {

@@ -74,7 +74,12 @@ export default function StudentDashboard() {
           </div>
 
           {/* Current GPA Card */}
-          <div className={styles.statCard}>
+          <div 
+            className={`${styles.statCard} ${styles.attendanceCard}`}
+            style={{ cursor: 'pointer' }}
+            onClick={() => navigate('/student/transcript')}
+            title="Click to view detailed transcript"
+          >
             <div className={styles.cardHeader}>
               <span className={styles.cardTitle}>Current GPA</span>
               <Award size={20} className={styles.iconPrimary} />
@@ -86,8 +91,11 @@ export default function StudentDashboard() {
                 <div className={styles.cardValue}>
                   {gpa.toFixed(2)}
                 </div>
-                <div className={styles.cardFooter}>
-                  Out of 10.0
+                <div className={styles.cardFooter} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span>Out of 10.0</span>
+                  <span style={{ fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '4px', opacity: 0.9 }}>
+                    <FileText size={14} /> View Transcript &rarr;
+                  </span>
                 </div>
               </>
             )}

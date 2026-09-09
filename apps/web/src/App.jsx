@@ -20,6 +20,7 @@ import HodManagement    from './pages/HodManagement';
 import HodAcademicStructure from './pages/HodAcademicStructure';
 import HodTeachingAssignments from './pages/HodTeachingAssignments';
 import StudentAttendancePage from './pages/StudentAttendancePage';
+import StudentTranscriptPage from './pages/StudentTranscriptPage';
 import LiveAttendanceSession from './pages/LiveAttendanceSession';
 import FacultyNotesPage     from './pages/FacultyNotesPage';
 import FacultyMarksEntryPage from './pages/FacultyMarksEntryPage';
@@ -240,6 +241,14 @@ export default function App() {
           element={
             <ProtectedRoute allowedRoles={['STUDENT']}>
               <StudentAttendancePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/student/transcript"
+          element={
+            <ProtectedRoute allowedRoles={['STUDENT']}>
+              <StudentTranscriptPage />
             </ProtectedRoute>
           }
         />

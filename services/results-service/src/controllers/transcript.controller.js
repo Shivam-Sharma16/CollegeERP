@@ -12,7 +12,8 @@ const { success, fail } = require('@college-erp/shared-utils');
  */
 const getTranscript = async (req, res) => {
   try {
-    const { id: studentId } = req.params;
+    let { id: studentId } = req.params;
+    if (studentId === 'me') studentId = req.user.id;
 
     // Step 1: Find all distinct subjects the student has been assessed on
     const subjectGroups = await mongoose.connection.db
@@ -52,7 +53,10 @@ const getTranscript = async (req, res) => {
     // Step 3: Compute grade per subject using the existing aggregation pipeline
     const subjectBreakdown = await Promise.all(
       subjectIds.map(async (subjectId) => {
-        const grade = await computeFinalGrade(studentId, subjectId.toString());
+        const gradeData = await computeFinalGrade(studentId, subjectId.toString());
+        const grade = typeof gradeData === 'number' ? gradeData : gradeData.finalGrade;
+        const breakdown = typeof gradeData === 'number' ? [] : gradeData.breakdown;
+        
         const meta = subjectMap[subjectId.toString()] || {};
         return {
           subjectId: subjectId.toString(),
@@ -60,7 +64,8 @@ const getTranscript = async (req, res) => {
           subjectCode: meta.code || 'N/A',
           credits: meta.credits || 0,
           gradePercent: parseFloat(grade.toFixed(2)),
-          letterGrade: toLetter(grade)
+          letterGrade: toLetter(grade),
+          breakdown
         };
       })
     );
