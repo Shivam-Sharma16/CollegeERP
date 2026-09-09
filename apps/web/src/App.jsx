@@ -21,6 +21,7 @@ import HodAcademicStructure from './pages/HodAcademicStructure';
 import HodTeachingAssignments from './pages/HodTeachingAssignments';
 import StudentAttendancePage from './pages/StudentAttendancePage';
 import StudentTranscriptPage from './pages/StudentTranscriptPage';
+import StudentFeesPage from './pages/StudentFeesPage';
 import LiveAttendanceSession from './pages/LiveAttendanceSession';
 import FacultyNotesPage     from './pages/FacultyNotesPage';
 import FacultyMarksEntryPage from './pages/FacultyMarksEntryPage';
@@ -249,6 +250,14 @@ export default function App() {
           element={
             <ProtectedRoute allowedRoles={['STUDENT']}>
               <StudentTranscriptPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/student/fees"
+          element={
+            <ProtectedRoute allowedRoles={['STUDENT']}>
+              <StudentFeesPage />
             </ProtectedRoute>
           }
         />

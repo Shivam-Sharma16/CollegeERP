@@ -12,6 +12,12 @@ router.post('/fee-structures', authenticate, requirePermission('write', 'FeeStru
 // Webhook endpoint (unauthenticated, relies on signature)
 router.post('/payments/webhook', ctrl.paymentWebhook);
 
+// Student fee status
+router.get('/students/me/status', authenticate, ctrl.getOwnFeeStatus);
+
+// Initiate payment
+router.post('/payments/initiate', authenticate, ctrl.initiatePayment);
+
 // GET /defaulters
 router.get('/defaulters', authenticate, requirePermission('read', 'FeeStructure'), ctrl.getDefaulters);
 

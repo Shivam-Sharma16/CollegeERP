@@ -87,6 +87,23 @@ export const feesApi = createApi({
       providesTags: ['Payment', 'FeeStructure'],
     }),
 
+    getOwnFeeStructure: builder.query({
+      query: () => '/api/fees/students/me/status',
+      providesTags: ['Payment', 'FeeStructure'],
+    }),
+
+    initiatePayment: builder.mutation({
+      query: (body) => ({ url: '/api/fees/payments/initiate', method: 'POST', body }),
+      invalidatesTags: ['Payment'],
+    }),
+
+    getReceipt: builder.query({
+      query: (paymentId) => ({
+        url: `/api/fees/payments/${paymentId}/receipt`,
+        responseHandler: (response) => response.blob(),
+      }),
+    }),
+
     // ── DEFAULTERS ────────────────────────────────────────────────────────────
 
     /**
@@ -128,4 +145,7 @@ export const {
   useGetCollectionSummaryQuery,
   useGetCollectionTrendQuery,
   useGetOwnFeeStatusQuery,
+  useGetOwnFeeStructureQuery,
+  useInitiatePaymentMutation,
+  useGetReceiptQuery,
 } = feesApi;

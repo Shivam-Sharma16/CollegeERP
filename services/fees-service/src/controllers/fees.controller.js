@@ -219,3 +219,121 @@ exports.getReceipt = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+// GET /students/me/status
+exports.getOwnFeeStatus = async (req, res) => {
+  try {
+    const roleAssignment = await mongoose.connection.collection('roleassignments').findOne({
+      userId: new mongoose.Types.ObjectId(req.user.id),
+      role: 'STUDENT'
+    });
+
+    if (!roleAssignment) {
+      return res.status(404).json({ success: false, message: 'Student role not found' });
+    }
+
+    const section = await mongoose.connection.collection('sections').findOne({ _id: roleAssignment.sectionId });
+    if (!section) return res.status(404).json({ success: false, message: 'Section not found' });
+
+    const semester = await mongoose.connection.collection('semesters').findOne({ _id: section.semesterId });
+    if (!semester) return res.status(404).json({ success: false, message: 'Semester not found' });
+
+    const yearDoc = await mongoose.connection.collection('years').findOne({ _id: semester.yearId });
+    if (!yearDoc) return res.status(404).json({ success: false, message: 'Year not found' });
+
+    const feeStructure = await FeeStructure.findOne({
+      departmentId: roleAssignment.departmentId,
+      year: yearDoc.yearNumber
+    });
+
+    if (!feeStructure) {
+      return res.json({ success: true, data: { pendingAmount: 0, installments: [] } });
+    }
+
+    const payments = await Payment.find({
+      studentId: req.user.id,
+      feeStructureId: feeStructure._id
+    });
+
+    const installments = feeStructure.installments.map((inst, index) => {
+      const payment = payments.find(p => p.installmentIndex === index);
+      let status = 'pending';
+      let paymentId = payment ? payment._id : null;
+      
+      if (payment && payment.status === 'paid') {
+        status = 'paid';
+      } else if (new Date(inst.dueDate) < new Date()) {
+        status = 'overdue';
+      }
+
+      return {
+        ...inst.toObject(),
+        index,
+        status,
+        paymentId,
+        paidAt: payment ? payment.paidAt : null,
+      };
+    });
+
+    const pendingAmount = installments.filter(i => i.status !== 'paid').reduce((sum, i) => sum + i.amount, 0);
+
+    res.json({ 
+      success: true, 
+      data: { 
+        feeStructureId: feeStructure._id, 
+        totalAmount: feeStructure.totalAmount, 
+        pendingAmount, 
+        installments 
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// POST /payments/initiate
+exports.initiatePayment = async (req, res) => {
+  try {
+    const { feeStructureId, installmentIndex, amount } = req.body;
+    
+    // Create or find pending payment
+    let payment = await Payment.findOne({
+      studentId: req.user.id,
+      feeStructureId,
+      installmentIndex,
+      status: 'pending'
+    });
+
+    if (!payment) {
+      payment = new Payment({
+        studentId: req.user.id,
+        feeStructureId,
+        installmentIndex,
+        amount,
+        status: 'pending'
+      });
+      await payment.save();
+    }
+
+    const redirectUrl = `/mock-gateway/checkout?paymentId=${payment._id}`;
+
+    // Simulate webhook firing after 3 seconds
+    setTimeout(async () => {
+      try {
+        const p = await Payment.findById(payment._id);
+        if (p && p.status !== 'paid') {
+          p.status = 'paid';
+          p.gatewayRef = 'mock-txn-' + Math.floor(Math.random() * 1000000);
+          p.paidAt = new Date();
+          await p.save();
+        }
+      } catch (err) {
+        console.error('Mock webhook failed:', err);
+      }
+    }, 3000);
+
+    res.status(200).json({ success: true, data: { paymentId: payment._id, redirectUrl } });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};

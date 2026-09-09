@@ -102,7 +102,12 @@ export default function StudentDashboard() {
           </div>
 
           {/* Pending Fees Card */}
-          <div className={styles.statCard}>
+          <div 
+            className={`${styles.statCard} ${styles.attendanceCard}`}
+            style={{ cursor: 'pointer' }}
+            onClick={() => navigate('/student/fees')}
+            title="Click to view fee details and pay"
+          >
             <div className={styles.cardHeader}>
               <span className={styles.cardTitle}>Pending Fees</span>
               <CreditCard size={20} className={pendingFees > 0 ? styles.iconWarning : styles.iconSuccess} />
@@ -114,8 +119,11 @@ export default function StudentDashboard() {
                 <div className={styles.cardValue}>
                   ${pendingFees.toLocaleString()}
                 </div>
-                <div className={`${styles.cardFooter} ${pendingFees > 0 ? styles.textWarning : styles.textSuccess}`}>
-                  {pendingFees > 0 ? 'Payment due' : 'All clear'}
+                <div className={`${styles.cardFooter} ${pendingFees > 0 ? styles.textWarning : styles.textSuccess}`} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span>{pendingFees > 0 ? 'Payment due' : 'All clear'}</span>
+                  <span style={{ fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '4px', opacity: 0.9 }}>
+                    <CreditCard size={14} /> View Fees &rarr;
+                  </span>
                 </div>
               </>
             )}

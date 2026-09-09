@@ -1,0 +1,232 @@
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 1rem 0;
+  position: relative;
+}
+
+.loading, .error, .empty {
+  text-align: center;
+  padding: 3rem;
+  color: var(--neutral-500);
+  background: var(--surface-100);
+  border-radius: 8px;
+  font-size: 1rem;
+}
+
+.error {
+  color: var(--danger-500);
+}
+
+.summaryCard {
+  display: flex;
+  justify-content: space-around;
+  background: var(--surface-100);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.summaryItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.summaryLabel {
+  font-size: 0.875rem;
+  color: var(--neutral-500);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.summaryValue {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--neutral-800);
+}
+
+.textWarning { color: var(--danger-600); }
+.textSuccess { color: var(--success-600); }
+
+.sectionTitle {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: var(--neutral-800);
+}
+
+.installmentList {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.installmentCard {
+  background: var(--surface-100);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.instHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.instInfo {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.instIcon {
+  color: var(--primary-500);
+  background: var(--primary-50);
+  padding: 8px;
+  border-radius: 8px;
+  width: 40px;
+  height: 40px;
+}
+
+.instTitle {
+  margin: 0 0 0.25rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--neutral-800);
+}
+
+.instDate {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--neutral-500);
+}
+
+.instAmount {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--neutral-800);
+}
+
+.instFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 1rem;
+  border-top: 1px dashed var(--border-subtle);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.badgeSuccess { background: var(--success-50); color: var(--success-700); }
+.badgeWarning { background: var(--warning-50); color: var(--warning-700); }
+.badgeDanger { background: var(--danger-50); color: var(--danger-700); }
+
+.actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.btnPrimary, .btnSecondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease;
+}
+
+.btnPrimary {
+  background: var(--primary-500);
+  color: white;
+}
+.btnPrimary:hover:not(:disabled) { background: var(--primary-600); }
+.btnPrimary:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.btnSecondary {
+  background: var(--surface-200);
+  color: var(--neutral-700);
+}
+.btnSecondary:hover { background: var(--surface-300); }
+
+/* Overlay for processing payment */
+.overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  border-radius: 12px;
+}
+
+.overlayContent {
+  background: white;
+  padding: 2.5rem;
+  border-radius: 16px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border: 1px solid var(--border-subtle);
+}
+
+.overlayContent h3 {
+  margin: 1.5rem 0 0.5rem;
+  color: var(--neutral-800);
+}
+
+.overlayContent p {
+  margin: 0;
+  color: var(--neutral-600);
+}
+
+.subtext {
+  font-size: 0.875rem;
+  margin-top: 0.5rem !important;
+  color: var(--primary-500) !important;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid var(--primary-100);
+  border-top-color: var(--primary-500);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (max-width: 640px) {
+  .summaryCard {
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+}
