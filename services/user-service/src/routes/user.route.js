@@ -9,6 +9,9 @@ router.use(authenticate);
 // We use a generic 'Institution' resourceType for Admins and HODs (since the HOD creation targets a department, the caller Admin has Institution scope).
 // We use a 'Department' resourceType for Faculty/CC (HOD creates them, so HOD has Department scope).
 // The controllers will enforce the strict downward hierarchy.
+// Search and Profile
+router.get('/search', userController.searchUsers);
+router.patch('/me', userController.updateOwnProfile);
 
 router.post('/admins', requirePermission('write', 'Institution'), userController.createAdmin);
 router.post('/hods', requirePermission('write', 'Institution'), userController.createHOD);

@@ -22,7 +22,14 @@ export const usersApi = createApi({
 
   endpoints: (builder) => ({
 
-    // ── CREATE ────────────────────────────────────────────────────────────────
+    // ── CREATE / UPDATE ───────────────────────────────────────────────────────
+
+    /** PATCH /api/users/me */
+    updateOwnProfile: builder.mutation({
+      query: (body) => ({ url: '/api/users/me', method: 'PATCH', body }),
+      // we invalidate auth/user locally if needed, but since we don't have a 
+      // specific tag for 'self', we might not invalidate a list.
+    }),
 
     /** POST /api/users/admins  — SUPERADMIN only */
     createAdmin: builder.mutation({
@@ -126,6 +133,7 @@ export const usersApi = createApi({
 });
 
 export const {
+  useUpdateOwnProfileMutation,
   useCreateAdminMutation,
   useCreateHodMutation,
   useCreateFacultyMutation,

@@ -7,6 +7,7 @@
  */
 
 import authStore from '../store/authStore';
+import { searchApi } from './searchApi';
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:4000';
 

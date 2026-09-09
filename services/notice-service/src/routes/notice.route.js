@@ -10,6 +10,9 @@ router.post('/notices', authenticate, resolveScope, ctrl.createNotice);
 // GET /notices/mine — returns notices visible to the authenticated user
 router.get('/notices/mine', authenticate, ctrl.getNoticesMine);
 
+// GET /notices/search — search notices visible to the caller
+router.get('/notices/search', authenticate, ctrl.searchNotices);
+
 // POST /notes — signed-URL upload; scope clamped to uploader's own section/dept
 router.post('/notes', authenticate, resolveScope, ctrl.createNote);
 

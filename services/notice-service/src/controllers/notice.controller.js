@@ -76,7 +76,7 @@ const toStringArray = (arr) => {
 // ---------------------------------------------------------------------------
 // getNoticesForUser  (Phase 7 pipeline)
 // ---------------------------------------------------------------------------
-const getNoticesForUser = async (userId) => {
+const getNoticesForUser = async (userId, searchQuery = '') => {
   const rolesPipeline = [
     { $match: { userId: new mongoose.Types.ObjectId(userId) } },
     { $lookup: { from: 'sections',  localField: 'sectionId',       foreignField: '_id', as: 'section'  } },
@@ -129,6 +129,16 @@ const getNoticesForUser = async (userId) => {
       ]},
     ],
   };
+
+  if (searchQuery) {
+    const regex = new RegExp(searchQuery, 'i');
+    query.$and.push({
+      $or: [
+        { title: regex },
+        { body: regex }
+      ]
+    });
+  }
 
   return Notice.find(query).sort({ publishedAt: -1 }).lean();
 };
@@ -187,6 +197,23 @@ exports.getNoticesMine = async (req, res) => {
     res.status(200).json({ success: true, data: notices });
   } catch (err) {
     console.error('[getNoticesMine]', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+};
+
+/**
+ * GET /notices/search
+ * Searches notices visible to the caller
+ */
+exports.searchNotices = async (req, res) => {
+  try {
+    const { q } = req.query;
+    if (!q) return res.status(200).json({ success: true, data: [] });
+    
+    const notices = await getNoticesForUser(req.user.userId, q);
+    res.status(200).json({ success: true, data: notices });
+  } catch (err) {
+    console.error('[searchNotices]', err);
     res.status(500).json({ success: false, error: err.message });
   }
 };

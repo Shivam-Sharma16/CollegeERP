@@ -199,11 +199,89 @@ const listStudents = async (req, res) => {
   }
 };
 
+const updateOwnProfile = async (req, res) => {
+  try {
+    const userId = req.user.userId || req.user.id;
+    const { name, email, avatarUrl } = req.body;
+    
+    // Explicitly ignore roles, department, etc. Only allow basic fields.
+    const updateData = {};
+    if (name) updateData.name = name;
+    if (email) updateData.email = email;
+    if (avatarUrl !== undefined) updateData.avatarUrl = avatarUrl; // allow clearing
+
+    const updatedUser = await User.findByIdAndUpdate(userId, updateData, { new: true }).select('-passwordHash');
+    
+    if (!updatedUser) {
+      return res.status(404).json(fail('User not found'));
+    }
+
+    res.status(200).json(success(updatedUser));
+  } catch (err) {
+    console.error('[UserController] Failed to update profile:', err);
+    res.status(500).json(fail('Internal server error'));
+  }
+};
+
+const searchUsers = async (req, res) => {
+  try {
+    const { q } = req.query;
+    if (!q) return res.status(200).json(success([]));
+
+    const queryRegex = new RegExp(q, 'i');
+    const isSuperAdmin = req.user.roles.includes('SUPERADMIN') || req.user.roles.includes('ADMIN');
+    
+    let scopeQuery = {};
+    if (!isSuperAdmin) {
+      const myAssignments = await RoleAssignment.find({ userId: req.user.userId || req.user.id });
+      
+      const deptIds = [];
+      const secIds = [];
+      
+      myAssignments.forEach(a => {
+        if (a.departmentId) deptIds.push(a.departmentId);
+        if (a.sectionId) secIds.push(a.sectionId);
+      });
+      
+      if (secIds.length > 0 && !req.user.roles.includes('HOD')) {
+        // Faculty/CC - only users in same section
+        const sectionAssignments = await RoleAssignment.find({ sectionId: { $in: secIds } });
+        scopeQuery._id = { $in: sectionAssignments.map(a => a.userId) };
+      } else if (deptIds.length > 0) {
+        // HOD - users in same department
+        const deptAssignments = await RoleAssignment.find({ departmentId: { $in: deptIds } });
+        scopeQuery._id = { $in: deptAssignments.map(a => a.userId) };
+      } else if (req.user.roles.includes('STUDENT')) {
+        // Students can't search other students globally, return empty
+        return res.status(200).json(success([]));
+      }
+    }
+
+    const matchQuery = {
+      $and: [
+        { $or: [{ name: queryRegex }, { email: queryRegex }] }
+      ]
+    };
+    
+    if (Object.keys(scopeQuery).length > 0) {
+      matchQuery.$and.push(scopeQuery);
+    }
+
+    const users = await User.find(matchQuery).select('name email roles avatarUrl').limit(10);
+    res.status(200).json(success(users));
+  } catch (err) {
+    console.error('[UserController] Failed to search users:', err);
+    res.status(500).json(fail('Internal server error'));
+  }
+};
+
 module.exports = {
   createAdmin,
   createHOD,
   createFaculty,
   createCC,
   onboardStudent,
-  listStudents
+  listStudents,
+  updateOwnProfile,
+  searchUsers
 };

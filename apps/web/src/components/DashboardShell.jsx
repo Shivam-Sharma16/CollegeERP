@@ -16,6 +16,7 @@ import { Table } from './ui/Table';
 import { Modal } from './ui/Modal';
 import { Skeleton } from './ui/Skeleton';
 import { useToast } from './ui/ToastContext';
+import { NotificationDropdown } from './ui/NotificationDropdown';
 import { AiAgentPanel } from './student/AiAgentPanel';
 
 // Safe icon renderer
@@ -192,8 +193,11 @@ export function DashboardShell({ title, subtitle, icon, children }) {
             <h1 className={styles.pageTitle}>{title}</h1>
             {subtitle && <p className={styles.pageSubtitle}>{subtitle}</p>}
           </div>
-          <div className={styles.roleBadge}>
-            {user?.roles?.join(', ') ?? ''}
+          <div className={styles.headerRight} style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <NotificationDropdown />
+            <div className={styles.roleBadge}>
+              {user?.roles?.join(', ') ?? ''}
+            </div>
           </div>
         </header>
 

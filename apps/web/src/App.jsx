@@ -24,6 +24,8 @@ import StudentTranscriptPage from './pages/StudentTranscriptPage';
 import StudentFeesPage from './pages/StudentFeesPage';
 import StudentNoticesPage from './pages/StudentNoticesPage';
 import LiveAttendanceSession from './pages/LiveAttendanceSession';
+import ProfilePage from './pages/ProfilePage';
+import { GlobalSearch } from './components/ui/GlobalSearch';
 import FacultyNotesPage     from './pages/FacultyNotesPage';
 import FacultyMarksEntryPage from './pages/FacultyMarksEntryPage';
 import FacultySubjectAnalyticsPage from './pages/FacultySubjectAnalyticsPage';
@@ -53,6 +55,7 @@ export default function App() {
   return (
     <ToastProvider>
       <BrowserRouter>
+        <GlobalSearch />
         <Routes>
         {/* ── Public ──────────────────────────────────────────────────── */}
         <Route path="/login"        element={<LoginPage />} />
@@ -275,6 +278,16 @@ export default function App() {
           element={
             <ProtectedRoute allowedRoles={['STUDENT']}>
               <StudentDashboard />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Global Profile Route */}
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <ProfilePage />
             </ProtectedRoute>
           }
         />
