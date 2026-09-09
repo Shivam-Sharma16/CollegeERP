@@ -16,6 +16,7 @@ import { Table } from './ui/Table';
 import { Modal } from './ui/Modal';
 import { Skeleton } from './ui/Skeleton';
 import { useToast } from './ui/ToastContext';
+import { AiAgentPanel } from './student/AiAgentPanel';
 
 // Safe icon renderer
 function Icon({ name }) {
@@ -246,6 +247,8 @@ export function DashboardShell({ title, subtitle, icon, children }) {
           <Button variant="primary" onClick={() => setIsModalOpen(false)}>Confirm</Button>
         </div>
       </Modal>
+
+      {userRoles.includes('student') && <AiAgentPanel />}
     </div>
   );
 }

@@ -130,7 +130,12 @@ export default function StudentDashboard() {
           </div>
 
           {/* Unread Notices Card */}
-          <div className={styles.statCard}>
+          <div 
+            className={`${styles.statCard} ${styles.attendanceCard}`}
+            style={{ cursor: 'pointer' }}
+            onClick={() => navigate('/student/notices')}
+            title="Click to view all notices"
+          >
             <div className={styles.cardHeader}>
               <span className={styles.cardTitle}>Unread Notices</span>
               <Bell size={20} className={unreadCount > 0 ? styles.iconPrimary : styles.iconNeutral} />
@@ -142,8 +147,11 @@ export default function StudentDashboard() {
                 <div className={styles.cardValue}>
                   {unreadCount}
                 </div>
-                <div className={styles.cardFooter}>
-                  {unreadCount > 0 ? 'New announcements' : 'Caught up'}
+                <div className={styles.cardFooter} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span>{unreadCount === 1 ? 'New announcement' : 'New announcements'}</span>
+                  <span style={{ fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '4px', opacity: 0.9 }}>
+                    <Bell size={14} /> View All &rarr;
+                  </span>
                 </div>
               </>
             )}
