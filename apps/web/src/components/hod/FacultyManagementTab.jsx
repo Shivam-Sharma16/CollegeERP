@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useListFacultyQuery } from '../../api/usersApi';
 import { Button } from '../ui/Button';
 import { CreateFacultyModal } from '../users/CreateFacultyModal';
@@ -13,10 +13,10 @@ export function FacultyManagementTab() {
   const [assignModalOpen, setAssignModalOpen] = useState(false);
   const [selectedFaculty, setSelectedFaculty] = useState(null);
 
-  const handleReassign = (faculty) => {
+  const handleReassign = useCallback((faculty) => {
     setSelectedFaculty(faculty);
     setAssignModalOpen(true);
-  };
+  }, []);
 
   if (isLoading) return <div>Loading faculty...</div>;
   if (isError) return <div className={styles.error}>Failed to load faculty.</div>;
@@ -40,7 +40,7 @@ export function FacultyManagementTab() {
             <FacultyCard 
               key={faculty._id} 
               faculty={faculty} 
-              onReassign={() => handleReassign(faculty)} 
+              onReassign={handleReassign} 
             />
           ))}
         </div>

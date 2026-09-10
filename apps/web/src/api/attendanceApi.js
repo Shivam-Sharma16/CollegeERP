@@ -20,9 +20,8 @@ export const attendanceApi = createApi({
   reducerPath: 'attendanceApi',
   baseQuery,
   tagTypes: ['Session', 'AttendanceRecord'],
-
+  keepUnusedDataFor: 30, // live counts go stale fast
   endpoints: (builder) => ({
-
     // ── SESSIONS ──────────────────────────────────────────────────────────────
 
     /**
@@ -119,6 +118,7 @@ export const attendanceApi = createApi({
         url: `/api/attendance/sessions/${sessionId}/records`,
         params,
       }),
+      keepUnusedDataFor: 10, // changes as students check in
       providesTags: (r) =>
         r?.data
           ? [
@@ -234,6 +234,7 @@ export const attendanceApi = createApi({
      */
     listFlaggedRecords: builder.query({
       query: (sectionId) => `/api/attendance/sections/${sectionId}/flagged`,
+      keepUnusedDataFor: 10, // changes as disputes are resolved
       providesTags: (r) =>
         r?.data
           ? [

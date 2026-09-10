@@ -14,6 +14,7 @@ export const resultsApi = createApi({
   reducerPath: 'resultsApi',
   baseQuery,
   tagTypes: ['ExamType', 'Mark', 'Transcript'],
+  keepUnusedDataFor: 300,
 
   endpoints: (builder) => ({
 

@@ -3,7 +3,9 @@ import { Button } from '../ui/Button';
 import { User, BookOpen } from 'lucide-react';
 import styles from './FacultyCard.module.css';
 
-export function FacultyCard({ faculty, onReassign }) {
+import { memo } from 'react';
+
+export const FacultyCard = memo(function FacultyCard({ faculty, onReassign }) {
   // Lazily fetches faculty load scoped to this specific card
   const { data, isLoading } = useGetFacultyLoadQuery(faculty._id);
 
@@ -40,10 +42,10 @@ export function FacultyCard({ faculty, onReassign }) {
       </div>
 
       <div className={styles.actions}>
-        <Button variant="secondary" size="sm" onClick={onReassign} className={styles.fullWidthBtn}>
+        <Button variant="secondary" size="sm" onClick={() => onReassign(faculty)} className={styles.fullWidthBtn}>
           Assign Subject
         </Button>
       </div>
     </div>
   );
-}
+});

@@ -2,7 +2,9 @@ import { Table } from '../ui/Table';
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
 
-export function UsersTable({ title, data = [], columns = [], isLoading, onCreate, createLabel }) {
+import { memo } from 'react';
+
+export const UsersTable = memo(function UsersTable({ title, data = [], columns = [], isLoading, onCreate, createLabel }) {
   return (
     <Card>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-4)' }}>
@@ -16,4 +18,4 @@ export function UsersTable({ title, data = [], columns = [], isLoading, onCreate
       <Table columns={columns} data={data} isLoading={isLoading} emptyMessage="No users found." />
     </Card>
   );
-}
+});

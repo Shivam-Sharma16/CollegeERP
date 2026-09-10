@@ -17,6 +17,7 @@ export const departmentsApi = createApi({
   reducerPath: 'departmentsApi',
   baseQuery,
   tagTypes: ['Department', 'DeptTree'],
+  keepUnusedDataFor: 600,
 
   endpoints: (builder) => ({
 

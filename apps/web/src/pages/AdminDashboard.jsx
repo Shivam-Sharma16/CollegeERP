@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { DashboardShell } from '../components/DashboardShell';
 import { UsersTable } from '../components/users/UsersTable';
 import { CreateHodModal } from '../components/users/CreateHodModal';
@@ -66,13 +66,13 @@ export default function AdminDashboard() {
   const activeNoticesCount = noticesData?.data?.length || 0;
 
   // Mock department comparison data since backend might not provide it perfectly yet
-  const deptChartData = [
+  const deptChartData = useMemo(() => [
     { name: 'CS', attendance: 85, fees: 92 },
     { name: 'IT', attendance: 88, fees: 89 },
     { name: 'EC', attendance: 78, fees: 85 },
     { name: 'ME', attendance: 82, fees: 75 },
     { name: 'CE', attendance: 75, fees: 80 },
-  ];
+  ], []);
 
   return (
     <DashboardShell 

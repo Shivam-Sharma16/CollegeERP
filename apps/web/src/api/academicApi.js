@@ -19,6 +19,7 @@ export const academicApi = createApi({
   reducerPath: 'academicApi',
   baseQuery,
   tagTypes: ['Year', 'Semester', 'Section', 'Subject'],
+  keepUnusedDataFor: 600,
 
   endpoints: (builder) => ({
 

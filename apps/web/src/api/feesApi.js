@@ -17,6 +17,7 @@ export const feesApi = createApi({
   reducerPath: 'feesApi',
   baseQuery,
   tagTypes: ['FeeStructure', 'Payment', 'Defaulter'],
+  keepUnusedDataFor: 120,
 
   endpoints: (builder) => ({
 

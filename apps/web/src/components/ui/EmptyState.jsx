@@ -89,7 +89,9 @@ const ICONS = {
  * @param {string} actionRoute   - Router path to navigate to on CTA click
  * @param {string} icon          - Key into ICONS: 'folder'|'inbox'|'chart'|'users'|'bell'|'document'|'lock'
  */
-export function EmptyState({ title, description, actionLabel, actionRoute, icon = 'default' }) {
+import { memo } from 'react';
+
+export const EmptyState = memo(function EmptyState({ title, description, actionLabel, actionRoute, icon = 'default' }) {
   const navigate = useNavigate();
   const IllustrationSvg = ICONS[icon] ?? ICONS.default;
 
@@ -114,4 +116,4 @@ export function EmptyState({ title, description, actionLabel, actionRoute, icon 
       )}
     </div>
   );
-}
+});

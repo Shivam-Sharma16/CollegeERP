@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, memo } from 'react';
 import { Skeleton } from './Skeleton';
 import styles from './StatCard.module.css';
 
@@ -6,7 +6,7 @@ function easeOutExpo(t) {
   return t === 1 ? 1 : 1 - Math.pow(2, -10 * t);
 }
 
-export function StatCard({ title, value, icon, isLoading }) {
+export const StatCard = memo(function StatCard({ title, value, icon, isLoading }) {
   const [displayValue, setDisplayValue] = useState(0);
 
   useEffect(() => {
@@ -51,4 +51,4 @@ export function StatCard({ title, value, icon, isLoading }) {
       {icon && <div className={styles.iconWrap}>{icon}</div>}
     </div>
   );
-}
+});

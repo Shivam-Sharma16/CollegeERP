@@ -19,6 +19,7 @@ export const usersApi = createApi({
   reducerPath: 'usersApi',
   baseQuery,
   tagTypes: ['Admin', 'Hod', 'Faculty', 'Cc', 'Student'],
+  keepUnusedDataFor: 300,
 
   endpoints: (builder) => ({
 

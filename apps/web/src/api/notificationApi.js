@@ -15,6 +15,7 @@ export const notificationApi = createApi({
   reducerPath: 'notificationApi',
   baseQuery,
   tagTypes: ['Notification'],
+  keepUnusedDataFor: 30,
 
   endpoints: (builder) => ({
     /**

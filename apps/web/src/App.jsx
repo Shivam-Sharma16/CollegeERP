@@ -3,35 +3,38 @@ import { ProtectedRoute } from './components/ProtectedRoute';
 import { useAuth } from './hooks/useAuth';
 import { ToastProvider } from './components/ui/ToastContext';
 
-import LoginPage        from './pages/LoginPage';
-import StudentRegisterPage from './pages/StudentRegisterPage';
-import SuperadminSignupPage from './pages/SuperadminSignupPage';
-import AdminDashboard   from './pages/AdminDashboard';
-import SuperAdminManagement from './pages/SuperAdminManagement';
-import InstitutionSettings from './pages/InstitutionSettings';
-import AdminHodManagement from './pages/AdminHodManagement';
-import AdminReports     from './pages/AdminReports';
-import AdminFeePolicy   from './pages/AdminFeePolicy';
-import AdminNotices     from './pages/AdminNotices';
-import FacultyDashboard from './pages/FacultyDashboard';
-import StudentDashboard from './pages/StudentDashboard';
-import HodDashboard     from './pages/HodDashboard';
-import HodManagement    from './pages/HodManagement';
-import HodAcademicStructure from './pages/HodAcademicStructure';
-import HodTeachingAssignments from './pages/HodTeachingAssignments';
-import StudentAttendancePage from './pages/StudentAttendancePage';
-import StudentTranscriptPage from './pages/StudentTranscriptPage';
-import StudentFeesPage from './pages/StudentFeesPage';
-import StudentNoticesPage from './pages/StudentNoticesPage';
-import LiveAttendanceSession from './pages/LiveAttendanceSession';
-import ProfilePage from './pages/ProfilePage';
+import { lazy, Suspense } from 'react';
+
+const LoginPage = lazy(() => import('./pages/LoginPage'));
+const StudentRegisterPage = lazy(() => import('./pages/StudentRegisterPage'));
+const SuperadminSignupPage = lazy(() => import('./pages/SuperadminSignupPage'));
+const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
+const SuperAdminManagement = lazy(() => import('./pages/SuperAdminManagement'));
+const InstitutionSettings = lazy(() => import('./pages/InstitutionSettings'));
+const AdminHodManagement = lazy(() => import('./pages/AdminHodManagement'));
+const AdminReports = lazy(() => import('./pages/AdminReports'));
+const AdminFeePolicy = lazy(() => import('./pages/AdminFeePolicy'));
+const AdminNotices = lazy(() => import('./pages/AdminNotices'));
+const FacultyDashboard = lazy(() => import('./pages/FacultyDashboard'));
+const StudentDashboard = lazy(() => import('./pages/StudentDashboard'));
+const HodDashboard = lazy(() => import('./pages/HodDashboard'));
+const HodManagement = lazy(() => import('./pages/HodManagement'));
+const HodAcademicStructure = lazy(() => import('./pages/HodAcademicStructure'));
+const HodTeachingAssignments = lazy(() => import('./pages/HodTeachingAssignments'));
+const StudentAttendancePage = lazy(() => import('./pages/StudentAttendancePage'));
+const StudentTranscriptPage = lazy(() => import('./pages/StudentTranscriptPage'));
+const StudentFeesPage = lazy(() => import('./pages/StudentFeesPage'));
+const StudentNoticesPage = lazy(() => import('./pages/StudentNoticesPage'));
+const LiveAttendanceSession = lazy(() => import('./pages/LiveAttendanceSession'));
+const ProfilePage = lazy(() => import('./pages/ProfilePage'));
+const FacultyNotesPage = lazy(() => import('./pages/FacultyNotesPage'));
+const FacultyMarksEntryPage = lazy(() => import('./pages/FacultyMarksEntryPage'));
+const FacultySubjectAnalyticsPage = lazy(() => import('./pages/FacultySubjectAnalyticsPage'));
+const CcDashboard = lazy(() => import('./pages/CcDashboard'));
+const CcWorkspace = lazy(() => import('./pages/CcWorkspace'));
+const UnauthorizedPage = lazy(() => import('./pages/UnauthorizedPage'));
+
 import { GlobalSearch } from './components/ui/GlobalSearch';
-import FacultyNotesPage     from './pages/FacultyNotesPage';
-import FacultyMarksEntryPage from './pages/FacultyMarksEntryPage';
-import FacultySubjectAnalyticsPage from './pages/FacultySubjectAnalyticsPage';
-import CcDashboard      from './pages/CcDashboard';
-import CcWorkspace      from './pages/CcWorkspace';
-import UnauthorizedPage from './pages/UnauthorizedPage';
 
 /**
  * Root redirect — send "/" to the correct dashboard based on the user's role.
@@ -51,13 +54,25 @@ function RootRedirect() {
   return <Navigate to="/student" replace />;
 }
 
+function AppLoadingFallback() {
+  return (
+    <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="flex flex-col items-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 dark:border-indigo-400"></div>
+        <p className="mt-4 text-gray-600 dark:text-gray-400 font-medium">Loading component...</p>
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
   return (
     <ToastProvider>
       <BrowserRouter>
         <GlobalSearch />
-        <Routes>
-        {/* ── Public ──────────────────────────────────────────────────── */}
+        <Suspense fallback={<AppLoadingFallback />}>
+          <Routes>
+          {/* ── Public ──────────────────────────────────────────────────── */}
         <Route path="/login"        element={<LoginPage />} />
         <Route path="/register"     element={<StudentRegisterPage />} />
         <Route path="/superadmin/signup" element={<SuperadminSignupPage />} />
@@ -293,8 +308,9 @@ export default function App() {
         />
 
         {/* ── 404 fallback ─────────────────────────────────────────────── */}
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+        </Suspense>
       </BrowserRouter>
     </ToastProvider>
   );

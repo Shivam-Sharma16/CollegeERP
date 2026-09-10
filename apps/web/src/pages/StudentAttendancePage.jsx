@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { List as FixedSizeList } from 'react-window';
 import { motion, AnimatePresence } from 'framer-motion';
 import { io } from 'socket.io-client';
 import {
@@ -774,45 +775,57 @@ export default function StudentAttendancePage() {
             {/* Sub-view: Table */}
             {historyView === 'table' && (
               <div style={{ overflowX: 'auto' }}>
-                <table className={styles.recordsTable} id="attendance-history-table">
-                  <thead>
-                    <tr>
-                      <th>Date & Time</th>
-                      <th>Subject</th>
-                      <th>Faculty</th>
-                      <th>Method</th>
-                      <th>Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {records.map((rec) => (
-                      <tr key={rec._id || rec.id}>
-                        <td>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <Clock size={14} color="#94a3b8" />
-                            <span>{new Date(rec.date || rec.createdAt).toLocaleDateString()}</span>
-                            <span style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                <div style={{ minWidth: '700px' }}>
+                  <div style={{ display: 'flex', padding: '0.75rem 1rem', borderBottom: '1px solid var(--border-color, #1e293b)', fontWeight: 600, color: '#94a3b8', fontSize: '0.875rem' }}>
+                    <div style={{ flex: 1.5 }}>Date & Time</div>
+                    <div style={{ flex: 2 }}>Subject</div>
+                    <div style={{ flex: 1.5 }}>Faculty</div>
+                    <div style={{ flex: 1 }}>Method</div>
+                    <div style={{ flex: 1 }}>Status</div>
+                  </div>
+                  <FixedSizeList
+                    height={400}
+                    width="100%"
+                    itemSize={56}
+                    itemCount={records.length}
+                  >
+                    {({ index, style }) => {
+                      const rec = records[index];
+                      return (
+                        <div style={{ ...style, display: 'flex', alignItems: 'center', padding: '0 1rem', borderBottom: '1px solid var(--border-color, #1e293b)' }}>
+                          <div style={{ flex: 1.5, display: 'flex', alignItems: 'center', gap: '0.5rem', overflow: 'hidden', paddingRight: '1rem' }}>
+                            <Clock size={14} color="#94a3b8" style={{ flexShrink: 0 }} />
+                            <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={new Date(rec.date || rec.createdAt).toLocaleDateString()}>
+                              {new Date(rec.date || rec.createdAt).toLocaleDateString()}
+                            </span>
+                            <span style={{ fontSize: '0.75rem', color: '#64748b', whiteSpace: 'nowrap' }}>
                               {new Date(rec.date || rec.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                             </span>
                           </div>
-                        </td>
-                        <td style={{ fontWeight: 600 }}>{rec.subject || rec.lectureSessionId?.topic || 'Core Lecture'}</td>
-                        <td style={{ color: '#94a3b8' }}>{rec.faculty || 'Faculty Assigned'}</td>
-                        <td>
-                          <span className={styles.methodBadge}>{rec.verificationMethod || 'qr+geofence'}</span>
-                        </td>
-                        <td>
-                          <span className={`${styles.statusBadge} ${styles[rec.status || 'present']}`}>
-                            {rec.status === 'present' && <CheckCircle2 size={12} />}
-                            {rec.status === 'flagged' && <AlertTriangle size={12} />}
-                            {rec.status === 'absent' && <XCircle size={12} />}
-                            {rec.status || 'present'}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                          <div style={{ flex: 2, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', paddingRight: '1rem' }} title={rec.subject || rec.lectureSessionId?.topic || 'Core Lecture'}>
+                            {rec.subject || rec.lectureSessionId?.topic || 'Core Lecture'}
+                          </div>
+                          <div style={{ flex: 1.5, color: '#94a3b8', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', paddingRight: '1rem' }} title={rec.faculty || 'Faculty Assigned'}>
+                            {rec.faculty || 'Faculty Assigned'}
+                          </div>
+                          <div style={{ flex: 1, overflow: 'hidden', paddingRight: '1rem' }}>
+                            <span className={styles.methodBadge} title={rec.verificationMethod || 'qr+geofence'} style={{ display: 'inline-block', maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                              {rec.verificationMethod || 'qr+geofence'}
+                            </span>
+                          </div>
+                          <div style={{ flex: 1 }}>
+                            <span className={`${styles.statusBadge} ${styles[rec.status || 'present']}`} title={rec.status || 'present'}>
+                              {rec.status === 'present' && <CheckCircle2 size={12} />}
+                              {rec.status === 'flagged' && <AlertTriangle size={12} />}
+                              {rec.status === 'absent' && <XCircle size={12} />}
+                              {rec.status || 'present'}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    }}
+                  </FixedSizeList>
+                </div>
               </div>
             )}
 

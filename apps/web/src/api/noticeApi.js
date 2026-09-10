@@ -17,6 +17,7 @@ export const noticeApi = createApi({
   reducerPath: 'noticeApi',
   baseQuery,
   tagTypes: ['Notice', 'Note'],
+  keepUnusedDataFor: 300,
 
   endpoints: (builder) => ({
 

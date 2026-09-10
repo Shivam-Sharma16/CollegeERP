@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { DashboardShell } from '../components/DashboardShell';
 import { Button } from '../components/ui/Button';
@@ -89,13 +89,13 @@ export default function FacultyMarksEntryPage() {
   };
 
   // Pre-fill logic combining existing marks + local edits
-  const getMarkValue = (studentId, examTypeId) => {
+  const getMarkValue = useCallback((studentId, examTypeId) => {
     if (edits[studentId] && edits[studentId][examTypeId] !== undefined) {
       return edits[studentId][examTypeId];
     }
     const existing = existingMarks.find(m => m.studentId === studentId && m.examTypeId === examTypeId);
     return existing ? existing.marks : '';
-  };
+  }, [edits, existingMarks]);
 
   const handleBulkSave = async () => {
     // Collect all entries

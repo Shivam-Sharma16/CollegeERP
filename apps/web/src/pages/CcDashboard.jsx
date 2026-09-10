@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DashboardShell } from '../components/DashboardShell';
 import { UsersTable } from '../components/users/UsersTable';
@@ -88,6 +88,20 @@ export default function CcDashboard() {
       s.email?.toLowerCase().includes(lowerQuery)
     );
   }, [studentsData, searchQuery]);
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
+
+  const paginatedStudents = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return filteredStudents.slice(start, start + itemsPerPage);
+  }, [filteredStudents, currentPage]);
+
+  const totalPages = Math.ceil(filteredStudents.length / itemsPerPage) || 1;
 
   const studentCount = studentsData?.data?.length || 0;
 
@@ -202,12 +216,31 @@ export default function CcDashboard() {
           </div>
           <UsersTable
             title="Students in your Section"
-            data={filteredStudents}
+            data={paginatedStudents}
             columns={studentColumns}
             isLoading={studentsLoading}
             onCreate={() => setModalOpen(true)}
             createLabel="Onboard Student"
           />
+          {!studentsLoading && totalPages > 1 && (
+            <div style={{ display: 'flex', justifyContent: 'center', marginTop: 'var(--spacing-4)', gap: 'var(--spacing-4)', alignItems: 'center' }}>
+              <button 
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                style={{ padding: '0.25rem 0.5rem', borderRadius: '4px', background: 'var(--surface-2)', cursor: currentPage === 1 ? 'not-allowed' : 'pointer' }}
+              >
+                Prev
+              </button>
+              <span>Page {currentPage} of {totalPages}</span>
+              <button 
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                style={{ padding: '0.25rem 0.5rem', borderRadius: '4px', background: 'var(--surface-2)', cursor: currentPage === totalPages ? 'not-allowed' : 'pointer' }}
+              >
+                Next
+              </button>
+            </div>
+          )}
         </div>
 
         <CreateStudentModal isOpen={modalOpen} onClose={() => setModalOpen(false)} />
