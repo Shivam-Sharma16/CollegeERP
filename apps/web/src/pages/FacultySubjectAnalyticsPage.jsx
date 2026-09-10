@@ -6,6 +6,11 @@ import { useGetGradeDistributionQuery } from '../api/resultsApi';
 import { useGetSubjectTrendQuery } from '../api/attendanceApi';
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from 'recharts';
 import { BarChart2, TrendingUp, AlertCircle } from 'lucide-react';
+import { PageTransition } from '../components/ui/PageTransition';
+import { FadeIn } from '../components/ui/FadeIn';
+import { EmptyState } from '../components/ui/EmptyState';
+import { Skeleton } from '../components/ui/Skeleton';
+import { StaggerList, StaggerItem } from '../components/ui/StaggerList';
 import styles from './FacultySubjectAnalyticsPage.module.css';
 
 export default function FacultySubjectAnalyticsPage() {
@@ -34,6 +39,7 @@ export default function FacultySubjectAnalyticsPage() {
 
   return (
     <DashboardShell title="Subject Analytics" subtitle="Performance & Attendance Trends" icon="📊">
+      <PageTransition>
       <div className={styles.container}>
         
         {/* Filter Controls */}
@@ -65,27 +71,32 @@ export default function FacultySubjectAnalyticsPage() {
 
         {/* Charts Panel */}
         {!subjectId ? (
-          <div className={styles.emptyState}>
-            <BarChart2 size={48} className={styles.emptyIcon} />
-            <h2>Select a Subject</h2>
-            <p>Please select a subject from the dropdown above to view its analytics.</p>
-          </div>
+          <EmptyState
+            icon="chart"
+            title="Select a Subject"
+            description="Choose a subject from the dropdown above to view its grade distribution and attendance trends."
+          />
         ) : (
-          <div className={styles.chartsGrid}>
+          <StaggerList className={styles.chartsGrid}>
             
             {/* Grade Distribution */}
+            <StaggerItem>
             <div className={styles.chartCard}>
               <div className={styles.chartHeader}>
                 <h3><BarChart2 size={20} /> Grade Distribution</h3>
                 {(isLoadingGrades) && <span className={styles.loadingSpinner}>Updating...</span>}
               </div>
               
-              <div className={styles.chartBody}>
-                {gradeData.length === 0 && !isLoadingGrades ? (
-                  <div className={styles.noData}>
-                    <AlertCircle size={24} />
-                    <p>No grade data available for this selection.</p>
-                  </div>
+              <FadeIn
+                show={!isLoadingGrades}
+                skeleton={<Skeleton height="300px" />}
+              >
+                {gradeData.length === 0 ? (
+                  <EmptyState
+                    icon="chart"
+                    title="No grade data"
+                    description="No grade data available for this selection."
+                  />
                 ) : (
                   <ResponsiveContainer width="100%" height={300}>
                     <BarChart data={gradeData} margin={{ top: 20, right: 20, left: 0, bottom: 20 }}>
@@ -100,22 +111,28 @@ export default function FacultySubjectAnalyticsPage() {
                     </BarChart>
                   </ResponsiveContainer>
                 )}
-              </div>
+              </FadeIn>
             </div>
+            </StaggerItem>
 
             {/* Attendance Trend */}
+            <StaggerItem>
             <div className={styles.chartCard}>
               <div className={styles.chartHeader}>
                 <h3><TrendingUp size={20} /> Attendance Trend</h3>
                 {(isLoadingTrend) && <span className={styles.loadingSpinner}>Updating...</span>}
               </div>
               
-              <div className={styles.chartBody}>
-                {trendData.length === 0 && !isLoadingTrend ? (
-                  <div className={styles.noData}>
-                    <AlertCircle size={24} />
-                    <p>No attendance data available for this selection.</p>
-                  </div>
+              <FadeIn
+                show={!isLoadingTrend}
+                skeleton={<Skeleton height="300px" />}
+              >
+                {trendData.length === 0 ? (
+                  <EmptyState
+                    icon="calendar"
+                    title="No attendance data"
+                    description="No attendance data available for this selection."
+                  />
                 ) : (
                   <ResponsiveContainer width="100%" height={300}>
                     <LineChart data={trendData} margin={{ top: 20, right: 20, left: 0, bottom: 20 }}>
@@ -130,13 +147,15 @@ export default function FacultySubjectAnalyticsPage() {
                     </LineChart>
                   </ResponsiveContainer>
                 )}
-              </div>
+              </FadeIn>
             </div>
+            </StaggerItem>
 
-          </div>
+          </StaggerList>
         )}
 
       </div>
+      </PageTransition>
     </DashboardShell>
   );
 }

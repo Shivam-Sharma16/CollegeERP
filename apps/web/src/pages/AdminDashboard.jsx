@@ -20,8 +20,12 @@ import { DepartmentComparisonChart } from '../components/dashboard/DepartmentCom
 import { Accordion } from '../components/ui/Accordion';
 import { Timeline } from '../components/ui/Timeline';
 import { EmptyState } from '../components/ui/EmptyState';
+import { StaggerList, StaggerItem } from '../components/ui/StaggerList';
+import { FadeIn } from '../components/ui/FadeIn';
+import { Skeleton } from '../components/ui/Skeleton';
 import { DepartmentTree } from '../components/departments/DepartmentTree';
 import { DollarSign, Percent, AlertTriangle, Bell } from 'lucide-react';
+import { PageTransition } from '../components/ui/PageTransition';
 import styles from './AdminDashboard.module.css';
 
 const hodColumns = [
@@ -76,6 +80,7 @@ export default function AdminDashboard() {
       subtitle={isSuperAdmin ? "Global system statistics" : "Institution-wide metrics and reports"} 
       icon={isSuperAdmin ? "⚙️" : "📊"}
     >
+      <PageTransition>
       <div className={styles.dashboard}>
         
         {/* ── SUPERADMIN VIEW ────────────────────────────────────── */}
@@ -83,31 +88,35 @@ export default function AdminDashboard() {
           <div className={styles.superadminLayout}>
             {/* Main Content Area */}
             <div className={styles.mainContent}>
-              <div className={styles.statsGrid}>
-                <StatCard title="Departments" value={stats.totalDepartments} icon="🏢" isLoading={isLoadingStats} />
-                <StatCard title="Total Students" value={stats.totalStudents} icon="👩‍🎓" isLoading={isLoadingStats} />
-                <StatCard title="Total Faculty" value={stats.totalFaculty} icon="👨‍🏫" isLoading={isLoadingStats} />
-                <StatCard title="Active Sessions" value={stats.activeSessions} icon="🟢" isLoading={isLoadingStats} />
-              </div>
+              <StaggerList className={styles.statsGrid}>
+                <StaggerItem><StatCard title="Departments" value={stats.totalDepartments} icon="🏢" isLoading={isLoadingStats} /></StaggerItem>
+                <StaggerItem><StatCard title="Total Students" value={stats.totalStudents} icon="👩‍🎓" isLoading={isLoadingStats} /></StaggerItem>
+                <StaggerItem><StatCard title="Total Faculty" value={stats.totalFaculty} icon="👨‍🏫" isLoading={isLoadingStats} /></StaggerItem>
+                <StaggerItem><StatCard title="Active Sessions" value={stats.activeSessions} icon="🟢" isLoading={isLoadingStats} /></StaggerItem>
+              </StaggerList>
 
               <div className={styles.departmentsSection}>
                 <h2 className={styles.sectionTitle}>Departments Hierarchy</h2>
-                {isLoadingTree ? (
-                  <p className={styles.loadingText}>Loading departments...</p>
-                ) : departments.length === 0 ? (
-                  <EmptyState 
-                    title="No Departments Yet" 
-                    description="Create your first department to start building the academic structure."
-                    actionLabel="Go to Management"
-                    actionRoute="/admin/management"
-                  />
-                ) : (
-                  departments.map(dept => (
-                    <Accordion key={dept._id} title={dept.name}>
-                      <DepartmentTree department={dept} />
-                    </Accordion>
-                  ))
-                )}
+                <FadeIn
+                  show={!isLoadingTree}
+                  skeleton={<><Skeleton height="48px" style={{ marginBottom: '8px' }} /><Skeleton height="48px" width="90%" style={{ marginBottom: '8px' }} /><Skeleton height="48px" width="80%" /></>}
+                >
+                  {departments.length === 0 ? (
+                    <EmptyState
+                      icon="folder"
+                      title="No Departments Yet"
+                      description="Create your first department to start building the academic structure."
+                      actionLabel="Go to Management"
+                      actionRoute="/admin/management"
+                    />
+                  ) : (
+                    departments.map(dept => (
+                      <Accordion key={dept._id} title={dept.name}>
+                        <DepartmentTree department={dept} />
+                      </Accordion>
+                    ))
+                  )}
+                </FadeIn>
               </div>
             </div>
 
@@ -125,48 +134,56 @@ export default function AdminDashboard() {
         {isAdmin && (
           <div className={styles.adminLayout}>
             {/* Top Stats Grid */}
-            <div className={styles.statsGrid}>
-              <StatCardWithTrend 
-                title="Fees Collected (Month)" 
-                value={`$${feesSummary.total.toLocaleString()}`} 
-                trendData={feesSummary.trend}
-                trendColor="var(--color-success)"
-                icon={DollarSign}
-                isLoading={isFeesLoading}
-                isError={isFeesError}
-                onRetry={refetchFees}
-              />
-              <StatCardWithTrend 
-                title="Attendance (Institution)" 
-                value={`${attSummary.percentage}%`} 
-                trendData={attSummary.trend}
-                trendColor="var(--color-primary)"
-                icon={Percent}
-                isLoading={isAttLoading}
-                isError={isAttError}
-                onRetry={refetchAtt}
-              />
-              <StatCardWithTrend 
-                title="Defaulters" 
-                value={defaultersCount} 
-                trendData={[]} // No trend for defaulters
-                trendColor="var(--color-danger)"
-                icon={AlertTriangle}
-                isLoading={isDefLoading}
-                isError={isDefError}
-                onRetry={refetchDef}
-              />
-              <StatCardWithTrend 
-                title="Active Notices" 
-                value={activeNoticesCount} 
-                trendData={[]} // No trend for notices
-                trendColor="var(--color-warning)"
-                icon={Bell}
-                isLoading={isNoticesLoading}
-                isError={isNoticesError}
-                onRetry={refetchNotices}
-              />
-            </div>
+            <StaggerList className={styles.statsGrid}>
+              <StaggerItem>
+                <StatCardWithTrend 
+                  title="Fees Collected (Month)" 
+                  value={`$${feesSummary.total.toLocaleString()}`} 
+                  trendData={feesSummary.trend}
+                  trendColor="var(--color-success)"
+                  icon={DollarSign}
+                  isLoading={isFeesLoading}
+                  isError={isFeesError}
+                  onRetry={refetchFees}
+                />
+              </StaggerItem>
+              <StaggerItem>
+                <StatCardWithTrend 
+                  title="Attendance (Institution)" 
+                  value={`${attSummary.percentage}%`} 
+                  trendData={attSummary.trend}
+                  trendColor="var(--color-primary)"
+                  icon={Percent}
+                  isLoading={isAttLoading}
+                  isError={isAttError}
+                  onRetry={refetchAtt}
+                />
+              </StaggerItem>
+              <StaggerItem>
+                <StatCardWithTrend 
+                  title="Defaulters" 
+                  value={defaultersCount} 
+                  trendData={[]} // No trend for defaulters
+                  trendColor="var(--color-danger)"
+                  icon={AlertTriangle}
+                  isLoading={isDefLoading}
+                  isError={isDefError}
+                  onRetry={refetchDef}
+                />
+              </StaggerItem>
+              <StaggerItem>
+                <StatCardWithTrend 
+                  title="Active Notices" 
+                  value={activeNoticesCount} 
+                  trendData={[]} // No trend for notices
+                  trendColor="var(--color-warning)"
+                  icon={Bell}
+                  isLoading={isNoticesLoading}
+                  isError={isNoticesError}
+                  onRetry={refetchNotices}
+                />
+              </StaggerItem>
+            </StaggerList>
 
             {/* Bottom 2-Col Layout */}
             <div className={styles.adminTwoCol}>
@@ -203,6 +220,7 @@ export default function AdminDashboard() {
 
         <CreateHodModal isOpen={hodModalOpen} onClose={() => setHodModalOpen(false)} />
       </div>
+      </PageTransition>
     </DashboardShell>
   );
 }

@@ -5,6 +5,8 @@ import { ChartCard } from '../components/reports/ChartCard';
 import { AttendanceTrendChart } from '../components/reports/AttendanceTrendChart';
 import { MarksDistributionChart } from '../components/reports/MarksDistributionChart';
 import { FeeCollectionChart } from '../components/reports/FeeCollectionChart';
+import { PageTransition } from '../components/ui/PageTransition';
+import { StaggerList, StaggerItem } from '../components/ui/StaggerList';
 import { useListDepartmentsQuery } from '../api/departmentsApi';
 import { useGetTrendQuery } from '../api/attendanceApi';
 import { useGetDistributionQuery } from '../api/resultsApi';
@@ -48,46 +50,54 @@ export default function AdminReports() {
 
   return (
     <DashboardShell title="Reports & Analytics" subtitle="Institution-wide insights" icon="📈">
-      <div className={styles.container}>
-        <FilterBar 
-          filters={filters} 
-          onFilterChange={setFilters} 
-          departments={departments}
-          isLoadingDepartments={isLoadingDepts}
-        />
+      <PageTransition>
+        <div className={styles.container}>
+          <FilterBar 
+            filters={filters} 
+            onFilterChange={setFilters} 
+            departments={departments}
+            isLoadingDepartments={isLoadingDepts}
+          />
 
-        <div className={styles.chartsGrid}>
-          {/* Attendance Trend */}
-          <ChartCard 
-            title="Attendance Trend" 
-            isLoading={isAttFetching} 
-            isError={isAttError}
-            isEmpty={!isAttFetching && !isAttError && attList.length === 0}
-          >
-            <AttendanceTrendChart data={attList} />
-          </ChartCard>
+          <StaggerList className={styles.chartsGrid}>
+            {/* Attendance Trend */}
+            <StaggerItem>
+              <ChartCard 
+                title="Attendance Trend" 
+                isLoading={isAttFetching} 
+                isError={isAttError}
+                isEmpty={!isAttFetching && !isAttError && attList.length === 0}
+              >
+                <AttendanceTrendChart data={attList} />
+              </ChartCard>
+            </StaggerItem>
 
-          {/* Marks Distribution */}
-          <ChartCard 
-            title="Marks Distribution" 
-            isLoading={isMarksFetching} 
-            isError={isMarksError}
-            isEmpty={!isMarksFetching && !isMarksError && marksList.length === 0}
-          >
-            <MarksDistributionChart data={marksList} />
-          </ChartCard>
+            {/* Marks Distribution */}
+            <StaggerItem>
+              <ChartCard 
+                title="Marks Distribution" 
+                isLoading={isMarksFetching} 
+                isError={isMarksError}
+                isEmpty={!isMarksFetching && !isMarksError && marksList.length === 0}
+              >
+                <MarksDistributionChart data={marksList} />
+              </ChartCard>
+            </StaggerItem>
 
-          {/* Fee Collection Trend */}
-          <ChartCard 
-            title="Fee Collection Trend" 
-            isLoading={isFeesFetching} 
-            isError={isFeesError}
-            isEmpty={!isFeesFetching && !isFeesError && feesList.length === 0}
-          >
-            <FeeCollectionChart data={feesList} />
-          </ChartCard>
+            {/* Fee Collection Trend */}
+            <StaggerItem>
+              <ChartCard 
+                title="Fee Collection Trend" 
+                isLoading={isFeesFetching} 
+                isError={isFeesError}
+                isEmpty={!isFeesFetching && !isFeesError && feesList.length === 0}
+              >
+                <FeeCollectionChart data={feesList} />
+              </ChartCard>
+            </StaggerItem>
+          </StaggerList>
         </div>
-      </div>
+      </PageTransition>
     </DashboardShell>
   );
 }

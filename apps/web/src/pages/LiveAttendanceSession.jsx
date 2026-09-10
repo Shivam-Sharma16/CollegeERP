@@ -3,11 +3,13 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { QRCodeSVG } from 'qrcode.react';
 import { io } from 'socket.io-client';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useGetQrTokenQuery, useCloseSessionMutation, useGetSessionQuery } from '../api/attendanceApi';
+import { useGetQrTokenQuery, useCloseSessionMutation, useGetSessionQuery, useGetSessionRecordsQuery, useOverrideRecordMutation } from '../api/attendanceApi';
 import { DashboardShell } from '../components/DashboardShell';
 import { Button } from '../components/ui/Button';
+import { PageTransition } from '../components/ui/PageTransition';
+import { EmptyState } from '../components/ui/EmptyState';
 import { useToast } from '../components/ui/ToastContext';
-import { Wifi, WifiOff, Users, StopCircle } from 'lucide-react';
+import { Wifi, WifiOff, Users, StopCircle, CheckCircle, XCircle } from 'lucide-react';
 import styles from './LiveAttendanceSession.module.css';
 
 export default function LiveAttendanceSession() {
@@ -84,7 +86,8 @@ export default function LiveAttendanceSession() {
 
   return (
     <DashboardShell title="Live Session" subtitle={session?.topic || 'Loading...'} icon="📡">
-      <div className={styles.container}>
+      <PageTransition>
+        <div className={styles.container}>
         
         {/* Header Status */}
         <div className={styles.header}>
@@ -175,12 +178,11 @@ export default function LiveAttendanceSession() {
           </div>
         </div>
       </div>
+      </PageTransition>
     </DashboardShell>
   );
 }
 
-import { useGetSessionRecordsQuery, useOverrideRecordMutation } from '../api/attendanceApi';
-import { CheckCircle, XCircle } from 'lucide-react';
 
 function PostCloseSummary({ sessionId, onFinish }) {
   const { data: recordsData, isLoading } = useGetSessionRecordsQuery({ sessionId });

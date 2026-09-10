@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { DashboardShell } from '../components/DashboardShell';
 import { AnimatedTabs } from '../components/ui/AnimatedTabs';
+import { PageTransition } from '../components/ui/PageTransition';
 import { CcDisputesTab } from '../components/cc/CcDisputesTab';
 import { CcNoticesTab } from '../components/cc/CcNoticesTab';
 
@@ -16,9 +17,11 @@ export default function CcWorkspace() {
 
   return (
     <DashboardShell title="CC Workspace" subtitle="Disputes & Notices" icon="🛠️">
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-6)' }}>
-        <AnimatedTabs tabs={tabs} defaultTabId={defaultTab} />
-      </div>
+      <PageTransition>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-6)' }}>
+          <AnimatedTabs tabs={tabs} defaultTabId={defaultTab} />
+        </div>
+      </PageTransition>
     </DashboardShell>
   );
 }

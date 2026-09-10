@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { DashboardShell } from '../components/DashboardShell';
 import { Button } from '../components/ui/Button';
+import { PageTransition } from '../components/ui/PageTransition';
+import { StaggerList, StaggerItem } from '../components/ui/StaggerList';
 import { useToast } from '../components/ui/ToastContext';
 import { useCreateNoticeMutation } from '../api/noticeApi';
 import { useListDepartmentsQuery } from '../api/departmentsApi';
@@ -70,10 +72,13 @@ export default function AdminNotices() {
 
   return (
     <DashboardShell title="Institution Notices" subtitle="Publish announcements and circulars" icon="📢">
-      <div className={styles.container}>
-        <form className={styles.card} onSubmit={handleSubmit}>
+      <PageTransition>
+        <div className={styles.container}>
+          <form className={styles.card} onSubmit={handleSubmit}>
+            <StaggerList style={{ display: 'contents' }}>
           
-          <div className={styles.mainContent}>
+            <StaggerItem>
+            <div className={styles.mainContent}>
             <div className={styles.field}>
               <label htmlFor="title">Notice Title</label>
               <input
@@ -111,9 +116,11 @@ export default function AdminNotices() {
                 <input type="file" className={styles.fileInput} disabled={isSubmitting} />
               </div>
             </div>
-          </div>
+            </div>
+            </StaggerItem>
 
-          <div className={styles.sidebar}>
+            <StaggerItem>
+            <div className={styles.sidebar}>
             <div className={styles.targetingBox}>
               <h3 className={styles.targetingTitle}>Audience Targeting</h3>
               
@@ -172,10 +179,12 @@ export default function AdminNotices() {
                 {isSubmitting ? 'Publishing...' : 'Publish Notice'}
               </Button>
             </div>
-          </div>
-
-        </form>
-      </div>
+            </div>
+            </StaggerItem>
+          </StaggerList>
+          </form>
+        </div>
+      </PageTransition>
     </DashboardShell>
   );
 }

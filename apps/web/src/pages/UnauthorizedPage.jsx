@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useLogoutMutation } from '../api/authApi';
+import { PageTransition } from '../components/ui/PageTransition';
 import styles from './UnauthorizedPage.module.css';
 
 export default function UnauthorizedPage() {
@@ -12,6 +13,7 @@ export default function UnauthorizedPage() {
   }
 
   return (
+    <PageTransition>
     <div className={styles.placeholder}>
       <div className={styles.placeholderIcon}>🚫</div>
       <h1>Access Denied</h1>
@@ -23,5 +25,6 @@ export default function UnauthorizedPage() {
         </button>
       </div>
     </div>
+    </PageTransition>
   );
 }

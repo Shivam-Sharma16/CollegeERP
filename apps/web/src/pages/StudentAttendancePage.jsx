@@ -21,6 +21,7 @@ import {
   UserCheck
 } from 'lucide-react';
 import { DashboardShell } from '../components/DashboardShell';
+import { PageTransition } from '../components/ui/PageTransition';
 import {
   useCheckInMutation,
   useListOwnRecordsQuery,
@@ -376,6 +377,7 @@ export default function StudentAttendancePage() {
       subtitle="Live QR check-in & verification records"
       icon="📸"
     >
+      <PageTransition>
       <div className={styles.container}>
         {/* ── KPI Summary Bar ── */}
         <div className={styles.kpiGrid}>
@@ -952,6 +954,7 @@ export default function StudentAttendancePage() {
           )}
         </AnimatePresence>
       </div>
+      </PageTransition>
     </DashboardShell>
   );
 }

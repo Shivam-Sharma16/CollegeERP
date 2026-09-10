@@ -1,5 +1,6 @@
 import { DashboardShell } from '../components/DashboardShell';
 import { Tabs } from '../components/ui/Tabs';
+import { PageTransition } from '../components/ui/PageTransition';
 import { DepartmentsTab } from '../components/departments/DepartmentsTab';
 import { AdminsTab } from '../components/users/AdminsTab';
 import styles from './SuperAdminManagement.module.css';
@@ -24,11 +25,13 @@ export default function SuperAdminManagement() {
       subtitle="Manage departments and system administrators" 
       icon="🛡️"
     >
-      <div className={styles.container}>
-        <div className={styles.card}>
-          <Tabs tabs={tabs} defaultTabId="departments" />
+      <PageTransition>
+        <div className={styles.container}>
+          <div className={styles.card}>
+            <Tabs tabs={tabs} defaultTabId="departments" />
+          </div>
         </div>
-      </div>
+      </PageTransition>
     </DashboardShell>
   );
 }

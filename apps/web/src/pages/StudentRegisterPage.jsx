@@ -4,6 +4,8 @@ import { useStudentSelfRegisterMutation } from '../api/authApi';
 import { useResolveDeptTreeQuery } from '../api/departmentsApi';
 import { useAppSelector } from '../store';
 import { selectInstitutionName, selectInstitutionLogo } from '../features/ui/themeSlice';
+import { PageTransition } from '../components/ui/PageTransition';
+import { StaggerList, StaggerItem } from '../components/ui/StaggerList';
 import styles from './StudentRegisterPage.module.css';
 
 export default function StudentRegisterPage() {
@@ -64,7 +66,8 @@ export default function StudentRegisterPage() {
   }
 
   return (
-    <div className={styles.page}>
+    <PageTransition>
+      <div className={styles.page}>
       <div className={styles.card} style={{ maxWidth: '500px' }}>
         <div className={styles.logoWrap}>
           {institutionLogo ? (
@@ -230,6 +233,7 @@ export default function StudentRegisterPage() {
           <Link to="/login" style={{ color: 'var(--color-primary)' }}>Already have an account? Sign in</Link>
         </p>
       </div>
-    </div>
+      </div>
+    </PageTransition>
   );
 }

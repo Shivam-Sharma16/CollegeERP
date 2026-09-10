@@ -1,11 +1,15 @@
 import { useNavigate } from 'react-router-dom';
 import { DashboardShell } from '../components/DashboardShell';
 import { StatCard } from '../components/ui/StatCard';
+import { StaggerList, StaggerItem } from '../components/ui/StaggerList';
+import { FadeIn } from '../components/ui/FadeIn';
+import { Skeleton } from '../components/ui/Skeleton';
 import { useGetOwnAttendanceSummaryQuery } from '../api/attendanceApi';
 import { useGetOwnGpaQuery } from '../api/resultsApi';
 import { useGetOwnFeeStatusQuery } from '../api/feesApi';
 import { useGetUnreadCountQuery } from '../api/notificationApi';
 import { CheckCircle, AlertTriangle, XCircle, FileText, Bell, CreditCard, Award, QrCode } from 'lucide-react';
+import { PageTransition } from '../components/ui/PageTransition';
 import styles from './StudentDashboard.module.css';
 
 export default function StudentDashboard() {
@@ -42,10 +46,12 @@ export default function StudentDashboard() {
       subtitle="Your academic overview"
       icon="🎓"
     >
+      <PageTransition>
       <div className={styles.container}>
         
-        <div className={styles.statsGrid}>
+        <StaggerList className={styles.statsGrid}>
           {/* Attendance Card */}
+          <StaggerItem>
           <div
             className={`${styles.statCard} ${styles.attendanceCard}`}
             style={{ '--att-color': attColor, cursor: 'pointer' }}
@@ -56,9 +62,10 @@ export default function StudentDashboard() {
               <span className={styles.cardTitle}>Overall Attendance</span>
               <AttIcon size={20} color={attColor} />
             </div>
-            {isLoadingAtt ? (
-              <div className={styles.loading}>Loading...</div>
-            ) : (
+            <FadeIn
+              show={!isLoadingAtt}
+              skeleton={<Skeleton height="36px" style={{ marginTop: '8px' }} />}
+            >
               <>
                 <div className={styles.cardValue} style={{ color: attColor }}>
                   {attendancePercentage.toFixed(1)}%
@@ -70,10 +77,12 @@ export default function StudentDashboard() {
                   </span>
                 </div>
               </>
-            )}
+            </FadeIn>
           </div>
+          </StaggerItem>
 
           {/* Current GPA Card */}
+          <StaggerItem>
           <div 
             className={`${styles.statCard} ${styles.attendanceCard}`}
             style={{ cursor: 'pointer' }}
@@ -84,9 +93,10 @@ export default function StudentDashboard() {
               <span className={styles.cardTitle}>Current GPA</span>
               <Award size={20} className={styles.iconPrimary} />
             </div>
-            {isLoadingGpa ? (
-              <div className={styles.loading}>Loading...</div>
-            ) : (
+            <FadeIn
+              show={!isLoadingGpa}
+              skeleton={<Skeleton height="36px" style={{ marginTop: '8px' }} />}
+            >
               <>
                 <div className={styles.cardValue}>
                   {gpa.toFixed(2)}
@@ -98,10 +108,12 @@ export default function StudentDashboard() {
                   </span>
                 </div>
               </>
-            )}
+            </FadeIn>
           </div>
+          </StaggerItem>
 
           {/* Pending Fees Card */}
+          <StaggerItem>
           <div 
             className={`${styles.statCard} ${styles.attendanceCard}`}
             style={{ cursor: 'pointer' }}
@@ -112,9 +124,10 @@ export default function StudentDashboard() {
               <span className={styles.cardTitle}>Pending Fees</span>
               <CreditCard size={20} className={pendingFees > 0 ? styles.iconWarning : styles.iconSuccess} />
             </div>
-            {isLoadingFee ? (
-              <div className={styles.loading}>Loading...</div>
-            ) : (
+            <FadeIn
+              show={!isLoadingFee}
+              skeleton={<Skeleton height="36px" style={{ marginTop: '8px' }} />}
+            >
               <>
                 <div className={styles.cardValue}>
                   ${pendingFees.toLocaleString()}
@@ -126,10 +139,12 @@ export default function StudentDashboard() {
                   </span>
                 </div>
               </>
-            )}
+            </FadeIn>
           </div>
+          </StaggerItem>
 
           {/* Unread Notices Card */}
+          <StaggerItem>
           <div 
             className={`${styles.statCard} ${styles.attendanceCard}`}
             style={{ cursor: 'pointer' }}
@@ -140,9 +155,10 @@ export default function StudentDashboard() {
               <span className={styles.cardTitle}>Unread Notices</span>
               <Bell size={20} className={unreadCount > 0 ? styles.iconPrimary : styles.iconNeutral} />
             </div>
-            {isLoadingNotif ? (
-              <div className={styles.loading}>Loading...</div>
-            ) : (
+            <FadeIn
+              show={!isLoadingNotif}
+              skeleton={<Skeleton height="36px" style={{ marginTop: '8px' }} />}
+            >
               <>
                 <div className={styles.cardValue}>
                   {unreadCount}
@@ -154,11 +170,13 @@ export default function StudentDashboard() {
                   </span>
                 </div>
               </>
-            )}
+            </FadeIn>
           </div>
-        </div>
+          </StaggerItem>
+        </StaggerList>
 
       </div>
+      </PageTransition>
     </DashboardShell>
   );
 }

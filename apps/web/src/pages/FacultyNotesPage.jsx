@@ -2,6 +2,11 @@ import { useState, useRef } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { DashboardShell } from '../components/DashboardShell';
 import { Button } from '../components/ui/Button';
+import { PageTransition } from '../components/ui/PageTransition';
+import { StaggerList, StaggerItem } from '../components/ui/StaggerList';
+import { FadeIn } from '../components/ui/FadeIn';
+import { Skeleton } from '../components/ui/Skeleton';
+import { EmptyState } from '../components/ui/EmptyState';
 import { useToast } from '../components/ui/ToastContext';
 import { useUploadNoteMutation, useListMyNotesQuery } from '../api/noticeApi';
 import { useGetFacultyLoadQuery } from '../api/teachingApi';
@@ -265,36 +270,42 @@ export default function FacultyNotesPage() {
         <section className={styles.listSection}>
           <h3>My Uploaded Notes</h3>
           
-          {isLoadingNotes ? (
-            <div className={styles.loading}>Loading notes...</div>
-          ) : notes.length === 0 ? (
-            <div className={styles.emptyList}>
-              <FileText size={48} className={styles.emptyIcon} />
-              <p>You haven't uploaded any notes yet.</p>
-            </div>
-          ) : (
-            <div className={styles.notesGrid}>
-              {notes.map(note => (
-                <div key={note._id} className={styles.noteCard}>
-                  <div className={styles.noteHeader}>
-                    <FileText size={20} className={styles.noteIcon} />
-                    <h4 title={note.title}>{note.title}</h4>
-                  </div>
-                  <div className={styles.noteMeta}>
-                    <span>{new Date(note.createdAt).toLocaleDateString()}</span>
-                  </div>
-                  <div className={styles.noteActions}>
-                    <Button variant="ghost" size="small" onClick={() => showToast('Download started', 'info')}>
-                      <Download size={16} /> Download
-                    </Button>
-                    <Button variant="ghost" size="small" className={styles.deleteBtn} onClick={() => showToast('Delete not implemented', 'warning')}>
-                      <Trash2 size={16} />
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+          <FadeIn
+            show={!isLoadingNotes}
+            skeleton={<><Skeleton height="100px" style={{ marginBottom: '8px', borderRadius: '12px' }} /><Skeleton height="100px" style={{ borderRadius: '12px' }} /></>}
+          >
+            {notes.length === 0 ? (
+              <EmptyState
+                icon="document"
+                title="No notes uploaded yet"
+                description="Upload your first note above to share materials with students."
+              />
+            ) : (
+              <StaggerList className={styles.notesGrid}>
+                {notes.map(note => (
+                  <StaggerItem key={note._id}>
+                    <div className={styles.noteCard}>
+                      <div className={styles.noteHeader}>
+                        <FileText size={20} className={styles.noteIcon} />
+                        <h4 title={note.title}>{note.title}</h4>
+                      </div>
+                      <div className={styles.noteMeta}>
+                        <span>{new Date(note.createdAt).toLocaleDateString()}</span>
+                      </div>
+                      <div className={styles.noteActions}>
+                        <Button variant="ghost" size="small" onClick={() => showToast('Download started', 'info')}>
+                          <Download size={16} /> Download
+                        </Button>
+                        <Button variant="ghost" size="small" className={styles.deleteBtn} onClick={() => showToast('Delete not implemented', 'warning')}>
+                          <Trash2 size={16} />
+                        </Button>
+                      </div>
+                    </div>
+                  </StaggerItem>
+                ))}
+              </StaggerList>
+            )}
+          </FadeIn>
         </section>
         
       </div>

@@ -5,9 +5,12 @@ import { Button } from '../components/ui/Button';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import { CreateHodModal } from '../components/users/CreateHodModal';
 import { EmptyState } from '../components/ui/EmptyState';
+import { FadeIn } from '../components/ui/FadeIn';
+import { Skeleton } from '../components/ui/Skeleton';
 import { useListHodsQuery } from '../api/usersApi';
 import { useToast } from '../components/ui/ToastContext';
 import { UserX, Eye } from 'lucide-react';
+import { PageTransition } from '../components/ui/PageTransition';
 import styles from './AdminHodManagement.module.css';
 
 export default function AdminHodManagement() {
@@ -116,41 +119,49 @@ export default function AdminHodManagement() {
 
   return (
     <DashboardShell title="HOD Management" subtitle="Manage Heads of Department" icon="👨‍💼">
+      <PageTransition>
       <div className={styles.container}>
         
-        {(!isLoading && hods.length === 0) ? (
-          <>
-            <EmptyState 
-              title="No HODs yet" 
-              description="Create your first Head of Department to assign them to a department."
-            />
-            <div style={{ display: 'flex', justifyContent: 'center', marginTop: '-24px', paddingBottom: '24px' }}>
-              <Button onClick={() => setCreateModalOpen(true)}>Create HOD</Button>
-            </div>
-          </>
-        ) : (
-          <div className={styles.card}>
-            <div className={styles.toolbar}>
-              <input 
-                type="text" 
-                placeholder="Search by name or department..." 
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className={styles.searchInput}
+        <FadeIn
+          show={!isLoading}
+          skeleton={<Skeleton height="300px" />}
+        >
+          {(!isLoading && hods.length === 0) ? (
+            <>
+              <EmptyState 
+                icon="users"
+                title="No HODs yet" 
+                description="Create your first Head of Department to assign them to a department."
               />
-              <Button onClick={() => setCreateModalOpen(true)}>Create HOD</Button>
-            </div>
+              <div style={{ display: 'flex', justifyContent: 'center', marginTop: '-24px', paddingBottom: '24px' }}>
+                <Button onClick={() => setCreateModalOpen(true)}>Create HOD</Button>
+              </div>
+            </>
+          ) : (
+            <div className={styles.card}>
+              <div className={styles.toolbar}>
+                <input 
+                  type="text" 
+                  placeholder="Search by name or department..." 
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className={styles.searchInput}
+                />
+                <Button onClick={() => setCreateModalOpen(true)}>Create HOD</Button>
+              </div>
 
-            <Table 
-              columns={columns}
-              data={filteredAndSortedData}
-              sortColumn={sortCol}
-              sortDirection={sortDir}
-              onSort={handleSort}
-              isLoading={isLoading}
-            />
-          </div>
-        )}
+              <Table 
+                columns={columns}
+                data={filteredAndSortedData}
+                sortColumn={sortCol}
+                sortDirection={sortDir}
+                onSort={handleSort}
+                isLoading={isLoading}
+                emptyIcon="users"
+              />
+            </div>
+          )}
+        </FadeIn>
 
         <CreateHodModal isOpen={createModalOpen} onClose={() => setCreateModalOpen(false)} />
 
@@ -164,6 +175,7 @@ export default function AdminHodManagement() {
           isDestructive={true}
         />
       </div>
+      </PageTransition>
     </DashboardShell>
   );
 }

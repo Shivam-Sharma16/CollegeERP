@@ -2,6 +2,11 @@ import { useState } from 'react';
 import { DashboardShell } from '../components/DashboardShell';
 import { useGetOwnTranscriptQuery } from '../api/resultsApi';
 import { Book, ChevronDown, ChevronUp } from 'lucide-react';
+import { PageTransition } from '../components/ui/PageTransition';
+import { StaggerList, StaggerItem } from '../components/ui/StaggerList';
+import { FadeIn } from '../components/ui/FadeIn';
+import { Skeleton } from '../components/ui/Skeleton';
+import { EmptyState } from '../components/ui/EmptyState';
 import styles from './StudentTranscriptPage.module.css';
 
 export default function StudentTranscriptPage() {
@@ -16,32 +21,52 @@ export default function StudentTranscriptPage() {
       subtitle="Detailed breakdown of your academic performance"
       icon="📄"
     >
-      <div className={styles.container}>
-        {isLoading ? (
-          <div className={styles.loading}>Loading transcript...</div>
-        ) : error ? (
-          <div className={styles.error}>Failed to load transcript. Please try again later.</div>
-        ) : subjects.length === 0 ? (
-          <div className={styles.empty}>No grades recorded for this semester yet.</div>
-        ) : (
-          <div className={styles.subjectList}>
-            <div className={styles.summaryHeader}>
-              <div className={styles.gpaBadge}>
-                <span className={styles.gpaLabel}>Overall GPA</span>
-                <span className={styles.gpaValue}>{transcriptData.gpa.toFixed(2)}</span>
-              </div>
-              <div className={styles.creditsBadge}>
-                <span className={styles.creditsLabel}>Total Credits</span>
-                <span className={styles.creditsValue}>{transcriptData.totalCredits}</span>
-              </div>
-            </div>
+      <PageTransition>
+        <div className={styles.container}>
+          <FadeIn
+            show={!isLoading}
+            skeleton={
+              <>
+                <Skeleton height="80px" style={{ marginBottom: '12px', borderRadius: '12px' }} />
+                <Skeleton height="80px" style={{ marginBottom: '8px', borderRadius: '12px' }} />
+                <Skeleton height="80px" style={{ marginBottom: '8px', borderRadius: '12px' }} />
+                <Skeleton height="80px" style={{ borderRadius: '12px' }} />
+              </>
+            }
+          >
+            {error ? (
+              <div className={styles.error}>Failed to load transcript. Please try again later.</div>
+            ) : subjects.length === 0 ? (
+              <EmptyState
+                icon="document"
+                title="No grades yet"
+                description="No grades have been recorded for this semester yet."
+              />
+            ) : (
+              <div className={styles.subjectList}>
+                <div className={styles.summaryHeader}>
+                  <div className={styles.gpaBadge}>
+                    <span className={styles.gpaLabel}>Overall GPA</span>
+                    <span className={styles.gpaValue}>{transcriptData.gpa.toFixed(2)}</span>
+                  </div>
+                  <div className={styles.creditsBadge}>
+                    <span className={styles.creditsLabel}>Total Credits</span>
+                    <span className={styles.creditsValue}>{transcriptData.totalCredits}</span>
+                  </div>
+                </div>
 
-            {subjects.map((subject) => (
-              <SubjectCard key={subject.subjectId} subject={subject} />
-            ))}
-          </div>
-        )}
-      </div>
+                <StaggerList>
+                  {subjects.map((subject) => (
+                    <StaggerItem key={subject.subjectId}>
+                      <SubjectCard subject={subject} />
+                    </StaggerItem>
+                  ))}
+                </StaggerList>
+              </div>
+            )}
+          </FadeIn>
+        </div>
+      </PageTransition>
     </DashboardShell>
   );
 }

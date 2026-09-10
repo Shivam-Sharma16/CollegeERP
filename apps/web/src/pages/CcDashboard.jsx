@@ -3,9 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { DashboardShell } from '../components/DashboardShell';
 import { UsersTable } from '../components/users/UsersTable';
 import { CreateStudentModal } from '../components/users/CreateStudentModal';
+import { StaggerList, StaggerItem } from '../components/ui/StaggerList';
+import { FadeIn } from '../components/ui/FadeIn';
+import { Skeleton } from '../components/ui/Skeleton';
 import { useListSectionStudentsQuery } from '../api/usersApi';
 import { useGetMySectionQuery } from '../api/academicApi';
 import { useGetSectionWeeklyAttendanceQuery, useGetPendingDisputesCountQuery } from '../api/attendanceApi';
+import { PageTransition } from '../components/ui/PageTransition';
 import styles from './CcDashboard.module.css';
 
 // Using label as required by Table.jsx
@@ -94,6 +98,7 @@ export default function CcDashboard() {
 
   return (
     <DashboardShell title="Class Coordinator" subtitle="Section management" icon="👨‍🏫">
+      <PageTransition>
       <div className={styles.dashboard}>
         
         {/* Prominent Section-Header Card */}
@@ -139,39 +144,43 @@ export default function CcDashboard() {
 
         {/* Quick Links */}
         <h3 className={styles.sectionHeader}>Quick Actions</h3>
-        <div className={styles.quickLinks}>
-          <div 
-            className={styles.quickLinkCard} 
-            onClick={() => {
-              document.getElementById('roster-section')?.scrollIntoView({ behavior: 'smooth' });
-            }}
-          >
-            <div className={styles.quickLinkHeader}>
-              <span className={styles.quickLinkIcon}>📋</span>
-              <span>Class Roster</span>
-              <span className={styles.badge}>{studentCount}</span>
+        <StaggerList className={styles.quickLinks}>
+          <StaggerItem>
+            <div 
+              className={styles.quickLinkCard} 
+              onClick={() => {
+                document.getElementById('roster-section')?.scrollIntoView({ behavior: 'smooth' });
+              }}
+            >
+              <div className={styles.quickLinkHeader}>
+                <span className={styles.quickLinkIcon}>📋</span>
+                <span>Class Roster</span>
+                <span className={styles.badge}>{studentCount}</span>
+              </div>
+              <p className={styles.quickLinkDesc}>View and manage enrolled students, add new students.</p>
             </div>
-            <p className={styles.quickLinkDesc}>View and manage enrolled students, add new students.</p>
-          </div>
+          </StaggerItem>
 
-          <div 
-            className={styles.quickLinkCard}
-            onClick={() => navigate('/cc/workspace?tab=disputes')}
-          >
-            <div className={styles.quickLinkHeader}>
-              <span className={styles.quickLinkIcon}>⚠️</span>
-              <span>Disputes</span>
-              {pendingDisputesCount > 0 ? (
-                <span className={`${styles.badge} ${styles.badgeWarning}`}>
-                  {pendingDisputesCount} pending
-                </span>
-              ) : (
-                <span className={styles.badge}>0</span>
-              )}
+          <StaggerItem>
+            <div 
+              className={styles.quickLinkCard}
+              onClick={() => navigate('/cc/workspace?tab=disputes')}
+            >
+              <div className={styles.quickLinkHeader}>
+                <span className={styles.quickLinkIcon}>⚠️</span>
+                <span>Disputes</span>
+                {pendingDisputesCount > 0 ? (
+                  <span className={`${styles.badge} ${styles.badgeWarning}`}>
+                    {pendingDisputesCount} pending
+                  </span>
+                ) : (
+                  <span className={styles.badge}>0</span>
+                )}
+              </div>
+              <p className={styles.quickLinkDesc}>Review and resolve student attendance disputes.</p>
             </div>
-            <p className={styles.quickLinkDesc}>Review and resolve student attendance disputes.</p>
-          </div>
-        </div>
+          </StaggerItem>
+        </StaggerList>
 
         {/* Roster Section */}
         <div id="roster-section" style={{ marginTop: 'var(--spacing-6)' }}>
@@ -203,6 +212,7 @@ export default function CcDashboard() {
 
         <CreateStudentModal isOpen={modalOpen} onClose={() => setModalOpen(false)} />
       </div>
+      </PageTransition>
     </DashboardShell>
   );
 }

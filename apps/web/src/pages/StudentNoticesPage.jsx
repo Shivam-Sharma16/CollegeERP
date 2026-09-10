@@ -2,6 +2,11 @@ import { useState, useMemo } from 'react';
 import { DashboardShell } from '../components/DashboardShell';
 import { useListMyNoticesQuery } from '../api/noticeApi';
 import { Bell, Filter, Calendar, Building, Users, Globe } from 'lucide-react';
+import { PageTransition } from '../components/ui/PageTransition';
+import { StaggerList, StaggerItem } from '../components/ui/StaggerList';
+import { FadeIn } from '../components/ui/FadeIn';
+import { Skeleton } from '../components/ui/Skeleton';
+import { EmptyState } from '../components/ui/EmptyState';
 import styles from './StudentNoticesPage.module.css';
 
 export default function StudentNoticesPage() {
@@ -40,79 +45,93 @@ export default function StudentNoticesPage() {
       subtitle="Stay updated with important information"
       icon="📢"
     >
-      <div className={styles.container}>
-        <div className={styles.filterSection}>
-          <div className={styles.filterLabel}>
-            <Filter size={16} /> Filter by scope:
+      <PageTransition>
+        <div className={styles.container}>
+          <div className={styles.filterSection}>
+            <div className={styles.filterLabel}>
+              <Filter size={16} /> Filter by scope:
+            </div>
+            <div className={styles.filterTabs}>
+              {['All', 'Institution', 'Department', 'Section'].map(f => (
+                <button
+                  key={f}
+                  className={`${styles.filterBtn} ${filter === f ? styles.activeFilter : ''}`}
+                  onClick={() => setFilter(f)}
+                >
+                  {f}
+                </button>
+              ))}
+            </div>
           </div>
-          <div className={styles.filterTabs}>
-            {['All', 'Institution', 'Department', 'Section'].map(f => (
-              <button
-                key={f}
-                className={`${styles.filterBtn} ${filter === f ? styles.activeFilter : ''}`}
-                onClick={() => setFilter(f)}
-              >
-                {f}
-              </button>
-            ))}
-          </div>
-        </div>
 
-        {isLoading ? (
-          <div className={styles.loading}>Loading notices...</div>
-        ) : error ? (
-          <div className={styles.error}>Failed to load notices. Please try again later.</div>
-        ) : filteredNotices.length === 0 ? (
-          <div className={styles.empty}>
-            <Bell size={48} className={styles.emptyIcon} />
-            <p>No notices found for the selected filter.</p>
-          </div>
-        ) : (
-          <div className={styles.feed}>
-            {filteredNotices.map(notice => {
-              const scope = getNoticeScope(notice);
-              const ScopeIcon = scope.icon;
-              
-              return (
-                <div key={notice._id} className={styles.noticeCard}>
-                  <div className={styles.noticeHeader}>
-                    <h3 className={styles.noticeTitle}>{notice.title}</h3>
-                    <div 
-                      className={styles.scopeBadge} 
-                      style={{ color: scope.color, backgroundColor: scope.bg }}
-                    >
-                      <ScopeIcon size={14} />
-                      {scope.label}
-                    </div>
-                  </div>
-                  
-                  <div className={styles.noticeMeta}>
-                    <Calendar size={14} />
-                    {new Date(notice.publishedAt || notice.createdAt).toLocaleDateString(undefined, {
-                      year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
-                    })}
-                  </div>
-                  
-                  <div className={styles.noticeBody}>
-                    {notice.body}
-                  </div>
-                  
-                  {notice.attachments && notice.attachments.length > 0 && (
-                    <div className={styles.attachments}>
-                      <span className={styles.attachmentsLabel}>Attachments:</span>
-                      {notice.attachments.map((att, i) => (
-                        <a key={i} href={att.url} target="_blank" rel="noreferrer" className={styles.attachmentLink}>
-                          {att.name || `Attachment ${i + 1}`}
-                        </a>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
+          <FadeIn
+            show={!isLoading}
+            skeleton={
+              <>
+                <Skeleton height="120px" style={{ marginBottom: '12px', borderRadius: '12px' }} />
+                <Skeleton height="120px" style={{ marginBottom: '12px', borderRadius: '12px' }} />
+                <Skeleton height="120px" style={{ borderRadius: '12px' }} />
+              </>
+            }
+          >
+            {error ? (
+              <div className={styles.error}>Failed to load notices. Please try again later.</div>
+            ) : filteredNotices.length === 0 ? (
+              <EmptyState
+                icon="bell"
+                title="No notices found"
+                description="No notices match the selected filter."
+              />
+            ) : (
+              <StaggerList className={styles.feed}>
+                {filteredNotices.map(notice => {
+                  const scope = getNoticeScope(notice);
+                  const ScopeIcon = scope.icon;
+
+                  return (
+                    <StaggerItem key={notice._id}>
+                      <div className={styles.noticeCard}>
+                        <div className={styles.noticeHeader}>
+                          <h3 className={styles.noticeTitle}>{notice.title}</h3>
+                          <div
+                            className={styles.scopeBadge}
+                            style={{ color: scope.color, backgroundColor: scope.bg }}
+                          >
+                            <ScopeIcon size={14} />
+                            {scope.label}
+                          </div>
+                        </div>
+
+                        <div className={styles.noticeMeta}>
+                          <Calendar size={14} />
+                          {new Date(notice.publishedAt || notice.createdAt).toLocaleDateString(undefined, {
+                            year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+                          })}
+                        </div>
+
+                        <div className={styles.noticeBody}>
+                          {notice.body}
+                        </div>
+
+                        {notice.attachments && notice.attachments.length > 0 && (
+                          <div className={styles.attachments}>
+                            <span className={styles.attachmentsLabel}>Attachments:</span>
+                            {notice.attachments.map((att, i) => (
+                              <a key={i} href={att.url} target="_blank" rel="noreferrer" className={styles.attachmentLink}>
+                                {att.name || `Attachment ${i + 1}`}
+                              </a>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </StaggerItem>
+                  );
+                })}
+              </StaggerList>
+            )}
+          </FadeIn>
+        </div>
+      </PageTransition>
     </DashboardShell>
   );
 }

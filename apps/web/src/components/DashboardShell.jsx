@@ -202,9 +202,18 @@ export function DashboardShell({ title, subtitle, icon, children }) {
         </header>
 
         {children ? (
-          <div className={styles.contentWrapper}>
-            {children}
-          </div>
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.div
+              key={location.pathname}
+              className={styles.contentWrapper}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+            >
+              {children}
+            </motion.div>
+          </AnimatePresence>
         ) : (
           <div className={styles.placeholder} style={{ textAlign: 'left', alignItems: 'flex-start' }}>
             <h2>Component Library Showcase</h2>

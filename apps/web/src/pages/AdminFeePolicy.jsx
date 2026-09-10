@@ -1,6 +1,8 @@
 import { useState, useMemo } from 'react';
 import { DashboardShell } from '../components/DashboardShell';
 import { Button } from '../components/ui/Button';
+import { PageTransition } from '../components/ui/PageTransition';
+import { StaggerList, StaggerItem } from '../components/ui/StaggerList';
 import { useToast } from '../components/ui/ToastContext';
 import { useCreateFeeStructureMutation } from '../api/feesApi';
 import { useListDepartmentsQuery } from '../api/departmentsApi';
@@ -77,6 +79,7 @@ export default function AdminFeePolicy() {
 
   return (
     <DashboardShell title="Fee Policy" subtitle="Manage fee structures per department" icon="💳">
+      <PageTransition>
       <div className={styles.container}>
         <form className={styles.card} onSubmit={handleSubmit}>
           <div className={styles.header}>
@@ -157,15 +160,14 @@ export default function AdminFeePolicy() {
               </div>
             )}
 
-            <div className={styles.installmentList}>
+            <StaggerList className={styles.installmentList}>
               {installments.map((inst, index) => (
-                <div key={index} className={styles.installmentRow}>
+                <StaggerItem key={index}>
+                <div className={styles.installmentRow}>
                   <div className={styles.instField}>
                     <label>Amount ($)</label>
                     <input
-                      type="number"
-                      min="1"
-                      required
+                      type="number" min="1" required
                       className={styles.input}
                       value={inst.amount}
                       onChange={e => handleInstallmentChange(index, 'amount', e.target.value)}
@@ -175,8 +177,7 @@ export default function AdminFeePolicy() {
                   <div className={styles.instField}>
                     <label>Due Date</label>
                     <input
-                      type="date"
-                      required
+                      type="date" required
                       className={styles.input}
                       value={inst.dueDate}
                       onChange={e => handleInstallmentChange(index, 'dueDate', e.target.value)}
@@ -196,8 +197,7 @@ export default function AdminFeePolicy() {
                   </div>
                   <div className={styles.instAction}>
                     <button
-                      type="button"
-                      className={styles.removeBtn}
+                      type="button" className={styles.removeBtn}
                       onClick={() => handleRemoveInstallment(index)}
                       disabled={installments.length === 1 || isSubmitting}
                       title="Remove Installment"
@@ -206,8 +206,9 @@ export default function AdminFeePolicy() {
                     </button>
                   </div>
                 </div>
+                </StaggerItem>
               ))}
-            </div>
+            </StaggerList>
           </div>
 
           <div className={styles.actions}>
@@ -221,6 +222,7 @@ export default function AdminFeePolicy() {
           </div>
         </form>
       </div>
+      </PageTransition>
     </DashboardShell>
   );
 }

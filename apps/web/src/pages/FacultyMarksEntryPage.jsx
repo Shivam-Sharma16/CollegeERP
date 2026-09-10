@@ -12,6 +12,7 @@ import {
 import { useGetFacultyLoadQuery } from '../api/teachingApi';
 import { useListSectionStudentsQuery } from '../api/usersApi';
 import { Save, Plus, AlertCircle, CheckCircle } from 'lucide-react';
+import { PageTransition } from '../components/ui/PageTransition';
 import styles from './FacultyMarksEntryPage.module.css';
 
 export default function FacultyMarksEntryPage() {
@@ -150,6 +151,7 @@ export default function FacultyMarksEntryPage() {
 
   return (
     <DashboardShell title="Marks Entry" subtitle="Continuous Assessment" icon="📝">
+      <PageTransition>
       <div className={styles.container}>
         
         {/* Top Controls */}
@@ -312,6 +314,7 @@ export default function FacultyMarksEntryPage() {
         )}
 
       </div>
+      </PageTransition>
     </DashboardShell>
   );
 }

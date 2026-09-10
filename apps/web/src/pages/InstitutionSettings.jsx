@@ -2,6 +2,10 @@ import { useState, useEffect, useRef } from 'react';
 import { DashboardShell } from '../components/DashboardShell';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
+import { PageTransition } from '../components/ui/PageTransition';
+import { StaggerList, StaggerItem } from '../components/ui/StaggerList';
+import { FadeIn } from '../components/ui/FadeIn';
+import { Skeleton } from '../components/ui/Skeleton';
 import { useToast } from '../components/ui/ToastContext';
 import { useGetThemeConfigQuery, useUpdateThemeConfigMutation } from '../api/settingsApi';
 import styles from './InstitutionSettings.module.css';
@@ -101,17 +105,19 @@ export default function InstitutionSettings() {
     }
   };
 
-  if (isFetching && !initialState) {
-    return (
-      <DashboardShell title="Institution Settings" icon="⚙️">
-        <p>Loading settings...</p>
-      </DashboardShell>
-    );
-  }
-
   return (
     <DashboardShell title="Institution Settings" subtitle="Brand & theme customization" icon="🎨">
-      <div className={styles.layout}>
+      <FadeIn
+        show={!isFetching || !!initialState}
+        skeleton={
+          <div className={styles.layout}>
+            <div className={styles.formCol}><Skeleton height="400px" /></div>
+            <div style={{ flex: 1 }}><Skeleton height="300px" /></div>
+          </div>
+        }
+      >
+        <PageTransition>
+          <div className={styles.layout}>
         {/* LEFT COLUMN - FORM */}
         <div className={styles.formCol}>
           <Card className={styles.settingsCard}>
@@ -318,7 +324,9 @@ export default function InstitutionSettings() {
             Note: This is a client-side preview. Save changes and reload the app to apply globally.
           </p>
         </div>
-      </div>
+        </div>
+        </PageTransition>
+      </FadeIn>
     </DashboardShell>
   );
 }

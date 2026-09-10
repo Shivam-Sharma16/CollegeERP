@@ -1,9 +1,13 @@
 import { useState, useMemo } from 'react';
 import { DashboardShell } from '../components/DashboardShell';
 import { TeachingMatrix } from '../components/hod/TeachingMatrix';
+import { FadeIn } from '../components/ui/FadeIn';
+import { Skeleton } from '../components/ui/Skeleton';
+import { EmptyState } from '../components/ui/EmptyState';
 import { useResolveDeptTreeQuery } from '../api/departmentsApi';
 import { useListFacultyQuery } from '../api/usersApi';
 import { useListTeachingAssignmentsQuery } from '../api/teachingApi';
+import { PageTransition } from '../components/ui/PageTransition';
 import styles from './HodTeachingAssignments.module.css';
 
 export default function HodTeachingAssignments() {
@@ -65,6 +69,7 @@ export default function HodTeachingAssignments() {
 
   return (
     <DashboardShell title="Teaching Assignments" subtitle="Assign faculty to subjects and sections" icon="Link">
+      <PageTransition>
       <div className={styles.container}>
         <div className={styles.filterBar}>
           <label htmlFor="semesterFilter" className={styles.filterLabel}>Semester Filter:</label>
@@ -81,18 +86,26 @@ export default function HodTeachingAssignments() {
           </select>
         </div>
 
-        {isLoading ? (
-          <div className={styles.loading}>Loading matrix data...</div>
-        ) : columns.length === 0 ? (
-          <div className={styles.empty}>No subjects or sections found for this semester.</div>
-        ) : (
-          <TeachingMatrix 
-            facultyList={facultyList} 
-            columns={columns} 
-            assignments={assignmentsList} 
-          />
-        )}
+        <FadeIn
+          show={!isLoading}
+          skeleton={<Skeleton height="400px" />}
+        >
+          {columns.length === 0 ? (
+            <EmptyState
+              icon="document"
+              title="No subjects or sections"
+              description="No subjects or sections found for the selected semester."
+            />
+          ) : (
+            <TeachingMatrix 
+              facultyList={facultyList} 
+              columns={columns} 
+              assignments={assignmentsList} 
+            />
+          )}
+        </FadeIn>
       </div>
+      </PageTransition>
     </DashboardShell>
   );
 }

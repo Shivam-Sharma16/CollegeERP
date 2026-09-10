@@ -2,6 +2,11 @@ import { useState, useEffect } from 'react';
 import { DashboardShell } from '../components/DashboardShell';
 import { useGetOwnFeeStructureQuery, useInitiatePaymentMutation, feesApi } from '../api/feesApi';
 import { CreditCard, CheckCircle, Clock, AlertTriangle, Download, DollarSign } from 'lucide-react';
+import { PageTransition } from '../components/ui/PageTransition';
+import { StaggerList, StaggerItem } from '../components/ui/StaggerList';
+import { FadeIn } from '../components/ui/FadeIn';
+import { Skeleton } from '../components/ui/Skeleton';
+import { EmptyState } from '../components/ui/EmptyState';
 import styles from './StudentFeesPage.module.css';
 import { useToast } from '../components/ui/ToastContext';
 
@@ -76,83 +81,101 @@ export default function StudentFeesPage() {
 
   return (
     <DashboardShell title="Fee Payments" subtitle="Manage and track your tuition fees" icon="💰">
-      <div className={styles.container}>
-        {isLoading && !isPaying ? (
-          <div className={styles.loading}>Loading fee structure...</div>
-        ) : error ? (
-          <div className={styles.error}>Failed to load fees. Please try again later.</div>
-        ) : installments.length === 0 ? (
-          <div className={styles.empty}>No fee structure assigned yet.</div>
-        ) : (
-          <>
-            <div className={styles.summaryCard}>
-              <div className={styles.summaryItem}>
-                <span className={styles.summaryLabel}>Total Fees</span>
-                <span className={styles.summaryValue}>${data.totalAmount.toLocaleString()}</span>
-              </div>
-              <div className={styles.summaryItem}>
-                <span className={styles.summaryLabel}>Pending Amount</span>
-                <span className={`${styles.summaryValue} ${data.pendingAmount > 0 ? styles.textWarning : styles.textSuccess}`}>
-                  ${data.pendingAmount.toLocaleString()}
-                </span>
-              </div>
-            </div>
-
-            <h3 className={styles.sectionTitle}>Installments</h3>
-            <div className={styles.installmentList}>
-              {installments.map((inst) => (
-                <div key={inst.index} className={styles.installmentCard}>
-                  <div className={styles.instHeader}>
-                    <div className={styles.instInfo}>
-                      <DollarSign size={20} className={styles.instIcon} />
-                      <div>
-                        <h4 className={styles.instTitle}>Installment {inst.index + 1}</h4>
-                        <p className={styles.instDate}>
-                          Due: {new Date(inst.dueDate).toLocaleDateString()}
-                        </p>
-                      </div>
-                    </div>
-                    <div className={styles.instAmount}>${inst.amount.toLocaleString()}</div>
+      <PageTransition>
+        <div className={styles.container}>
+          <FadeIn
+            show={!isLoading || isPaying}
+            skeleton={
+              <>
+                <Skeleton height="80px" style={{ marginBottom: '16px', borderRadius: '12px' }} />
+                <Skeleton height="100px" style={{ marginBottom: '8px', borderRadius: '12px' }} />
+                <Skeleton height="100px" style={{ marginBottom: '8px', borderRadius: '12px' }} />
+                <Skeleton height="100px" style={{ borderRadius: '12px' }} />
+              </>
+            }
+          >
+            {error ? (
+              <div className={styles.error}>Failed to load fees. Please try again later.</div>
+            ) : installments.length === 0 ? (
+              <EmptyState
+                icon="document"
+                title="No fee structure yet"
+                description="No fee structure has been assigned to your account yet."
+              />
+            ) : (
+              <>
+                <div className={styles.summaryCard}>
+                  <div className={styles.summaryItem}>
+                    <span className={styles.summaryLabel}>Total Fees</span>
+                    <span className={styles.summaryValue}>${data.totalAmount.toLocaleString()}</span>
                   </div>
-
-                  <div className={styles.instFooter}>
-                    <StatusBadge status={inst.status} />
-                    <div className={styles.actions}>
-                      {inst.status === 'paid' ? (
-                        <button 
-                          className={styles.btnSecondary}
-                          onClick={() => handleDownloadReceipt(inst.paymentId)}
-                        >
-                          <Download size={16} /> Receipt
-                        </button>
-                      ) : (
-                        <button 
-                          className={styles.btnPrimary}
-                          onClick={() => handlePayNow(inst)}
-                          disabled={isPaying}
-                        >
-                          <CreditCard size={16} /> Pay Now
-                        </button>
-                      )}
-                    </div>
+                  <div className={styles.summaryItem}>
+                    <span className={styles.summaryLabel}>Pending Amount</span>
+                    <span className={`${styles.summaryValue} ${data.pendingAmount > 0 ? styles.textWarning : styles.textSuccess}`}>
+                      ${data.pendingAmount.toLocaleString()}
+                    </span>
                   </div>
                 </div>
-              ))}
-            </div>
-          </>
-        )}
 
-        {isPaying && (
-          <div className={styles.overlay}>
-            <div className={styles.overlayContent}>
-              <div className={styles.spinner}></div>
-              <h3>Processing Payment</h3>
-              <p>Please do not refresh or close this page.</p>
-              <p className={styles.subtext}>Waiting for secure gateway confirmation...</p>
+                <h3 className={styles.sectionTitle}>Installments</h3>
+                <StaggerList className={styles.installmentList}>
+                  {installments.map((inst) => (
+                    <StaggerItem key={inst.index}>
+                      <div className={styles.installmentCard}>
+                        <div className={styles.instHeader}>
+                          <div className={styles.instInfo}>
+                            <DollarSign size={20} className={styles.instIcon} />
+                            <div>
+                              <h4 className={styles.instTitle}>Installment {inst.index + 1}</h4>
+                              <p className={styles.instDate}>
+                                Due: {new Date(inst.dueDate).toLocaleDateString()}
+                              </p>
+                            </div>
+                          </div>
+                          <div className={styles.instAmount}>${inst.amount.toLocaleString()}</div>
+                        </div>
+
+                        <div className={styles.instFooter}>
+                          <StatusBadge status={inst.status} />
+                          <div className={styles.actions}>
+                            {inst.status === 'paid' ? (
+                              <button
+                                className={styles.btnSecondary}
+                                onClick={() => handleDownloadReceipt(inst.paymentId)}
+                              >
+                                <Download size={16} /> Receipt
+                              </button>
+                            ) : (
+                              <button
+                                className={styles.btnPrimary}
+                                onClick={() => handlePayNow(inst)}
+                                disabled={isPaying}
+                              >
+                                <CreditCard size={16} /> Pay Now
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </StaggerItem>
+                  ))}
+                </StaggerList>
+              </>
+            )}
+          </FadeIn>
+
+          {isPaying && (
+            <div className={styles.overlay}>
+              <div className={styles.overlayContent}>
+                <div className={styles.spinner}></div>
+                <h3>Processing Payment</h3>
+                <p>Please do not refresh or close this page.</p>
+                <p className={styles.subtext}>Waiting for secure gateway confirmation...</p>
+              </div>
             </div>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      </PageTransition>
     </DashboardShell>
   );
 }
