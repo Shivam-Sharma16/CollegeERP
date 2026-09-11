@@ -41,7 +41,7 @@
 
 .actionButton {
   background: var(--color-primary);
-  color: #fff;
+  color: var(--color-text-on-primary, #ffffff);
   font-weight: 500;
   padding: var(--spacing-2) var(--spacing-5);
   border-radius: var(--radius-sm);

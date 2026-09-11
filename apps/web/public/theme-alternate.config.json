@@ -1,0 +1,31 @@
+{
+  "institution": {
+    "name": "Neon Academy of Design",
+    "logoUrl": "",
+    "faviconUrl": ""
+  },
+  "colors": {
+    "primary": "#39ff14",
+    "primaryLight": "#70ff57",
+    "secondary": "#ff073a",
+    "surface": "#121212",
+    "surfaceElevated": "#1e1e1e",
+    "bg": "#0a0a0a",
+    "border": "#333333",
+    "text": "#ffffff",
+    "textMuted": "#aaaaaa",
+    "danger": "#ff0000",
+    "success": "#00ff00",
+    "warning": "#ffea00"
+  },
+  "fonts": {
+    "heading": "Outfit",
+    "body": "Outfit",
+    "importUrl": "https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap"
+  },
+  "radius": {
+    "sm": "4px",
+    "md": "8px",
+    "lg": "12px"
+  }
+}

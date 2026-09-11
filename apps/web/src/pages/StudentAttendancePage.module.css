@@ -95,7 +95,7 @@
 
 .tabBtn.activeTab {
   background: var(--color-primary, #6366f1);
-  color: #ffffff;
+  color: var(--color-text-on-primary, #ffffff);
   font-weight: 600;
   box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);
 }
@@ -653,7 +653,7 @@
   position: absolute;
   font-size: 0.9375rem;
   font-weight: 700;
-  color: #ffffff;
+  color: var(--color-text-on-primary, #ffffff);
 }
 
 .livenessContent {
@@ -665,7 +665,7 @@
 .livenessTitle {
   font-size: 0.9375rem;
   font-weight: 600;
-  color: #f8fafc;
+  color: var(--color-text-on-primary, #ffffff);
   margin: 0;
 }
 

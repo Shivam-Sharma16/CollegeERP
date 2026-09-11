@@ -16,10 +16,18 @@
 
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import usePageMeta from '../hooks/usePageMeta';
 
 export function ProtectedRoute({ children, allowedRoles = [] }) {
   const { isAuthenticated, user } = useAuth();
   const location = useLocation();
+
+  // Add noindex to all authenticated routes automatically (Phase 59)
+  usePageMeta({
+    title: 'Dashboard',
+    description: 'Internal college dashboard',
+    isPublic: false
+  });
 
   // ── 1. Must be logged in ──────────────────────────────────────────────────
   if (!isAuthenticated) {

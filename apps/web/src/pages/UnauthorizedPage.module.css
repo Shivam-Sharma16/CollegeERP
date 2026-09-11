@@ -204,7 +204,7 @@
   place-items: center;
   font-weight: 700;
   font-size: var(--text-sm);
-  color: #fff;
+  color: var(--color-text-on-primary, #ffffff);
 }
 
 .userName {
@@ -333,7 +333,7 @@
 .btn {
   padding: .65rem var(--spacing-6);
   background: var(--color-primary);
-  color: #fff;
+  color: var(--color-text-on-primary, #ffffff);
   font-family: var(--font-body);
   font-weight: 600;
   font-size: var(--text-sm);

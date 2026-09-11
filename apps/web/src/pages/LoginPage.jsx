@@ -4,11 +4,18 @@ import { useLoginMutation } from '../api/authApi';
 import { useAppSelector, useAppDispatch } from '../store';
 import { setCredentials } from '../features/ui/authSlice';
 import { selectInstitutionName, selectInstitutionLogo } from '../features/ui/themeSlice';
+import usePageMeta from '../hooks/usePageMeta';
 import { PageTransition } from '../components/ui/PageTransition';
 import { StaggerList, StaggerItem } from '../components/ui/StaggerList';
 import styles from './LoginPage.module.css';
 
 export default function LoginPage() {
+  usePageMeta({
+    title: 'Login',
+    description: 'Log in to the College ERP system to access your dashboard.',
+    isPublic: true
+  });
+
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useAppDispatch();

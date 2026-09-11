@@ -24,7 +24,7 @@
 /* Primary: filled, --color-primary bg */
 .primary {
   background-color: var(--color-primary);
-  color: #fff; /* Ensure text is always legible */
+  color: var(--color-text-on-primary, #ffffff); /* Ensure text is always legible */
 }
 .primary:not(:disabled):hover {
   background-color: var(--color-primary-light);

@@ -5,9 +5,16 @@ import { useAppSelector } from '../store';
 import { selectInstitutionName, selectInstitutionLogo } from '../features/ui/themeSlice';
 import { PageTransition } from '../components/ui/PageTransition';
 import { StaggerList, StaggerItem } from '../components/ui/StaggerList';
+import usePageMeta from '../hooks/usePageMeta';
 import styles from './SuperadminSignupPage.module.css';
 
 export default function SuperadminSignupPage() {
+  usePageMeta({
+    title: 'Super Admin Setup',
+    description: 'Setup the initial super admin account for the ERP system.',
+    isPublic: true
+  });
+
   const navigate = useNavigate();
 
   const [name, setName] = useState('');

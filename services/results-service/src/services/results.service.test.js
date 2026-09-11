@@ -65,7 +65,7 @@ describe('Results Pipeline', () => {
     const grade = await computeFinalGrade(studentId, subjectId);
     
     // Check against expected percentage 85.5
-    expect(grade).toBeCloseTo(85.5, 2);
+    expect(grade.finalGrade).toBeCloseTo(85.5, 2);
   });
 
   it('2. Rejects creating an ExamType that pushes the sum over 1.0', async () => {

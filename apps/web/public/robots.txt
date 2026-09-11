@@ -1,0 +1,9 @@
+User-agent: *
+Disallow: /admin/
+Disallow: /hod/
+Disallow: /faculty/
+Disallow: /cc/
+Disallow: /student/
+Disallow: /dashboard/
+
+Sitemap: https://yourdomain.com/sitemap.xml

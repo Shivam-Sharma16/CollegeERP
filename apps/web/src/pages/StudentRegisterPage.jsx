@@ -6,9 +6,16 @@ import { useAppSelector } from '../store';
 import { selectInstitutionName, selectInstitutionLogo } from '../features/ui/themeSlice';
 import { PageTransition } from '../components/ui/PageTransition';
 import { StaggerList, StaggerItem } from '../components/ui/StaggerList';
+import usePageMeta from '../hooks/usePageMeta';
 import styles from './StudentRegisterPage.module.css';
 
 export default function StudentRegisterPage() {
+  usePageMeta({
+    title: 'Student Registration',
+    description: 'Register as a student in the College ERP system.',
+    isPublic: true
+  });
+
   const navigate = useNavigate();
 
   const [name, setName] = useState('');
