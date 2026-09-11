@@ -24,6 +24,7 @@ app.use(express.json());
 app.use('/', healthRoute);
 
 // Public REST routes — require user JWT
+app.use('/notifications', notificationRoute);
 app.use('/api/notifications', notificationRoute);
 
 // Internal routes — require x-internal-key header (service-to-service only)

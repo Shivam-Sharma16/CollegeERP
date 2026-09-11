@@ -18,7 +18,8 @@ app.use(express.json());
 // Mount health route
 app.use('/', healthRoute);
 
-// Placeholder for feature routes
+// Feature routes
+app.use('/fees', require('./routes/fees.route'));
 app.use('/api/fees', require('./routes/fees.route'));
 
 connectDB();

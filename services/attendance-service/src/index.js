@@ -23,6 +23,11 @@ app.use('/sessions', sessionRoute);
 app.use('/records',  recordRoute);
 app.use('/summary',  recordRoute);
 
+app.use('/api/attendance/sessions', sessionRoute);
+app.use('/api/attendance/records',  recordRoute);
+app.use('/api/attendance/summary',  recordRoute);
+app.use('/api/attendance',          sessionRoute);
+
 connectDB();
 
 app.listen(env.PORT, () => {

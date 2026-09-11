@@ -26,6 +26,7 @@ app.use('/', healthRoute);
 
 // Mount auth routes
 app.use('/auth', authRoute);
+app.use('/api/auth', authRoute);
 
 connectDB();
 

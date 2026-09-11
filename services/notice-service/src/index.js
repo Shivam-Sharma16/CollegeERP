@@ -19,7 +19,10 @@ app.use(express.json());
 app.use('/', healthRoute);
 
 // Feature routes
+app.use('/notice', require('./routes/notice.route'));
+app.use('/notices', require('./routes/notice.route'));
 app.use('/api/notice', require('./routes/notice.route'));
+app.use('/api/notices', require('./routes/notice.route'));
 
 connectDB();
 

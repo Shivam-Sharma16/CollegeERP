@@ -24,6 +24,14 @@ app.use('/exam-types', examTypeRoute);
 app.use('/marks',      marksRoute);
 app.use('/students',   transcriptRoute);
 
+app.use('/api/exam-types',          examTypeRoute);
+app.use('/api/marks',               marksRoute);
+app.use('/api/students',            transcriptRoute);
+app.use('/api/results/exam-types',  examTypeRoute);
+app.use('/api/results/marks',       marksRoute);
+app.use('/api/results/students',    transcriptRoute);
+app.use('/api/results',             marksRoute);
+
 connectDB();
 
 app.listen(env.PORT, () => {

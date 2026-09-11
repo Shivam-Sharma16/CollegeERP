@@ -17,8 +17,9 @@ app.use(express.json());
 // Mount health route
 app.use('/', healthRoute);
 
-// Placeholder for feature routes
-// app.use('/api/gateway', require('./routes/gateway.route'));
+// Mount reverse proxies for microservices
+const { registerProxies } = require('./routes/proxy');
+registerProxies(app);
 
 
 app.listen(env.PORT, () => {

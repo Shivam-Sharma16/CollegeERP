@@ -30,6 +30,19 @@ app.use('/subjects',           subjectRoute);
 app.use('/teaching-assignments', teachingRoute);
 app.use('/section-assignments',  sectionAssignmentRoute);
 
+app.use('/api/years', yearRoute);
+app.use('/api/semesters', semesterRoute);
+app.use('/api/sections', sectionRoute);
+app.use('/api/subjects', subjectRoute);
+app.use('/api/teaching-assignments', teachingRoute);
+app.use('/api/section-assignments', sectionAssignmentRoute);
+app.use('/api/academics/years', yearRoute);
+app.use('/api/academics/semesters', semesterRoute);
+app.use('/api/academics/sections', sectionRoute);
+app.use('/api/academics/subjects', subjectRoute);
+app.use('/api/academics/teaching-assignments', teachingRoute);
+app.use('/api/academics/section-assignments', sectionAssignmentRoute);
+
 connectDB();
 
 app.listen(env.PORT, () => {

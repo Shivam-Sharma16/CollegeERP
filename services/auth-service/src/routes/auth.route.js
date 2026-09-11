@@ -45,6 +45,8 @@ const loginSchema = Joi.object({
 
 // Routes
 router.post('/superadmin/signup', superadminLimiter, validate(superadminSchema), authController.superadminSignup);
+router.post('/superadmin-signup', superadminLimiter, validate(superadminSchema), authController.superadminSignup);
+router.post('/register', standardLimiter, validate(studentRegisterSchema), authController.registerStudent);
 router.post('/register/student', standardLimiter, validate(studentRegisterSchema), authController.registerStudent);
 router.post('/login', standardLimiter, validate(loginSchema), authController.login);
 router.post('/refresh', standardLimiter, authController.refresh);

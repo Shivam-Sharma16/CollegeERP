@@ -21,6 +21,8 @@ app.use('/', healthRoute);
 // Feature routes
 app.use('/departments', departmentRoute);
 app.use('/users', userRoute);
+app.use('/api/departments', departmentRoute);
+app.use('/api/users', userRoute);
 
 connectDB();
 
