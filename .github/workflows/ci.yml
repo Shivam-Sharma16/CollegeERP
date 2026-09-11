@@ -1,0 +1,122 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [main, master, develop]
+  pull_request:
+    branches: [main, master, develop]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Lint (All Workspaces)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run linter across all workspaces
+        run: npm run lint
+
+  unit-tests:
+    name: Unit Tests (All Workspaces)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run unit tests across all workspaces
+        run: npm run test --workspaces --if-present
+
+  build-check:
+    name: Build Check (Per Service & Web App)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run build checks across all workspaces
+        run: npm run build
+
+  e2e-tests:
+    name: E2E Suite (Phase 62 Docker Compose Stack)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers & dependencies
+        run: npx playwright install --with-deps chromium
+        working-directory: apps/web
+
+      - name: Spin up Docker Compose test environment
+        run: docker compose -f docker-compose.test.yml up -d --build
+
+      - name: Wait for backend services to become ready
+        run: |
+          echo "Waiting for core backend services..."
+          for i in {1..30}; do
+            if curl -s http://localhost:4000/ > /dev/null 2>&1; then
+              echo "Gateway is up and responding."
+              break
+            fi
+            echo "Waiting for services to initialize ($i/30)..."
+            sleep 2
+          done
+
+      - name: Run Phase 62 E2E critical-chain tests
+        run: npm run test:e2e --workspace=apps/web
+        env:
+          CI: true
+          SUPERADMIN_SETUP_KEY: changeme123_secret_example
+
+      - name: Teardown Docker Compose test environment
+        if: always()
+        run: docker compose -f docker-compose.test.yml down -v
+
+      - name: Upload Playwright test report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: apps/web/playwright-report/
+          retention-days: 7

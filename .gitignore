@@ -6,3 +6,6 @@ build
 .DS_Store
 .env.example
 API_CONTRACTS.md
+playwright-report/
+test-results/
+coverage/

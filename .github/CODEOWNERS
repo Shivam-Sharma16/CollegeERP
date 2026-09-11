@@ -1,0 +1,6 @@
+# Monorepo Codeowners
+* @college-erp/core-team
+
+# Critical infrastructure & CI/CD
+/.github/ @college-erp/infra-team
+/docker-compose*.yml @college-erp/infra-team

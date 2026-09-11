@@ -1,0 +1,175 @@
+version: '3.8'
+
+services:
+  mongo:
+    image: mongo:7
+    ports:
+      - "27017:27017"
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  gateway:
+    build:
+      context: ./services/gateway
+    ports:
+      - "4000:4000"
+    environment:
+      - PORT=4000
+      - MONGO_URI=mongodb://mongo:27017/college_erp_test
+      - NODE_ENV=test
+    depends_on:
+      mongo:
+        condition: service_healthy
+
+  auth-service:
+    build:
+      context: ./services/auth-service
+    ports:
+      - "4001:4001"
+    environment:
+      - PORT=4001
+      - MONGO_URI=mongodb://mongo:27017/college_erp_test
+      - JWT_ACCESS_SECRET=ci_test_jwt_access_secret_12345
+      - JWT_REFRESH_SECRET=ci_test_jwt_refresh_secret_12345
+      - SUPERADMIN_SETUP_KEY=changeme123_secret_example
+      - NODE_ENV=test
+    depends_on:
+      mongo:
+        condition: service_healthy
+
+  user-service:
+    build:
+      context: ./services/user-service
+    ports:
+      - "4002:4002"
+    environment:
+      - PORT=4002
+      - MONGO_URI=mongodb://mongo:27017/college_erp_test
+      - JWT_ACCESS_SECRET=ci_test_jwt_access_secret_12345
+      - NODE_ENV=test
+    depends_on:
+      mongo:
+        condition: service_healthy
+
+  academic-service:
+    build:
+      context: ./services/academic-service
+    ports:
+      - "4003:4003"
+    environment:
+      - PORT=4003
+      - MONGO_URI=mongodb://mongo:27017/college_erp_test
+      - JWT_ACCESS_SECRET=ci_test_jwt_access_secret_12345
+      - NODE_ENV=test
+    depends_on:
+      mongo:
+        condition: service_healthy
+
+  attendance-service:
+    build:
+      context: ./services/attendance-service
+    ports:
+      - "4004:4004"
+    environment:
+      - PORT=4004
+      - MONGO_URI=mongodb://mongo:27017/college_erp_test
+      - REDIS_URL=redis://redis:6379
+      - INTERNAL_SERVICE_KEY=ci_test_internal_key
+      - NOTIFICATION_SERVICE_URL=http://notification-service:4008
+      - NODE_ENV=test
+    depends_on:
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  results-service:
+    build:
+      context: ./services/results-service
+    ports:
+      - "4005:4005"
+    environment:
+      - PORT=4005
+      - MONGO_URI=mongodb://mongo:27017/college_erp_test
+      - JWT_ACCESS_SECRET=ci_test_jwt_access_secret_12345
+      - NODE_ENV=test
+    depends_on:
+      mongo:
+        condition: service_healthy
+
+  fees-service:
+    build:
+      context: ./services/fees-service
+    ports:
+      - "4006:4006"
+    environment:
+      - PORT=4006
+      - MONGO_URI=mongodb://mongo:27017/college_erp_test
+      - JWT_ACCESS_SECRET=ci_test_jwt_access_secret_12345
+      - NODE_ENV=test
+    depends_on:
+      mongo:
+        condition: service_healthy
+
+  notice-service:
+    build:
+      context: ./services/notice-service
+    ports:
+      - "4007:4007"
+    environment:
+      - PORT=4007
+      - MONGO_URI=mongodb://mongo:27017/college_erp_test
+      - NODE_ENV=test
+    depends_on:
+      mongo:
+        condition: service_healthy
+
+  notification-service:
+    build:
+      context: ./services/notification-service
+    ports:
+      - "4008:4008"
+    environment:
+      - PORT=4008
+      - MONGO_URI=mongodb://mongo:27017/college_erp_test
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=ci_test_jwt_access_secret_12345
+      - INTERNAL_SERVICE_KEY=ci_test_internal_key
+      - NODE_ENV=test
+    depends_on:
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  ai-agent-service:
+    build:
+      context: ./services/ai-agent-service
+    ports:
+      - "4009:4009"
+    environment:
+      - PORT=4009
+      - MONGO_URI=mongodb://mongo:27017/college_erp_test
+      - JWT_SECRET=ci_test_jwt_access_secret_12345
+      - INTERNAL_SERVICE_KEY=ci_test_internal_key
+      - ATTENDANCE_SERVICE_URL=http://attendance-service:4004
+      - RESULTS_SERVICE_URL=http://results-service:4005
+      - FEES_SERVICE_URL=http://fees-service:4006
+      - NOTICE_SERVICE_URL=http://notice-service:4007
+      - NODE_ENV=test
+    depends_on:
+      mongo:
+        condition: service_healthy

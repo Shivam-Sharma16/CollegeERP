@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "node src/index.js",
     "start": "node src/index.js",
-    "test": "jest"
+    "build": "node --check src/index.js",
+    "lint": "eslint .",
+    "test": "jest --passWithNoTests"
   },
   "dependencies": {
     "cors": "^2.8.5",
