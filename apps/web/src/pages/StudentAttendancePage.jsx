@@ -382,7 +382,7 @@ export default function StudentAttendancePage() {
       <div className={styles.container}>
         {/* ── KPI Summary Bar ── */}
         <div className={styles.kpiGrid}>
-          <div className={styles.kpiCard} style={{ '--card-accent': '#22c55e', '--card-value-color': '#4ade80' }}>
+          <div className={styles.kpiCard} style={{ '--card-accent': 'var(--color-status-present)', '--card-value-color': 'color-mix(in srgb, var(--color-status-present) 80%, white)' }}>
             <span className={styles.kpiLabel}>
               <ShieldCheck size={16} /> Attendance Rate
             </span>
@@ -392,7 +392,7 @@ export default function StudentAttendancePage() {
             <span className={styles.kpiMeta}>Required: 75% minimum</span>
           </div>
 
-          <div className={styles.kpiCard} style={{ '--card-accent': '#6366f1', '--card-value-color': '#818cf8' }}>
+          <div className={styles.kpiCard} style={{ '--card-accent': 'var(--color-primary)', '--card-value-color': 'var(--color-primary-light)' }}>
             <span className={styles.kpiLabel}>
               <Calendar size={16} /> Total Sessions
             </span>
@@ -400,7 +400,7 @@ export default function StudentAttendancePage() {
             <span className={styles.kpiMeta}>Academic Year 2024-25</span>
           </div>
 
-          <div className={styles.kpiCard} style={{ '--card-accent': '#38bdf8', '--card-value-color': '#38bdf8' }}>
+          <div className={styles.kpiCard} style={{ '--card-accent': 'var(--color-secondary)', '--card-value-color': 'var(--color-secondary)' }}>
             <span className={styles.kpiLabel}>
               <UserCheck size={16} /> Present Count
             </span>
@@ -408,7 +408,7 @@ export default function StudentAttendancePage() {
             <span className={styles.kpiMeta}>Verified check-ins</span>
           </div>
 
-          <div className={styles.kpiCard} style={{ '--card-accent': '#f59e0b', '--card-value-color': '#fbbf24' }}>
+          <div className={styles.kpiCard} style={{ '--card-accent': 'var(--color-status-flagged)', '--card-value-color': 'color-mix(in srgb, var(--color-status-flagged) 80%, white)' }}>
             <span className={styles.kpiLabel}>
               <AlertTriangle size={16} /> Flagged Disputes
             </span>
@@ -442,7 +442,7 @@ export default function StudentAttendancePage() {
             <div className={styles.scannerCard}>
               <div className={styles.cardHeader}>
                 <div className={styles.cardTitleWrap}>
-                  <QrCode size={20} color="var(--color-primary, #6366f1)" />
+                  <QrCode size={20} color="var(--color-primary)" />
                   <div>
                     <h2 className={styles.cardTitle}>QR Scanner</h2>
                     <p className={styles.cardSubtitle}>Align the dynamic classroom QR code within frame</p>
@@ -467,7 +467,7 @@ export default function StudentAttendancePage() {
 
                 {!isCameraActive && (
                   <div className={styles.noCameraOverlay}>
-                    <CameraOff size={44} color="#64748b" />
+                    <CameraOff size={44} color="var(--color-text-muted)" />
                     <p style={{ margin: 0, fontSize: '0.875rem' }}>Camera preview standby</p>
                     <button
                       onClick={startCamera}
@@ -490,7 +490,7 @@ export default function StudentAttendancePage() {
                       <div className={styles.laserLine}></div>
                     </div>
                     <div className={styles.scannerHint}>
-                      <Zap size={14} color="#facc15" />
+                      <Zap size={14} color="var(--color-status-flagged)" />
                       Keep device steady
                     </div>
                   </div>
@@ -532,7 +532,7 @@ export default function StudentAttendancePage() {
                       <div className={styles.successCircle}>
                         <CheckCircle2 size={42} />
                       </div>
-                      <h3 className={styles.statusTitle} style={{ color: '#4ade80' }}>
+                      <h3 className={styles.statusTitle} style={{ color: 'var(--color-status-present)' }}>
                         Check-in Confirmed!
                       </h3>
                       <p className={styles.statusDesc} style={{ marginBottom: '1rem' }}>
@@ -557,7 +557,7 @@ export default function StudentAttendancePage() {
                       <div className={styles.errorCircle}>
                         <XCircle size={42} />
                       </div>
-                      <h3 className={styles.statusTitle} style={{ color: '#f87171' }}>
+                      <h3 className={styles.statusTitle} style={{ color: 'var(--color-status-absent)' }}>
                         Verification Denied
                       </h3>
                       <div className={styles.specificErrorBox}>
@@ -586,14 +586,14 @@ export default function StudentAttendancePage() {
                       <div className={styles.warningCircle}>
                         <MapPin size={42} />
                       </div>
-                      <h3 className={styles.statusTitle} style={{ color: '#fbbf24' }}>
+                      <h3 className={styles.statusTitle} style={{ color: 'var(--color-status-flagged)' }}>
                         Geofence Alert
                       </h3>
                       <div
                         className={styles.specificErrorBox}
-                        style={{ background: 'rgba(245, 158, 11, 0.1)', borderColor: 'rgba(245, 158, 11, 0.3)' }}
+                        style={{ background: 'color-mix(in srgb, var(--color-status-flagged) 10%, transparent)', borderColor: 'color-mix(in srgb, var(--color-status-flagged) 30%, transparent)' }}
                       >
-                        <p className={styles.specificErrorText} style={{ color: '#fcd34d' }} id="error-geofence-fail">
+                        <p className={styles.specificErrorText} style={{ color: 'color-mix(in srgb, var(--color-status-flagged) 80%, white)' }} id="error-geofence-fail">
                           You appear to be outside the classroom
                         </p>
                       </div>
@@ -615,17 +615,17 @@ export default function StudentAttendancePage() {
                       exit={{ opacity: 0 }}
                       className={styles.statusBackdrop}
                     >
-                      <div className={styles.warningCircle} style={{ borderColor: '#a855f7', color: '#c084fc' }}>
+                      <div className={styles.warningCircle} style={{ borderColor: 'var(--color-secondary)', color: 'color-mix(in srgb, var(--color-secondary) 80%, white)' }}>
                         <UserCheck size={42} />
                       </div>
-                      <h3 className={styles.statusTitle} style={{ color: '#c084fc' }}>
+                      <h3 className={styles.statusTitle} style={{ color: 'color-mix(in srgb, var(--color-secondary) 80%, white)' }}>
                         Duplicate Submission
                       </h3>
                       <div
                         className={styles.specificErrorBox}
-                        style={{ background: 'rgba(168, 85, 247, 0.1)', borderColor: 'rgba(168, 85, 247, 0.3)' }}
+                        style={{ background: 'color-mix(in srgb, var(--color-secondary) 10%, transparent)', borderColor: 'color-mix(in srgb, var(--color-secondary) 30%, transparent)' }}
                       >
-                        <p className={styles.specificErrorText} style={{ color: '#e9d5ff' }} id="error-already-checked-in">
+                        <p className={styles.specificErrorText} style={{ color: 'color-mix(in srgb, var(--color-secondary) 80%, white)' }} id="error-already-checked-in">
                           You have already checked in to this session
                         </p>
                       </div>
@@ -646,7 +646,7 @@ export default function StudentAttendancePage() {
               {/* Device Telemetry Card */}
               <div className={styles.deviceInfoCard}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 600, fontSize: '0.9375rem' }}>
-                  <ShieldCheck size={18} color="#6366f1" />
+                  <ShieldCheck size={18} color="var(--color-primary)" />
                   Security Telemetry
                 </div>
 
@@ -659,14 +659,14 @@ export default function StudentAttendancePage() {
 
                 <div className={styles.infoRow}>
                   <span className={styles.infoLabel}>GPS Status</span>
-                  <span className={styles.infoValue} style={{ color: '#4ade80' }}>
+                  <span className={styles.infoValue} style={{ color: 'var(--color-status-present)' }}>
                     {locationCoords ? `${locationCoords.lat.toFixed(4)}, ${locationCoords.lng.toFixed(4)}` : 'Ready'}
                   </span>
                 </div>
 
                 <div className={styles.infoRow}>
                   <span className={styles.infoLabel}>Socket Link</span>
-                  <span className={styles.infoValue} style={{ color: socketConnected ? '#4ade80' : '#f87171' }}>
+                  <span className={styles.infoValue} style={{ color: socketConnected ? 'var(--color-status-present)' : 'var(--color-status-absent)' }}>
                     {socketConnected ? 'Connected (4004)' : 'Offline'}
                   </span>
                 </div>
@@ -681,12 +681,12 @@ export default function StudentAttendancePage() {
               <div className={styles.simulatorCard}>
                 <div className={styles.simulatorHeader}>
                   <span className={styles.simulatorTitle}>
-                    <Zap size={16} color="#818cf8" />
+                    <Zap size={16} color="var(--color-primary-light)" />
                     Interactive Mode Simulator
                   </span>
                   <span className={styles.simBadge}>Tester Panel</span>
                 </div>
-                <p style={{ fontSize: '0.75rem', color: '#94a3b8', margin: 0 }}>
+                <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', margin: 0 }}>
                   Test all required check-in failure modes and liveness pings without needing a live faculty classroom broadcast:
                 </p>
 
@@ -749,7 +749,7 @@ export default function StudentAttendancePage() {
             <div className={styles.historyHeader}>
               <div>
                 <h3 style={{ margin: 0, fontSize: '1.125rem', fontWeight: 600 }}>Past Attendance Sessions</h3>
-                <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.8125rem', color: '#94a3b8' }}>
+                <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.8125rem', color: 'var(--color-text-muted)' }}>
                   Review recorded check-ins, validation methods, and flagged entries
                 </p>
               </div>
@@ -776,7 +776,7 @@ export default function StudentAttendancePage() {
             {historyView === 'table' && (
               <div style={{ overflowX: 'auto' }}>
                 <div style={{ minWidth: '700px' }}>
-                  <div style={{ display: 'flex', padding: '0.75rem 1rem', borderBottom: '1px solid var(--border-color, #1e293b)', fontWeight: 600, color: '#94a3b8', fontSize: '0.875rem' }}>
+                  <div style={{ display: 'flex', padding: '0.75rem 1rem', borderBottom: '1px solid var(--color-border)', fontWeight: 600, color: 'var(--color-text-muted)', fontSize: '0.875rem' }}>
                     <div style={{ flex: 1.5 }}>Date & Time</div>
                     <div style={{ flex: 2 }}>Subject</div>
                     <div style={{ flex: 1.5 }}>Faculty</div>
@@ -792,20 +792,20 @@ export default function StudentAttendancePage() {
                     {({ index, style }) => {
                       const rec = records[index];
                       return (
-                        <div style={{ ...style, display: 'flex', alignItems: 'center', padding: '0 1rem', borderBottom: '1px solid var(--border-color, #1e293b)' }}>
+                        <div style={{ ...style, display: 'flex', alignItems: 'center', padding: '0 1rem', borderBottom: '1px solid var(--color-border)' }}>
                           <div style={{ flex: 1.5, display: 'flex', alignItems: 'center', gap: '0.5rem', overflow: 'hidden', paddingRight: '1rem' }}>
-                            <Clock size={14} color="#94a3b8" style={{ flexShrink: 0 }} />
+                            <Clock size={14} color="var(--color-text-muted)" style={{ flexShrink: 0 }} />
                             <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={new Date(rec.date || rec.createdAt).toLocaleDateString()}>
                               {new Date(rec.date || rec.createdAt).toLocaleDateString()}
                             </span>
-                            <span style={{ fontSize: '0.75rem', color: '#64748b', whiteSpace: 'nowrap' }}>
+                            <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', whiteSpace: 'nowrap' }}>
                               {new Date(rec.date || rec.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                             </span>
                           </div>
                           <div style={{ flex: 2, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', paddingRight: '1rem' }} title={rec.subject || rec.lectureSessionId?.topic || 'Core Lecture'}>
                             {rec.subject || rec.lectureSessionId?.topic || 'Core Lecture'}
                           </div>
-                          <div style={{ flex: 1.5, color: '#94a3b8', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', paddingRight: '1rem' }} title={rec.faculty || 'Faculty Assigned'}>
+                          <div style={{ flex: 1.5, color: 'var(--color-text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', paddingRight: '1rem' }} title={rec.faculty || 'Faculty Assigned'}>
                             {rec.faculty || 'Faculty Assigned'}
                           </div>
                           <div style={{ flex: 1, overflow: 'hidden', paddingRight: '1rem' }}>
@@ -833,10 +833,10 @@ export default function StudentAttendancePage() {
             {historyView === 'heatmap' && (
               <div className={styles.heatmapContainer} id="attendance-heatmap-container">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: '#e2e8f0' }}>
+                  <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--color-text)' }}>
                     12-Week Attendance Heatmap
                   </span>
-                  <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Recent activity (Mon - Sun)</span>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>Recent activity (Mon - Sun)</span>
                 </div>
 
                 <div className={styles.heatmapGrid}>
@@ -906,12 +906,12 @@ export default function StudentAttendancePage() {
                         strokeDashoffset={
                           2 * Math.PI * 18 * (1 - livenessPing.remainingSeconds / livenessPing.totalSeconds)
                         }
-                        stroke={
+                         stroke={
                           livenessPing.remainingSeconds > 15
-                            ? '#22c55e'
+                            ? 'var(--color-status-present)'
                             : livenessPing.remainingSeconds > 7
-                            ? '#f59e0b'
-                            : '#ef4444'
+                            ? 'var(--color-status-flagged)'
+                            : 'var(--color-status-absent)'
                         }
                       />
                     </svg>
@@ -923,7 +923,7 @@ export default function StudentAttendancePage() {
                   {/* Liveness Content */}
                   <div className={styles.livenessContent}>
                     <h4 className={styles.livenessTitle}>
-                      <Radio size={14} color="#818cf8" style={{ display: 'inline', marginRight: '4px' }} />
+                      <Radio size={14} color="var(--color-primary-light)" style={{ display: 'inline', marginRight: '4px' }} />
                       Liveness Ping Active
                     </h4>
                     <p className={styles.livenessMsg}>
@@ -945,12 +945,12 @@ export default function StudentAttendancePage() {
                   ) : (
                     <div
                       style={{
-                        color: '#f87171',
+                        color: 'var(--color-status-absent)',
                         fontSize: '0.8125rem',
                         fontWeight: 600,
                         textAlign: 'center',
                         padding: '0.4rem',
-                        background: 'rgba(239, 68, 68, 0.1)',
+                        background: 'color-mix(in srgb, var(--color-status-absent) 10%, transparent)',
                         borderRadius: '8px'
                       }}
                     >

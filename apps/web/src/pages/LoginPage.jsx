@@ -99,7 +99,7 @@ export default function LoginPage() {
               </StaggerItem>
 
               <StaggerItem>
-                <div style={{ marginTop: '1rem', borderTop: '1px solid rgba(255, 255, 255, 0.08)', paddingTop: '0.75rem', textAlign: 'center' }}>
+                <div style={{ marginTop: '1rem', borderTop: '1px solid var(--color-border)', paddingTop: '0.75rem', textAlign: 'center' }}>
                   <button
                     id="btn-demo-student-login"
                     type="button"
@@ -115,18 +115,7 @@ export default function LoginPage() {
                       }));
                       navigate('/attendance', { replace: true });
                     }}
-                    style={{
-                      width: '100%',
-                      padding: '0.625rem 1rem',
-                      borderRadius: '8px',
-                      border: '1px dashed rgba(99, 102, 241, 0.5)',
-                      background: 'rgba(99, 102, 241, 0.1)',
-                      color: '#c7d2fe',
-                      fontWeight: 600,
-                      fontSize: '0.875rem',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s'
-                    }}
+                    className={styles.demoBtn}
                   >
                     🎓 Quick Demo Student Login
                   </button>

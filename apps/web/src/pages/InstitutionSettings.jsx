@@ -8,6 +8,7 @@ import { FadeIn } from '../components/ui/FadeIn';
 import { Skeleton } from '../components/ui/Skeleton';
 import { useToast } from '../components/ui/ToastContext';
 import { useGetThemeConfigQuery, useUpdateThemeConfigMutation } from '../api/settingsApi';
+import { DEFAULT_COLORS } from '../features/ui/themeSlice';
 import styles from './InstitutionSettings.module.css';
 
 // Helper to read file as Base64
@@ -25,8 +26,8 @@ export default function InstitutionSettings() {
 
   const [formState, setFormState] = useState({
     name: '',
-    primary: '#6366f1',
-    secondary: '#22d3ee',
+    primary: DEFAULT_COLORS.primary,
+    secondary: DEFAULT_COLORS.secondary,
     logoUrl: '',
     faviconUrl: '',
   });
@@ -40,8 +41,8 @@ export default function InstitutionSettings() {
     if (configData) {
       const state = {
         name: configData.institution?.name || '',
-        primary: configData.colors?.primary || '#6366f1',
-        secondary: configData.colors?.secondary || '#22d3ee',
+        primary: configData.colors?.primary || DEFAULT_COLORS.primary,
+        secondary: configData.colors?.secondary || DEFAULT_COLORS.secondary,
         logoUrl: configData.institution?.logoUrl || '',
         faviconUrl: configData.institution?.faviconUrl || '',
       };

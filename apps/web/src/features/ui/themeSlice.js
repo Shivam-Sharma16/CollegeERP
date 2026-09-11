@@ -49,6 +49,23 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 
 // ── CSS variable defaults (mirror tokens.css) ──────────────────────────────────
+// Exported so consumers (e.g. InstitutionSettings) can reference canonical defaults
+// without duplicating hex literals.
+export const DEFAULT_COLORS = {
+  primary:         '#6366f1',
+  primaryLight:    '#818cf8',
+  secondary:       '#22d3ee',
+  surface:         '#1a1d2e',
+  surfaceElevated: '#232741',
+  bg:              '#0f1117',
+  border:          '#2e3455',
+  text:            '#e2e8f0',
+  textMuted:       '#94a3b8',
+  danger:          '#f43f5e',
+  success:         '#10b981',
+  warning:         '#f59e0b',
+};
+
 const CSS_DEFAULTS = {
   '--color-primary':          '#6366f1',
   '--color-primary-light':    '#818cf8',
@@ -210,6 +227,6 @@ export default themeSlice.reducer;
 // ── Selectors ─────────────────────────────────────────────────────────────────
 export const selectThemeCssVars    = (state) => state.theme.cssVars;
 export const selectInstitution     = (state) => state.theme.institution;
-export const selectInstitutionName = (state) => state.theme.institution?.name ?? 'College ERP';
+export const selectInstitutionName = (state) => state.theme.institution?.name ?? 'ERP Portal';
 export const selectInstitutionLogo = (state) => state.theme.institution?.logoUrl ?? null;
 export const selectThemeLoading    = (state) => state.theme.loading;

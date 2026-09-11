@@ -168,3 +168,24 @@
   opacity: .5;
   cursor: not-allowed;
 }
+
+/* ── Demo login shortcut button ───────────────────────────────────────────── */
+/* Uses color-mix() so the tint follows --color-primary on theme swap.         */
+.demoBtn {
+  width: 100%;
+  padding: 0.625rem 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px dashed color-mix(in srgb, var(--color-primary) 60%, transparent);
+  background: color-mix(in srgb, var(--color-primary) 12%, transparent);
+  color: var(--color-primary-light);
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: var(--text-sm);
+  cursor: pointer;
+  transition: background var(--transition), border-color var(--transition);
+}
+
+.demoBtn:hover {
+  background: color-mix(in srgb, var(--color-primary) 20%, transparent);
+  border-color: color-mix(in srgb, var(--color-primary) 80%, transparent);
+}

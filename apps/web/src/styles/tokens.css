@@ -106,4 +106,14 @@
   --bp-md: 768px;
   --bp-lg: 1024px;
   --bp-xl: 1440px;
+
+  /* ── Semantic status tokens (attendance domain) ─────────────────────────── */
+  /* These alias the brand tokens so domain components stay theme-neutral.    */
+  --color-status-present:  var(--color-success);
+  --color-status-absent:   var(--color-danger);
+  --color-status-flagged:  var(--color-warning);
+
+  /* ── Text-on-primary: always-legible foreground on --color-primary bg ───── */
+  /* Use this instead of hardcoded #fff where the background is --color-primary */
+  --color-text-on-primary: #ffffff;
 }

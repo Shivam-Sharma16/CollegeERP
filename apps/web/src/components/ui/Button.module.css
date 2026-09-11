@@ -53,8 +53,9 @@
 /* Danger */
 .danger {
   background-color: var(--color-danger);
-  color: #fff;
+  color: var(--color-text-on-primary);
 }
 .danger:not(:disabled):hover {
-  background-color: #fb7185; /* lighter danger approximation */
+  /* Lighten the configured danger color instead of hardcoding a fixed hex */
+  background-color: color-mix(in srgb, var(--color-danger) 80%, white);
 }

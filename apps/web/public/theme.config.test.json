@@ -1,0 +1,31 @@
+{
+  "institution": {
+    "name": "Apex Institute of Technology",
+    "logoUrl": "",
+    "faviconUrl": ""
+  },
+  "colors": {
+    "primary": "#059669",
+    "primaryLight": "#34d399",
+    "secondary": "#d97706",
+    "surface": "#0a1628",
+    "surfaceElevated": "#112240",
+    "bg": "#060d1a",
+    "border": "#1d3a5c",
+    "text": "#e2e8f0",
+    "textMuted": "#94a3b8",
+    "danger": "#dc2626",
+    "success": "#059669",
+    "warning": "#d97706"
+  },
+  "fonts": {
+    "heading": "Poppins",
+    "body": "Poppins",
+    "importUrl": "https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
+  },
+  "radius": {
+    "sm": "4px",
+    "md": "8px",
+    "lg": "16px"
+  }
+}
