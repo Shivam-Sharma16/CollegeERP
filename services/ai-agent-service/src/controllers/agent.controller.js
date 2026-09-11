@@ -1,5 +1,5 @@
 const { AgentExecutor }        = require('../agents/agentExecutor');
-const { AnthropicAdapter }     = require('../agents/llmAdapters/anthropicAdapter');
+const { GeminiAdapter }        = require('../agents/llmAdapters/geminiAdapter');
 const AgentReviewItem          = require('../models/AgentReviewItem.model');
 const attendanceIntegrityAgent = require('../agents/attendanceIntegrityAgent');
 const atRiskStudentAgent       = require('../agents/atRiskStudentAgent');
@@ -23,9 +23,9 @@ function buildContext(req) {
   };
 }
 
-/** Build production executor (uses real Anthropic SDK) */
+/** Build production executor (uses real Gemini SDK) */
 function buildExecutor() {
-  const adapter = new AnthropicAdapter(env.ANTHROPIC_API_KEY);
+  const adapter = new GeminiAdapter(env.GEMINI_API_KEY);
   return new AgentExecutor({ adapter });
 }
 

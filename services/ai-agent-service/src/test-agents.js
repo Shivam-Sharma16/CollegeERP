@@ -18,7 +18,7 @@ process.env.MONGO_URI            = (process.env.MONGO_URI || 'mongodb://mongo:27
   .replace('mongodb://mongo:', 'mongodb://127.0.0.1:');
 process.env.JWT_SECRET           = process.env.JWT_SECRET || 'test-jwt-secret';
 process.env.INTERNAL_SERVICE_KEY = process.env.INTERNAL_SERVICE_KEY || 'test-internal-key';
-process.env.ANTHROPIC_API_KEY    = 'stub-not-needed';
+process.env.GEMINI_API_KEY       = 'stub-not-needed';
 
 const mongoose = require('mongoose');
 const { AgentExecutor }   = require('./agents/agentExecutor');
