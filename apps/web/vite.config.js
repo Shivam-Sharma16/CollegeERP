@@ -4,6 +4,14 @@ import { fileURLToPath, URL } from 'node:url'
 
 export default defineConfig({
   plugins: [react()],
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    setupFiles: './src/setupTests.js',
+    // Only scan component tests, not Playwright e2e specs
+    include: ['src/tests/**/*.{test,spec}.{js,jsx}'],
+    exclude: ['e2e/**', 'node_modules/**'],
+  },
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
