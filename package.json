@@ -19,12 +19,15 @@
     "dev:notification-service": "npm run dev --workspace=services/notification-service",
     "dev:ai-agent-service": "npm run dev --workspace=services/ai-agent-service",
     "dev:web": "npm run dev --workspace=apps/web",
+    "dev:backend": "concurrently -n \"gateway,auth,user,acad,attend,results,fees,notice,notif,ai\" -c \"cyan,blue,green,magenta,yellow,red,cyan,blue,green,magenta\" \"npm run dev:gateway\" \"npm run dev:auth-service\" \"npm run dev:user-service\" \"npm run dev:academic-service\" \"npm run dev:attendance-service\" \"npm run dev:results-service\" \"npm run dev:fees-service\" \"npm run dev:notice-service\" \"npm run dev:notification-service\" \"npm run dev:ai-agent-service\"",
+    "dev:all": "concurrently -n \"backend,web\" -c \"blue,green\" \"npm run dev:backend\" \"npm run dev:web\"",
     "test": "npm test --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present",
     "lint:all": "eslint .",
     "build": "npm run build --workspaces --if-present"
   },
   "devDependencies": {
+    "concurrently": "^10.0.5",
     "eslint": "^10.10.0"
   }
 }
