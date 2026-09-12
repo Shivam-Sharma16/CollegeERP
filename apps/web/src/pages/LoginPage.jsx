@@ -38,7 +38,15 @@ export default function LoginPage() {
   async function handleSubmit(e) {
     e.preventDefault();
     try {
-      await login({ email, password }).unwrap();
+      const res = await login({ email, password }).unwrap();
+      const token = res?.data?.token || res?.token || res?.accessToken;
+      const user = res?.data?.user || res?.user || {
+        id: res?.userId || res?.data?.userId,
+        roles: res?.roles || res?.data?.roles || []
+      };
+      if (token) {
+        dispatch(setCredentials({ token, user }));
+      }
       navigate(from, { replace: true });
     } catch { /* error rendered from RTK Query's `error` state */ }
   }

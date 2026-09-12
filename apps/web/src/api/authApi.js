@@ -29,8 +29,17 @@ export const authApi = createApi({
       async onQueryStarted(_arg, { dispatch, queryFulfilled }) {
         try {
           const { data } = await queryFulfilled;
-          dispatch(setCredentials({ token: data.data.token, user: data.data.user }));
-        } catch { /* error handled by component */ }
+          const token = data?.data?.token || data?.token || data?.accessToken;
+          const user = data?.data?.user || data?.user || {
+            id: data?.userId || data?.data?.userId,
+            roles: data?.roles || data?.data?.roles || []
+          };
+          if (token) {
+            dispatch(setCredentials({ token, user }));
+          }
+        } catch (err) {
+          console.error('[authApi] Failed to set credentials on login:', err);
+        }
       },
     }),
 
@@ -44,7 +53,11 @@ export const authApi = createApi({
       async onQueryStarted(_arg, { dispatch, queryFulfilled }) {
         try {
           const { data } = await queryFulfilled;
-          dispatch(setCredentials({ token: data.data.token, user: data.data.user }));
+          const token = data?.data?.token || data?.token || data?.accessToken;
+          const user = data?.data?.user || data?.user;
+          if (token) {
+            dispatch(setCredentials({ token, user }));
+          }
         } catch {
           dispatch(clearCredentials());
         }

@@ -130,7 +130,28 @@ const login = async (req, res) => {
       maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
     });
 
-    res.status(200).json({ accessToken, roles: user.roles, userId: user._id });
+    const userPayload = {
+      id: user._id.toString(),
+      name: user.name,
+      email: user.email,
+      roles: user.roles
+    };
+
+    res.status(200).json({
+      success: true,
+      accessToken,
+      token: accessToken,
+      roles: user.roles,
+      userId: user._id,
+      user: userPayload,
+      data: {
+        token: accessToken,
+        accessToken,
+        userId: user._id,
+        roles: user.roles,
+        user: userPayload
+      }
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -158,7 +179,28 @@ const refresh = async (req, res) => {
       maxAge: 7 * 24 * 60 * 60 * 1000
     });
 
-    res.status(200).json({ accessToken: tokens.accessToken });
+    const userPayload = {
+      id: user._id.toString(),
+      name: user.name,
+      email: user.email,
+      roles: user.roles
+    };
+
+    res.status(200).json({
+      success: true,
+      accessToken: tokens.accessToken,
+      token: tokens.accessToken,
+      roles: user.roles,
+      userId: user._id,
+      user: userPayload,
+      data: {
+        token: tokens.accessToken,
+        accessToken: tokens.accessToken,
+        userId: user._id,
+        roles: user.roles,
+        user: userPayload
+      }
+    });
   } catch (error) {
     res.status(401).json({ message: 'Invalid refresh token' });
   }
