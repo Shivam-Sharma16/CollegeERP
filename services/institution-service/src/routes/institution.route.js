@@ -7,6 +7,10 @@ const { authenticate } = require('@college-erp/shared-utils');
 router.get('/resolve/:slug', institutionController.resolveInstitutionBySlug);
 router.get('/resolve/subdomain/:subdomain', institutionController.resolveInstitutionBySlug);
 
+// Public tenant branding (unauthenticated, tenant-resolved)
+router.get('/branding', institutionController.getInstitutionBranding);
+router.get('/branding/:subdomain', institutionController.getInstitutionBranding);
+
 // Live subdomain availability check
 router.get('/check-subdomain', institutionController.checkSubdomainAvailability);
 router.get('/check-subdomain/:subdomain', institutionController.checkSubdomainAvailability);

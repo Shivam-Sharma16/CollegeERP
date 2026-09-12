@@ -481,11 +481,63 @@ const checkSubdomainAvailability = async (req, res) => {
   }
 };
 
+/**
+ * Public branding endpoint (Tenant-resolved, unauthenticated)
+ * Returns { name, logoUrl, primaryColor, secondaryColor, faviconUrl }
+ */
+const getInstitutionBranding = async (req, res) => {
+  try {
+    const tenantId = req.tenantId || req.headers['x-tenant-id'];
+    const subdomain = req.query.subdomain || req.query.slug || req.params.subdomain || req.headers['x-tenant-subdomain'];
+
+    let institution = null;
+
+    if (tenantId && mongoose.Types.ObjectId.isValid(tenantId)) {
+      institution = await Institution.findById(tenantId)
+        .select('name logoUrl themeConfig branding isActive status')
+        .lean();
+    } else if (subdomain) {
+      const normalized = subdomain.toLowerCase().trim();
+      institution = await Institution.findOne({
+        $or: [
+          { subdomain: normalized },
+          { slug: normalized },
+          { customDomain: normalized },
+          { domain: normalized }
+        ]
+      }).select('name logoUrl themeConfig branding isActive status').lean();
+    }
+
+    if (!institution) {
+      return res.status(404).json(fail('Institution not found'));
+    }
+
+    if (institution.isActive === false || institution.status === 'SUSPENDED') {
+      return res.status(403).json(fail('Institution is suspended or inactive'));
+    }
+
+    const brandingData = {
+      name: institution.name,
+      logoUrl: institution.logoUrl || institution.branding?.logoUrl || '',
+      primaryColor: institution.themeConfig?.primaryColor || institution.branding?.primaryColor || '#4f46e5',
+      secondaryColor: institution.themeConfig?.secondaryColor || institution.branding?.secondaryColor || '#06b6d4',
+      faviconUrl: institution.themeConfig?.faviconUrl || institution.branding?.faviconUrl || ''
+    };
+
+    return res.status(200).json(success(brandingData));
+  } catch (err) {
+    console.error('[InstitutionController] Failed to get branding:', err);
+    return res.status(500).json(fail('Internal server error'));
+  }
+};
+
 module.exports = {
   createInstitution,
   listInstitutions,
   resolveInstitutionBySlug,
   getInstitutionById,
   updateInstitution,
-  checkSubdomainAvailability
+  checkSubdomainAvailability,
+  getInstitutionBranding
 };
+

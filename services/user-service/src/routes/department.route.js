@@ -6,9 +6,17 @@ const departmentController = require('../controllers/department.controller');
 // Require authentication for all department routes
 router.use(authenticate);
 
-// Only SuperAdmin or Admin (who inherently have institution-wide scope) can create departments.
-// Note: we can map the 'Institution' resourceType to bypass checks unless they have SUPERADMIN/ADMIN role in RBAC.
-router.post('/', requirePermission('write', 'Institution'), departmentController.createDepartment);
+// Phase 69: Department Creation Ownership Change
+// POST /departments is Admin-only, scoped strictly to req.user.institutionId.
+// SuperAdmin is explicitly disallowed from creating departments.
+const requireAdminOnly = (req, res, next) => {
+  if (req.user?.roles?.includes('SUPERADMIN') || !req.user?.roles?.includes('ADMIN')) {
+    return res.status(403).json({ success: false, error: 'Access Denied: Only Admin can create departments' });
+  }
+  next();
+};
+
+router.post('/', requireAdminOnly, departmentController.createDepartment);
 router.get('/tree', departmentController.resolveDeptTree);
 router.get('/', departmentController.listDepartments);
 router.get('/:id', departmentController.getDepartmentById);

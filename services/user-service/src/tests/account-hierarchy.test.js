@@ -3,6 +3,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const { MongoMemoryServer } = require('mongodb-memory-server');
 const userRoutes = require('../routes/user.route');
+const departmentRoutes = require('../routes/department.route');
 const User = require('../models/User.model');
 const RoleAssignment = require('../models/RoleAssignment.model');
 const Department = require('../models/Department.model');
@@ -45,8 +46,9 @@ jest.mock('@college-erp/shared-utils', () => ({
 }));
 
 app.use('/api/users', userRoutes);
+app.use('/api/departments', departmentRoutes);
 
-describe('Priority 1: Account-Creation Hierarchy (Phase 12)', () => {
+describe('Account-Creation Hierarchy (Phase 12 / Phase 69 Retrofit)', () => {
   let testDeptId;
 
   beforeAll(async () => {
@@ -84,6 +86,50 @@ describe('Priority 1: Account-Creation Hierarchy (Phase 12)', () => {
     expect(res.status).toBe(201);
   });
 
+  // Phase 69: Department & HOD creation ownership
+  it('SUPERADMIN gets 403 when attempting POST /departments (even with forged institutionId in payload)', async () => {
+    const res = await request(app)
+      .post('/api/departments')
+      .set('Authorization', 'Bearer SUPERADMIN')
+      .send({ name: 'Mechanical Engineering', code: 'ME', institutionId: testInstId });
+
+    expect(res.status).toBe(403);
+    expect(res.body.error).toMatch(/only admin can create departments/i);
+  });
+
+  it('ADMIN can create Department scoped strictly to req.user.institutionId', async () => {
+    const res = await request(app)
+      .post('/api/departments')
+      .set('Authorization', 'Bearer ADMIN')
+      .send({ name: 'Electrical Engineering', code: 'EE', institutionId: new mongoose.Types.ObjectId() }); // Forged institutionId ignored
+
+    expect(res.status).toBe(201);
+    expect(res.body.data.department.institutionId.toString()).toBe(testInstId.toString());
+  });
+
+  it('SUPERADMIN gets 403 when creating HOD (Phase 69: only Admin creates HOD)', async () => {
+    const res = await request(app)
+      .post('/api/users/hods')
+      .set('Authorization', 'Bearer SUPERADMIN')
+      .send({ ...payload, departmentId: testDeptId });
+
+    expect(res.status).toBe(403);
+  });
+
+  it('SUPERADMIN gets 403 when creating FACULTY or CC', async () => {
+    const res1 = await request(app)
+      .post('/api/users/faculty')
+      .set('Authorization', 'Bearer SUPERADMIN')
+      .send({ ...payload, departmentId: testDeptId });
+    expect(res1.status).toBe(403);
+
+    const res2 = await request(app)
+      .post('/api/users/cc')
+      .set('Authorization', 'Bearer SUPERADMIN')
+      .send({ ...payload, departmentId: testDeptId });
+    expect(res2.status).toBe(403);
+  });
+
   it('ADMIN can create HOD', async () => {
     const res = await request(app).post('/api/users/hods').set('Authorization', 'Bearer ADMIN').send({ ...payload, departmentId: testDeptId });
     expect(res.status).toBe(201);
@@ -119,7 +165,7 @@ describe('Priority 1: Account-Creation Hierarchy (Phase 12)', () => {
     for (const role of roles) {
       const endpoints = ['/api/users/admins', '/api/users/hods', '/api/users/faculty', '/api/users/cc', '/api/users/students'];
       for (const endpoint of endpoints) {
-        const res = await request(app).post(endpoint).set('Authorization', `Bearer ${role}`).send({ ...payload, email: `${role}_${endpoint}@test.com`, departmentId: testDeptId });
+        const res = await request(app).post(endpoint).set('Authorization', `Bearer ${role}`).send({ ...payload, email: `${role}_${endpoint.replace(/\//g, '_')}@test.com`, departmentId: testDeptId });
         expect(res.status).toBe(403);
       }
     }

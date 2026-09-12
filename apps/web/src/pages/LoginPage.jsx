@@ -32,12 +32,16 @@ export default function LoginPage({ isSuperAdminMode = false }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  // Fallback institution data from config if not in a specific tenant route
+  // Fallback institution data from config/themeSlice
   const defaultInstitutionName = useAppSelector(selectInstitutionName);
   const defaultInstitutionLogo = useAppSelector(selectInstitutionLogo);
 
-  const institutionName = isTenantPortal ? (tenant?.name || 'Institution Portal') : (isSuperAdminMode ? 'SuperAdmin Console' : defaultInstitutionName);
-  const institutionLogo = isTenantPortal ? (tenant?.branding?.logoUrl || null) : defaultInstitutionLogo;
+  const institutionName = isTenantPortal
+    ? (tenant?.name || defaultInstitutionName || 'Institution Portal')
+    : (isSuperAdminMode ? 'SuperAdmin Console' : defaultInstitutionName);
+  const institutionLogo = isTenantPortal
+    ? (tenant?.logoUrl || tenant?.branding?.logoUrl || defaultInstitutionLogo || null)
+    : defaultInstitutionLogo;
 
   const [login, { isLoading, error }] = useLoginMutation();
 

@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useResolveInstitutionBySlugQuery } from '../api/institutionsApi';
 import { useAppDispatch } from '../store';
-import { patchTheme } from '../features/ui/themeSlice';
+import { patchTheme, loadTheme } from '../features/ui/themeSlice';
 
 const TenantContext = createContext({
   tenant: null,
@@ -15,6 +15,12 @@ const TenantContext = createContext({
 export function TenantProvider({ children }) {
   const { slug } = useParams();
   const dispatch = useAppDispatch();
+
+  useEffect(() => {
+    if (slug) {
+      dispatch(loadTheme(slug));
+    }
+  }, [slug, dispatch]);
 
   const {
     data: tenant,

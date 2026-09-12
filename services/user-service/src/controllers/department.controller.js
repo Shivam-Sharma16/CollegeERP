@@ -4,13 +4,23 @@ const { success, fail, logAudit } = require('@college-erp/shared-utils');
 
 const createDepartment = async (req, res) => {
   try {
+    // Phase 69: SuperAdmin cannot create departments — Admin-only
+    if (req.user?.roles?.includes('SUPERADMIN') || !req.user?.roles?.includes('ADMIN')) {
+      return res.status(403).json(fail('Access Denied: Only Admin can create departments'));
+    }
+
     const { name, code } = req.body;
 
     if (!name || !code) {
       return res.status(400).json(fail('Name and code are required'));
     }
 
-    const institutionId = req.tenantId || req.headers['x-tenant-id'] || req.user?.institutionId || req.body.institutionId || null;
+    // Strictly scoped to Admin's own institutionId (ignoring any forged body.institutionId)
+    const institutionId = req.user?.institutionId;
+    if (!institutionId) {
+      return res.status(403).json(fail('Admin must be associated with an institution'));
+    }
+
     const normalizedCode = code.trim().toUpperCase();
 
     const existing = await Department.findOne({ code: normalizedCode, institutionId });

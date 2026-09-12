@@ -25,7 +25,11 @@ services:
 
   gateway:
     build:
-      context: ./services/gateway
+      context: .
+      dockerfile: ./infra/docker/service.Dockerfile
+      args:
+        - SERVICE_NAME=gateway
+        - SERVICE_PORT=4000
     ports:
       - "4000:4000"
     environment:

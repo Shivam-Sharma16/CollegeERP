@@ -38,9 +38,20 @@ const tenantResolver = async (req, res, next) => {
         return next();
       }
 
-      // Check if developer explicitly passed an x-tenant-subdomain header for testing on root domain
+      // Check if client explicitly passed an x-tenant-subdomain header for testing or path-based tenant portals
       if (req.headers['x-tenant-subdomain']) {
         return resolveSubdomain(req.headers['x-tenant-subdomain'].toLowerCase().trim(), req, res, next);
+      }
+
+      // Check if client passed ?subdomain=... or ?slug=... on branding/resolve endpoints
+      if (req.query && (req.query.subdomain || req.query.slug)) {
+        return resolveSubdomain((req.query.subdomain || req.query.slug).toLowerCase().trim(), req, res, next);
+      }
+
+      // Check if path has subdomain parameter, e.g. /institutions/branding/:subdomain or /institutions/resolve/:subdomain
+      const pathParamMatch = path.match(/^\/(?:api\/)?institutions\/(?:branding|resolve)(?:\/subdomain)?\/([a-z0-9-]+)/i);
+      if (pathParamMatch && pathParamMatch[1]) {
+        return resolveSubdomain(pathParamMatch[1].toLowerCase().trim(), req, res, next);
       }
 
       // If on root domain without subdomain and not accessing /superadmin, no tenant can be inferred

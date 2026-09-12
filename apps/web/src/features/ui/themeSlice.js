@@ -171,8 +171,103 @@ function applyInstitutionMeta(json) {
   }
 }
 
+// Helper to derive lighter tint for primary-light
+function adjustColorBrightness(hex, percent) {
+  if (!hex || typeof hex !== 'string' || !hex.startsWith('#')) return hex;
+  let clean = hex.slice(1);
+  if (clean.length === 3) {
+    clean = clean.split('').map((c) => c + c).join('');
+  }
+  if (clean.length !== 6) return hex;
+  const num = parseInt(clean, 16);
+  if (isNaN(num)) return hex;
+  let r = (num >> 16) + Math.round(255 * (percent / 100));
+  let g = ((num >> 8) & 0x00FF) + Math.round(255 * (percent / 100));
+  let b = (num & 0x0000FF) + Math.round(255 * (percent / 100));
+  r = Math.min(255, Math.max(0, r));
+  g = Math.min(255, Math.max(0, g));
+  b = Math.min(255, Math.max(0, b));
+  return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
+}
+
+// Subdomain & tenant detection helper
+export function detectTenantSubdomain() {
+  if (typeof window === 'undefined') return null;
+
+  // 1. Path-based detection: /inst/:slug/...
+  const pathMatch = window.location.pathname.match(/^\/inst\/([a-z0-9-]+)/i);
+  if (pathMatch && pathMatch[1]) {
+    return pathMatch[1].toLowerCase();
+  }
+
+  // 2. Query param: ?subdomain=...
+  const urlParams = new URLSearchParams(window.location.search);
+  const querySub = urlParams.get('subdomain') || urlParams.get('tenant');
+  if (querySub) {
+    return querySub.toLowerCase().trim();
+  }
+
+  // 3. Subdomain-based detection from hostname:
+  // e.g. jecrc.collegeerp.com -> jecrc, apex-tech.localhost -> apex-tech
+  const hostname = window.location.hostname;
+  const parts = hostname.split('.');
+  if (parts.length > 2 || (parts.length === 2 && parts[1] === 'localhost')) {
+    const sub = parts[0].toLowerCase().trim();
+    if (!['www', 'localhost', '127', 'collegeerp', 'app', 'portal', 'api', 'admin'].includes(sub)) {
+      return sub;
+    }
+  }
+
+  return null;
+}
+
 // ── Async thunk ────────────────────────────────────────────────────────────────
-export const loadTheme = createAsyncThunk('theme/load', async () => {
+export const loadTheme = createAsyncThunk('theme/load', async (targetSubdomain) => {
+  const subdomain = targetSubdomain || detectTenantSubdomain();
+
+  if (subdomain) {
+    try {
+      const res = await fetch(`/api/institutions/branding?subdomain=${encodeURIComponent(subdomain)}`, {
+        headers: {
+          'x-tenant-subdomain': subdomain,
+        },
+      });
+      if (res.ok) {
+        const json = await res.json();
+        const data = json?.data || json;
+        if (data && (data.name || data.primaryColor)) {
+          const primary = data.primaryColor || '#4f46e5';
+          const secondary = data.secondaryColor || '#06b6d4';
+          const primaryLight = adjustColorBrightness(primary, 25);
+
+          const cssVars = {
+            ...CSS_DEFAULTS,
+            '--color-primary': primary,
+            '--color-primary-light': primaryLight,
+            '--color-secondary': secondary,
+          };
+
+          const raw = {
+            institution: {
+              name: data.name,
+              logoUrl: data.logoUrl || null,
+              faviconUrl: data.faviconUrl || null,
+            },
+            colors: {
+              primary,
+              primaryLight,
+              secondary,
+            },
+          };
+
+          return { cssVars, raw };
+        }
+      }
+    } catch (fetchErr) {
+      console.warn('[themeSlice] Failed to fetch institution branding, falling back to theme.config.json:', fetchErr);
+    }
+  }
+
   try {
     const res = await fetch('/theme.config.json');
     if (!res.ok) return { cssVars: CSS_DEFAULTS, raw: {} };

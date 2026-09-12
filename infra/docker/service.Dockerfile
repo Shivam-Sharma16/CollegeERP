@@ -12,7 +12,7 @@ ARG SERVICE_PORT
 COPY services/${SERVICE_NAME}/ ./services/${SERVICE_NAME}/
 
 # Install dependencies with monorepo workspace linking
-RUN npm install
+RUN npm install --legacy-peer-deps
 
 WORKDIR /app/services/${SERVICE_NAME}
 

@@ -17,6 +17,15 @@ export const institutionsApi = createApi({
       transformResponse: (response) => response?.data ?? response,
     }),
 
+    getInstitutionBranding: builder.query({
+      query: (subdomain) => ({
+        url: '/api/institutions/branding',
+        params: subdomain ? { subdomain } : undefined,
+        headers: subdomain ? { 'x-tenant-subdomain': subdomain } : undefined,
+      }),
+      transformResponse: (response) => response?.data ?? response,
+    }),
+
     getInstitutionById: builder.query({
       query: (id) => `/api/institutions/${id}`,
       transformResponse: (response) => response?.data ?? response,
@@ -46,6 +55,7 @@ export const institutionsApi = createApi({
 export const {
   useListInstitutionsQuery,
   useResolveInstitutionBySlugQuery,
+  useGetInstitutionBrandingQuery,
   useGetInstitutionByIdQuery,
   useCreateInstitutionMutation,
   useUpdateInstitutionMutation,

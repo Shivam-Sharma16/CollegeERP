@@ -65,6 +65,13 @@ const createUser = async (req, res, targetRole, enforceHierarchyCallback, extrac
   }
 };
 
+/**
+ * Account-Creation Hierarchy (Phase 12 / Phase 69 Retrofit):
+ * SuperAdmin -> creates: Institution (+ first Admin, bundled in Phase 67)
+ * Admin      -> creates: Department, HOD
+ * HOD        -> creates: Faculty, CC
+ * CC         -> creates: Student (onboarding)
+ */
 const createAdmin = (req, res) => {
   return createUser(
     req, res, 'ADMIN',
@@ -74,22 +81,27 @@ const createAdmin = (req, res) => {
 };
 
 const createHOD = async (req, res) => {
+  // Phase 69: SuperAdmin no longer creates HODs — Admin-only
+  if (req.user?.roles?.includes('SUPERADMIN') || !req.user?.roles?.includes('ADMIN')) {
+    return res.status(403).json(fail('Access Denied: Only Admin can create HODs'));
+  }
+
+  const institutionId = req.user?.institutionId;
+  if (!institutionId) {
+    return res.status(403).json(fail('Admin must be associated with an institution'));
+  }
+
   // Validate department exists within caller's institution
   if (req.body.departmentId) {
-    const tenantId = req.tenantId || req.headers['x-tenant-id'] || req.user?.institutionId;
-    const deptFilter = { _id: req.body.departmentId };
-    if (tenantId && !req.user?.roles?.includes('SUPERADMIN')) {
-      deptFilter.institutionId = tenantId;
-    }
-    const dept = await Department.findOne(deptFilter).catch(() => null);
+    const dept = await Department.findOne({ _id: req.body.departmentId, institutionId }).catch(() => null);
     if (!dept) {
-      return res.status(404).json(fail('Department not found'));
+      return res.status(404).json(fail('Department not found in this institution'));
     }
   }
 
   return createUser(
     req, res, 'HOD',
-    (callerRoles) => callerRoles.includes('SUPERADMIN') || callerRoles.includes('ADMIN'),
+    (callerRoles) => !callerRoles.includes('SUPERADMIN') && callerRoles.includes('ADMIN'),
     (req) => {
       if (!req.body.departmentId) return { error: 'departmentId is required for HOD' };
       return { departmentId: req.body.departmentId };
@@ -98,9 +110,12 @@ const createHOD = async (req, res) => {
 };
 
 const createFaculty = (req, res) => {
+  if (req.user?.roles?.includes('SUPERADMIN') || !req.user?.roles?.includes('HOD')) {
+    return res.status(403).json(fail('Access Denied: Only HOD can create Faculty'));
+  }
   return createUser(
     req, res, 'FACULTY',
-    (callerRoles) => callerRoles.includes('HOD'),
+    (callerRoles) => !callerRoles.includes('SUPERADMIN') && callerRoles.includes('HOD'),
     (req) => {
       // Find the caller's HOD RoleAssignment departmentId
       const hodRole = req.effectiveRoles?.find(r => r.role === 'HOD');
@@ -113,9 +128,12 @@ const createFaculty = (req, res) => {
 };
 
 const createCC = (req, res) => {
+  if (req.user?.roles?.includes('SUPERADMIN') || !req.user?.roles?.includes('HOD')) {
+    return res.status(403).json(fail('Access Denied: Only HOD can create CC'));
+  }
   return createUser(
     req, res, 'CC',
-    (callerRoles) => callerRoles.includes('HOD'),
+    (callerRoles) => !callerRoles.includes('SUPERADMIN') && callerRoles.includes('HOD'),
     (req) => {
       const hodRole = req.effectiveRoles?.find(r => r.role === 'HOD');
       if (!hodRole || !hodRole.departmentId) {
