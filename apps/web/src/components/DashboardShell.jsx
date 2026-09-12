@@ -57,26 +57,37 @@ export function DashboardShell({ title, subtitle, icon, children }) {
     );
   }, [userRoles]);
 
-  const personalItems = accessibleNavItems.filter(item => item.key === 'dashboard' || item.key === 'profile');
-  const roleItems = accessibleNavItems.filter(item => item.key !== 'dashboard' && item.key !== 'profile');
+  const isDashboardOrProfile = (k) => k.endsWith('dashboard') || k === 'dashboard' || k === 'profile';
+  const personalItems = accessibleNavItems.filter(item => isDashboardOrProfile(item.key));
+  const roleItems = accessibleNavItems.filter(item => !isDashboardOrProfile(item.key));
 
   const hasMultipleRoles = userRoles.length > 1;
 
+  // Extract optional tenant slug from path
+  const slugMatch = location.pathname.match(/^\/inst\/([a-z0-9-]+)/i);
+  const slug = slugMatch ? slugMatch[1] : null;
+  const normalizedPath = slug ? (location.pathname.replace(new RegExp(`^/inst/${slug}`), '') || '/') : location.pathname;
+
   // Attempt to match the current path. Fallback to exact match or prefix match.
   const activeKey = useMemo(() => {
-    const current = NAV_ITEMS.find(item => location.pathname.startsWith(item.path));
+    const current = accessibleNavItems.find(item => {
+      if (normalizedPath === item.path) return true;
+      if (item.path !== '/' && normalizedPath.startsWith(item.path)) return true;
+      return false;
+    });
     return current ? current.key : null;
-  }, [location.pathname]);
+  }, [normalizedPath, accessibleNavItems]);
 
   const renderNavItem = (item) => {
     const isActive = activeKey === item.key;
+    const targetPath = slug ? `/inst/${slug}${item.path}` : item.path;
     return (
       <button
         key={item.key}
         className={`${styles.navItem} ${isActive ? styles.navItemActive : ''}`}
         onClick={() => {
           setMobileMenuOpen(false);
-          navigate(item.path);
+          navigate(targetPath);
         }}
         title={collapsed ? item.label : undefined}
       >

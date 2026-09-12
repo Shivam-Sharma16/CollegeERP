@@ -55,7 +55,7 @@ export default function StudentDashboard() {
           <div
             className={`${styles.statCard} ${styles.attendanceCard}`}
             style={{ '--att-color': attColor, cursor: 'pointer' }}
-            onClick={() => navigate('/attendance')}
+            onClick={() => navigate('/student/attendance')}
             title="Click to open QR Attendance Scanner"
           >
             <div className={styles.cardHeader}>

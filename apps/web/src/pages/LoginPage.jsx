@@ -66,24 +66,38 @@ export default function LoginPage({ isSuperAdminMode = false }) {
       }
 
       // Determine redirect path
+      const roles = user.roles || [];
       if (isTenantPortal && slug) {
-        const roles = user.roles || [];
         if (roles.includes('ADMIN')) {
-          navigate(`/inst/${slug}/admin`, { replace: true });
+          navigate(`/inst/${slug}/admin/dashboard`, { replace: true });
         } else if (roles.includes('HOD')) {
-          navigate(`/inst/${slug}/hod`, { replace: true });
+          navigate(`/inst/${slug}/hod/dashboard`, { replace: true });
         } else if (roles.includes('FACULTY')) {
-          navigate(`/inst/${slug}/faculty`, { replace: true });
+          navigate(`/inst/${slug}/faculty/dashboard`, { replace: true });
         } else if (roles.includes('CC')) {
-          navigate(`/inst/${slug}/cc`, { replace: true });
+          navigate(`/inst/${slug}/cc/dashboard`, { replace: true });
         } else {
-          navigate(`/inst/${slug}/student`, { replace: true });
+          navigate(`/inst/${slug}/student/dashboard`, { replace: true });
         }
-      } else if (user.roles?.includes('SUPERADMIN')) {
-        navigate('/admin/management', { replace: true });
+      } else if (roles.includes('SUPERADMIN')) {
+        navigate('/superadmin/dashboard', { replace: true });
       } else {
-        const from = location.state?.from?.pathname ?? '/';
-        navigate(from, { replace: true });
+        const from = location.state?.from?.pathname;
+        if (from && from !== '/' && from !== '/login' && from !== '/unauthorized') {
+          navigate(from, { replace: true });
+        } else {
+          if (roles.includes('ADMIN')) {
+            navigate('/admin/dashboard', { replace: true });
+          } else if (roles.includes('HOD')) {
+            navigate('/hod/dashboard', { replace: true });
+          } else if (roles.includes('FACULTY')) {
+            navigate('/faculty/dashboard', { replace: true });
+          } else if (roles.includes('CC')) {
+            navigate('/cc/dashboard', { replace: true });
+          } else {
+            navigate('/student/dashboard', { replace: true });
+          }
+        }
       }
     } catch { /* error handled by RTK error state */ }
   }
@@ -203,15 +217,16 @@ export default function LoginPage({ isSuperAdminMode = false }) {
                     type="button"
                     onClick={() => {
                       dispatch(setCredentials({
-                        token: 'mock-jwt-student-token',
+                        token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YWE0ZjM3ZGQ0YjZiZTExM2IwNzVjMjciLCJpZCI6IjZhYTRmMzdkZDRiNmJlMTEzYjA3NWMyNyIsImVtYWlsIjoiYWxleC5yaXZlcmFAYXBleC5lZHUiLCJyb2xlcyI6WyJTVFVERU5UIl0sImluc3RpdHV0aW9uSWQiOiI2YWE0ZjM3Y2Q0YjZiZTExM2IwNzVjMjUiLCJpYXQiOjE3ODkyMjM4MTUsImV4cCI6MTgyMDc1OTgxNX0.CicI_GAS6q2f_WKCMGnqaJ8Hj4MbbZQIHbLr-TMyEeo',
                         user: {
-                          id: '65e000000000000000000001',
+                          id: '6aa4f37dd4b6be113b075c27',
                           name: 'Alex Rivera',
-                          email: 'alex.rivera@college.edu',
-                          roles: ['STUDENT']
+                          email: 'alex.rivera@apex.edu',
+                          roles: ['STUDENT'],
+                          institutionId: '6aa4f37cd4b6be113b075c25'
                         }
                       }));
-                      navigate('/attendance', { replace: true });
+                      navigate('/student/dashboard', { replace: true });
                     }}
                     className={styles.demoBtn}
                   >

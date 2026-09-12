@@ -81,7 +81,7 @@ export default function LiveAttendanceSession() {
   const checkedInCount = checkIns.length;
 
   if (sessionClosed) {
-    return <PostCloseSummary sessionId={sessionId} onFinish={() => navigate('/faculty')} />;
+    return <PostCloseSummary sessionId={sessionId} onFinish={() => navigate('/faculty/dashboard')} />;
   }
 
   return (

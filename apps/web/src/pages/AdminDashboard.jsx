@@ -106,8 +106,8 @@ export default function AdminDashboard() {
                       icon="folder"
                       title="No Departments Yet"
                       description="Create your first department to start building the academic structure."
-                      actionLabel="Go to Management"
-                      actionRoute="/admin/management"
+                      actionLabel="Manage Departments"
+                      actionRoute="/admin/departments"
                     />
                   ) : (
                     departments.map(dept => (
