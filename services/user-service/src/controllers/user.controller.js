@@ -27,33 +27,38 @@ const createUser = async (req, res, targetRole, enforceHierarchyCallback, extrac
     }
 
     // 4. Check for existing user
-    const existing = await User.findOne({ email });
+    const existing = await User.findOne({ email: email.toLowerCase().trim() });
     if (existing) {
       return res.status(409).json(fail('User with this email already exists'));
     }
 
-    // 5. Create user
+    // 5. Tenant institution scoping
+    const institutionId = req.user?.institutionId || req.body.institutionId || null;
+
+    // 6. Create user
     const passwordHash = await bcrypt.hash(password, BCRYPT_COST);
     const user = await User.create({
-      name,
-      email,
+      name: name.trim(),
+      email: email.toLowerCase().trim(),
       passwordHash,
-      roles: [] // Managed purely by RoleAssignment except for SUPERADMIN
+      roles: [], // Managed purely by RoleAssignment except for SUPERADMIN
+      institutionId
     });
 
-    // 6. Create Role Assignment
+    // 7. Create Role Assignment
     await RoleAssignment.create({
       userId: user._id,
       role: targetRole,
       departmentId: scope.departmentId || null,
       sectionId: null, // CC/Faculty section assignment is a later phase (Phase 13/20) when sections are created
+      institutionId,
       validFrom: new Date()
     });
 
-    // 7. Audit log
-    await logAudit(req, `${targetRole}_CREATED`, user._id.toString(), 'User', { email, departmentId: scope.departmentId });
+    // 8. Audit log
+    await logAudit(req, `${targetRole}_CREATED`, user._id.toString(), 'User', { email, departmentId: scope.departmentId, institutionId });
 
-    res.status(201).json(success({ userId: user._id, role: targetRole }));
+    res.status(201).json(success({ userId: user._id, role: targetRole, institutionId }));
   } catch (err) {
     console.error(`[UserController] Failed to create ${targetRole}:`, err);
     res.status(500).json(fail('Internal server error'));
@@ -142,13 +147,16 @@ const onboardStudent = async (req, res) => {
       return res.status(409).json(fail('Roll number already exists', { field: 'rollNumber' }));
     }
 
+    const institutionId = req.user?.institutionId || ccRole.institutionId || null;
+
     const passwordHash = await bcrypt.hash(password, BCRYPT_COST);
     const user = await User.create({
-      name,
-      email,
-      rollNumber,
+      name: name.trim(),
+      email: email.toLowerCase().trim(),
+      rollNumber: rollNumber.trim(),
       passwordHash,
-      roles: [] // Managed by RoleAssignment
+      roles: [], // Managed by RoleAssignment
+      institutionId
     });
 
     await RoleAssignment.create({
@@ -156,12 +164,13 @@ const onboardStudent = async (req, res) => {
       role: 'STUDENT',
       departmentId: ccRole.departmentId,
       sectionId: ccRole.sectionId,
+      institutionId,
       validFrom: new Date()
     });
 
-    await logAudit(req, 'STUDENT_CREATED_BY_CC', user._id.toString(), 'User', { email, departmentId: ccRole.departmentId, sectionId: ccRole.sectionId });
+    await logAudit(req, 'STUDENT_CREATED_BY_CC', user._id.toString(), 'User', { email, departmentId: ccRole.departmentId, sectionId: ccRole.sectionId, institutionId });
 
-    res.status(201).json(success({ userId: user._id, role: 'STUDENT' }));
+    res.status(201).json(success({ userId: user._id, role: 'STUDENT', institutionId }));
   } catch (err) {
     console.error('[UserController] Failed to onboard student:', err);
     res.status(500).json(fail('Internal server error'));
@@ -175,12 +184,17 @@ const listStudents = async (req, res) => {
       return res.status(403).json(fail('You are not assigned to a section'));
     }
 
-    // Find all users who have an active STUDENT role for this section
-    const assignments = await RoleAssignment.find({
+    const filter = {
       role: 'STUDENT',
       sectionId: ccRole.sectionId,
       $or: [{ validTo: null }, { validTo: { $gt: new Date() } }]
-    }).populate('userId', 'name email isActive');
+    };
+
+    if (req.user?.institutionId) {
+      filter.institutionId = req.user.institutionId;
+    }
+
+    const assignments = await RoleAssignment.find(filter).populate('userId', 'name email isActive');
 
     const students = assignments
       .filter(a => a.userId && a.userId.isActive)
@@ -262,6 +276,11 @@ const searchUsers = async (req, res) => {
         { $or: [{ name: queryRegex }, { email: queryRegex }] }
       ]
     };
+
+    // Enforce institution scoping
+    if (req.user?.institutionId) {
+      matchQuery.institutionId = req.user.institutionId;
+    }
     
     if (Object.keys(scopeQuery).length > 0) {
       matchQuery.$and.push(scopeQuery);
@@ -277,10 +296,18 @@ const searchUsers = async (req, res) => {
 
 const listHods = async (req, res) => {
   try {
-    const assignments = await RoleAssignment.find({
+    const filter = {
       role: 'HOD',
       $or: [{ validTo: null }, { validTo: { $gt: new Date() } }]
-    })
+    };
+
+    if (req.user?.institutionId) {
+      filter.institutionId = req.user.institutionId;
+    } else if (req.query.institutionId) {
+      filter.institutionId = req.query.institutionId;
+    }
+
+    const assignments = await RoleAssignment.find(filter)
       .populate('userId', 'name email isActive avatarUrl')
       .populate('departmentId', 'name code');
 
@@ -307,15 +334,29 @@ const listHods = async (req, res) => {
 
 const listAdmins = async (req, res) => {
   try {
+    const roleFilter = {
+      role: 'ADMIN',
+      $or: [{ validTo: null }, { validTo: { $gt: new Date() } }]
+    };
+    const userFilter = {
+      roles: { $in: ['ADMIN'] },
+      isActive: true
+    };
+
+    if (req.user?.institutionId) {
+      roleFilter.institutionId = req.user.institutionId;
+      userFilter.institutionId = req.user.institutionId;
+    } else if (req.query.institutionId) {
+      roleFilter.institutionId = req.query.institutionId;
+      userFilter.institutionId = req.query.institutionId;
+    } else if (req.user?.roles.includes('SUPERADMIN')) {
+      // Platform superadmin sees SUPERADMIN and all Admins
+      userFilter.roles = { $in: ['ADMIN', 'SUPERADMIN'] };
+    }
+
     const [adminAssignments, directAdmins] = await Promise.all([
-      RoleAssignment.find({
-        role: 'ADMIN',
-        $or: [{ validTo: null }, { validTo: { $gt: new Date() } }]
-      }).populate('userId', 'name email isActive avatarUrl'),
-      User.find({
-        roles: { $in: ['ADMIN', 'SUPERADMIN'] },
-        isActive: true
-      }).select('name email isActive avatarUrl roles')
+      RoleAssignment.find(roleFilter).populate('userId', 'name email isActive avatarUrl'),
+      User.find(userFilter).select('name email isActive avatarUrl roles institutionId')
     ]);
 
     const adminMap = new Map();
@@ -325,7 +366,8 @@ const listAdmins = async (req, res) => {
         _id: u._id,
         name: u.name,
         email: u.email,
-        roles: u.roles
+        roles: u.roles,
+        institutionId: u.institutionId
       });
     });
 
@@ -337,7 +379,8 @@ const listAdmins = async (req, res) => {
             _id: a.userId._id,
             name: a.userId.name,
             email: a.userId.email,
-            roles: ['ADMIN']
+            roles: ['ADMIN'],
+            institutionId: a.institutionId
           });
         }
       }
@@ -356,6 +399,12 @@ const listFaculty = async (req, res) => {
       role: 'FACULTY',
       $or: [{ validTo: null }, { validTo: { $gt: new Date() } }]
     };
+
+    if (req.user?.institutionId) {
+      filter.institutionId = req.user.institutionId;
+    } else if (req.query.institutionId) {
+      filter.institutionId = req.query.institutionId;
+    }
 
     if (req.user.roles?.includes('HOD') && !req.user.roles?.includes('SUPERADMIN') && !req.user.roles?.includes('ADMIN')) {
       const hodRole = req.effectiveRoles?.find(r => r.role === 'HOD');
@@ -393,6 +442,12 @@ const listCC = async (req, res) => {
       role: 'CC',
       $or: [{ validTo: null }, { validTo: { $gt: new Date() } }]
     };
+
+    if (req.user?.institutionId) {
+      filter.institutionId = req.user.institutionId;
+    } else if (req.query.institutionId) {
+      filter.institutionId = req.query.institutionId;
+    }
 
     if (req.user.roles?.includes('HOD') && !req.user.roles?.includes('SUPERADMIN') && !req.user.roles?.includes('ADMIN')) {
       const hodRole = req.effectiveRoles?.find(r => r.role === 'HOD');

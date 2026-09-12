@@ -1,6 +1,7 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User.model');
+const Institution = require('../models/Institution.model');
 const RoleAssignment = require('../models/RoleAssignment.model');
 const env = require('../config/env');
 
@@ -8,15 +9,15 @@ const { logAudit } = require('@college-erp/shared-utils');
 
 const BCRYPT_COST = 12;
 
-const generateTokens = (userId) => {
+const generateTokens = (userId, institutionId = null, roles = []) => {
   const accessToken = jwt.sign(
-    { userId }, 
+    { userId, institutionId, roles }, 
     env.JWT_ACCESS_SECRET, 
     { expiresIn: '15m' }
   );
   
   const refreshToken = jwt.sign(
-    { userId }, 
+    { userId, institutionId, roles }, 
     env.JWT_REFRESH_SECRET, 
     { expiresIn: '7d' }
   );
@@ -39,14 +40,15 @@ const superadminSignup = async (req, res) => {
       return res.status(403).json({ message: 'Superadmin already exists. Setup disabled.' });
     }
 
-    // 3. Create Superadmin
+    // 3. Create Superadmin (Platform owner, institutionId: null)
     const passwordHash = await bcrypt.hash(password, BCRYPT_COST);
     
     const user = await User.create({
       name,
       email,
       passwordHash,
-      roles: ['SUPERADMIN']
+      roles: ['SUPERADMIN'],
+      institutionId: null
     });
 
     await logAudit(
@@ -65,7 +67,7 @@ const superadminSignup = async (req, res) => {
 
 const registerStudent = async (req, res) => {
   try {
-    const { name, email, password, departmentId, sectionId } = req.body;
+    const { name, email, password, departmentId, sectionId, institutionId } = req.body;
 
     if (!departmentId || !sectionId) {
       return res.status(400).json({ message: 'departmentId and sectionId are required' });
@@ -83,7 +85,8 @@ const registerStudent = async (req, res) => {
       name,
       email,
       passwordHash,
-      roles: ['STUDENT'] // Never trusts request body for roles
+      roles: ['STUDENT'],
+      institutionId: institutionId || null
     });
 
     await RoleAssignment.create({
@@ -91,6 +94,7 @@ const registerStudent = async (req, res) => {
       role: 'STUDENT',
       departmentId,
       sectionId,
+      institutionId: institutionId || null,
       validFrom: new Date()
     });
 
@@ -99,7 +103,7 @@ const registerStudent = async (req, res) => {
       'STUDENT_CREATED', 
       user._id.toString(), 
       'User', 
-      { email: user.email, departmentId, sectionId }
+      { email: user.email, departmentId, sectionId, institutionId }
     );
 
     res.status(201).json({ message: 'Student registered successfully', userId: user._id });
@@ -110,7 +114,9 @@ const registerStudent = async (req, res) => {
 
 const login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, institutionSlug } = req.body;
+    const headerSlug = req.headers['x-institution-slug'];
+    const slug = institutionSlug || headerSlug;
     
     const user = await User.findOne({ email });
     if (!user || !user.isActive) {
@@ -122,7 +128,31 @@ const login = async (req, res) => {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    const { accessToken, refreshToken } = generateTokens(user._id.toString());
+    let userInstitution = null;
+
+    if (slug) {
+      // Institution-scoped login
+      userInstitution = await Institution.findOne({ slug: slug.toLowerCase() });
+      if (!userInstitution) {
+        return res.status(404).json({ message: 'Institution not found' });
+      }
+      if (userInstitution.status !== 'ACTIVE') {
+        return res.status(403).json({ message: 'Institution is suspended or inactive' });
+      }
+
+      // Verify tenant isolation: user must belong to this institution
+      if (!user.institutionId || user.institutionId.toString() !== userInstitution._id.toString()) {
+        return res.status(403).json({ message: 'Access denied: You do not belong to this institution' });
+      }
+    } else {
+      // Platform (SuperAdmin) login - only global superadmins with null institutionId
+      if (!user.roles.includes('SUPERADMIN') || user.institutionId !== null) {
+        return res.status(403).json({ message: 'Please log in through your institution portal URL' });
+      }
+    }
+
+    const resolvedInstitutionId = userInstitution ? userInstitution._id.toString() : (user.institutionId ? user.institutionId.toString() : null);
+    const { accessToken, refreshToken } = generateTokens(user._id.toString(), resolvedInstitutionId, user.roles || []);
 
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
@@ -134,7 +164,8 @@ const login = async (req, res) => {
       id: user._id.toString(),
       name: user.name,
       email: user.email,
-      roles: user.roles
+      roles: user.roles,
+      institutionId: resolvedInstitutionId
     };
 
     res.status(200).json({
@@ -143,12 +174,14 @@ const login = async (req, res) => {
       token: accessToken,
       roles: user.roles,
       userId: user._id,
+      institutionId: resolvedInstitutionId,
       user: userPayload,
       data: {
         token: accessToken,
         accessToken,
         userId: user._id,
         roles: user.roles,
+        institutionId: resolvedInstitutionId,
         user: userPayload
       }
     });
@@ -171,7 +204,8 @@ const refresh = async (req, res) => {
       return res.status(401).json({ message: 'User not found or inactive' });
     }
 
-    const tokens = generateTokens(user._id.toString());
+    const institutionId = user.institutionId ? user.institutionId.toString() : null;
+    const tokens = generateTokens(user._id.toString(), institutionId, user.roles || []);
 
     res.cookie('refreshToken', tokens.refreshToken, {
       httpOnly: true,
@@ -183,7 +217,8 @@ const refresh = async (req, res) => {
       id: user._id.toString(),
       name: user.name,
       email: user.email,
-      roles: user.roles
+      roles: user.roles,
+      institutionId
     };
 
     res.status(200).json({
@@ -192,12 +227,14 @@ const refresh = async (req, res) => {
       token: tokens.accessToken,
       roles: user.roles,
       userId: user._id,
+      institutionId,
       user: userPayload,
       data: {
         token: tokens.accessToken,
         accessToken: tokens.accessToken,
         userId: user._id,
         roles: user.roles,
+        institutionId,
         user: userPayload
       }
     });

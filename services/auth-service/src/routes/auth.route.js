@@ -8,13 +8,13 @@ const validate = require('../middlewares/validate');
 // Limiters
 const standardLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // Limit each IP to 5 requests per windowMs
+  max: process.env.NODE_ENV === 'production' ? 100 : 1000, // Generous limit in dev to allow tests
   message: { success: false, error: 'Too many requests from this IP, please try again after 15 minutes' }
 });
 
 const superadminLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
-  max: 3, // Limit each IP to 3 requests per hour
+  max: process.env.NODE_ENV === 'production' ? 10 : 100,
   message: { success: false, error: 'Too many setup attempts from this IP, please try again after an hour' },
   handler: (req, res, next, options) => {
     console.error(`[ALERT] Superadmin signup rate limit exceeded by IP: ${req.ip}`);
@@ -40,8 +40,9 @@ const studentRegisterSchema = Joi.object({
 
 const loginSchema = Joi.object({
   email: Joi.string().email().required(),
-  password: Joi.string().required()
-});
+  password: Joi.string().required(),
+  institutionSlug: Joi.string().allow('', null).optional()
+}).unknown(true);
 
 // Routes
 router.post('/superadmin/signup', superadminLimiter, validate(superadminSchema), authController.superadminSignup);

@@ -1,7 +1,8 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { useAuth } from './hooks/useAuth';
 import { ToastProvider } from './components/ui/ToastContext';
+import { TenantProvider } from './context/TenantContext';
 
 import { lazy, Suspense } from 'react';
 
@@ -38,8 +39,6 @@ import { GlobalSearch } from './components/ui/GlobalSearch';
 
 /**
  * Root redirect — send "/" to the correct dashboard based on the user's role.
- * Falls back to /student for unknown roles so authenticated users always land
- * somewhere meaningful.
  */
 function RootRedirect() {
   const { isAuthenticated, user } = useAuth();
@@ -47,11 +46,26 @@ function RootRedirect() {
   if (!isAuthenticated) return <Navigate to="/login" replace />;
 
   const roles = user?.roles ?? [];
-  if (roles.includes('SUPERADMIN') || roles.includes('ADMIN'))  return <Navigate to="/admin"   replace />;
-  if (roles.includes('HOD'))                                     return <Navigate to="/hod"     replace />;
-  if (roles.includes('FACULTY'))                                 return <Navigate to="/faculty" replace />;
-  if (roles.includes('CC'))                                      return <Navigate to="/cc"      replace />;
+  if (roles.includes('SUPERADMIN')) return <Navigate to="/admin/management" replace />;
+  if (roles.includes('ADMIN'))       return <Navigate to="/admin"            replace />;
+  if (roles.includes('HOD'))         return <Navigate to="/hod"              replace />;
+  if (roles.includes('FACULTY'))     return <Navigate to="/faculty"          replace />;
+  if (roles.includes('CC'))          return <Navigate to="/cc"               replace />;
   return <Navigate to="/student" replace />;
+}
+
+function TenantRootRedirect() {
+  const { slug } = useParams();
+  const { isAuthenticated, user } = useAuth();
+
+  if (!isAuthenticated) return <Navigate to={`/inst/${slug}/login`} replace />;
+
+  const roles = user?.roles ?? [];
+  if (roles.includes('ADMIN'))   return <Navigate to={`/inst/${slug}/admin`}   replace />;
+  if (roles.includes('HOD'))     return <Navigate to={`/inst/${slug}/hod`}     replace />;
+  if (roles.includes('FACULTY')) return <Navigate to={`/inst/${slug}/faculty`} replace />;
+  if (roles.includes('CC'))      return <Navigate to={`/inst/${slug}/cc`}      replace />;
+  return <Navigate to={`/inst/${slug}/student`} replace />;
 }
 
 function AppLoadingFallback() {
@@ -73,13 +87,30 @@ export default function App() {
         <Suspense fallback={<AppLoadingFallback />}>
           <Routes>
           {/* ── Public ──────────────────────────────────────────────────── */}
-        <Route path="/login"        element={<LoginPage />} />
-        <Route path="/register"     element={<StudentRegisterPage />} />
-        <Route path="/superadmin/signup" element={<SuperadminSignupPage />} />
-        <Route path="/unauthorized" element={<UnauthorizedPage />} />
+          <Route path="/login"        element={<LoginPage />} />
+          <Route path="/register"     element={<StudentRegisterPage />} />
+          <Route path="/superadmin/login"  element={<LoginPage isSuperAdminMode={true} />} />
+          <Route path="/superadmin/signup" element={<SuperadminSignupPage />} />
+          <Route path="/superadmin"        element={<Navigate to="/admin/management" replace />} />
+          <Route path="/superadmin/dashboard" element={<Navigate to="/admin/management" replace />} />
+          <Route path="/unauthorized" element={<UnauthorizedPage />} />
 
-        {/* ── Root redirect ────────────────────────────────────────────── */}
-        <Route path="/" element={<RootRedirect />} />
+          {/* ── Whitelabeled Tenant Portals ─────────────────────────────── */}
+          <Route path="/inst/:slug/login"    element={<TenantProvider><LoginPage /></TenantProvider>} />
+          <Route path="/inst/:slug/register" element={<TenantProvider><StudentRegisterPage /></TenantProvider>} />
+          <Route path="/inst/:slug"          element={<TenantProvider><TenantRootRedirect /></TenantProvider>} />
+          <Route path="/inst/:slug/admin/*"  element={<TenantProvider><ProtectedRoute allowedRoles={['ADMIN', 'SUPERADMIN']}><AdminDashboard /></ProtectedRoute></TenantProvider>} />
+          <Route path="/inst/:slug/hod/*"    element={<TenantProvider><ProtectedRoute allowedRoles={['HOD', 'ADMIN', 'SUPERADMIN']}><HodDashboard /></ProtectedRoute></TenantProvider>} />
+          <Route path="/inst/:slug/faculty/*" element={<TenantProvider><ProtectedRoute allowedRoles={['FACULTY', 'HOD', 'ADMIN', 'SUPERADMIN']}><FacultyDashboard /></ProtectedRoute></TenantProvider>} />
+          <Route path="/inst/:slug/cc/*"      element={<TenantProvider><ProtectedRoute allowedRoles={['CC', 'HOD', 'ADMIN', 'SUPERADMIN']}><CcDashboard /></ProtectedRoute></TenantProvider>} />
+          <Route path="/inst/:slug/student/*" element={<TenantProvider><ProtectedRoute allowedRoles={['STUDENT']}><StudentDashboard /></ProtectedRoute></TenantProvider>} />
+          <Route path="/inst/:slug/attendance" element={<TenantProvider><ProtectedRoute allowedRoles={['STUDENT']}><StudentAttendancePage /></ProtectedRoute></TenantProvider>} />
+          <Route path="/inst/:slug/fees"       element={<TenantProvider><ProtectedRoute allowedRoles={['STUDENT']}><StudentFeesPage /></ProtectedRoute></TenantProvider>} />
+          <Route path="/inst/:slug/notices"    element={<TenantProvider><ProtectedRoute allowedRoles={['STUDENT']}><StudentNoticesPage /></ProtectedRoute></TenantProvider>} />
+          <Route path="/inst/:slug/profile"    element={<TenantProvider><ProtectedRoute><ProfilePage /></ProtectedRoute></TenantProvider>} />
+
+          {/* ── Root redirect ────────────────────────────────────────────── */}
+          <Route path="/" element={<RootRedirect />} />
 
         {/* ── Admin (ADMIN, SUPERADMIN) ────────────────────────────────── */}
         <Route

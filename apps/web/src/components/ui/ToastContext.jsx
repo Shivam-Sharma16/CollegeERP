@@ -24,8 +24,16 @@ export function ToastProvider({ children }) {
     setToasts((prev) => prev.filter((toast) => toast.id !== id));
   }, []);
 
+  const showToast = useCallback((message, type = 'info', title = '') => {
+    addToast({
+      type,
+      title: title || (type === 'error' ? 'Error' : (type === 'success' ? 'Success' : 'Notice')),
+      message: typeof message === 'string' ? message : JSON.stringify(message)
+    });
+  }, [addToast]);
+
   return (
-    <ToastContext.Provider value={{ addToast, removeToast }}>
+    <ToastContext.Provider value={{ addToast, removeToast, showToast }}>
       {children}
       
       {/* Toast Container */}

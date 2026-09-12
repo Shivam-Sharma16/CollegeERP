@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const Department = require('../models/Department.model');
 const { success, fail, logAudit } = require('@college-erp/shared-utils');
 
@@ -9,19 +10,26 @@ const createDepartment = async (req, res) => {
       return res.status(400).json(fail('Name and code are required'));
     }
 
-    const existing = await Department.findOne({ code });
+    const institutionId = req.user?.institutionId || req.body.institutionId || null;
+    const normalizedCode = code.trim().toUpperCase();
+
+    const existing = await Department.findOne({ code: normalizedCode, institutionId });
     if (existing) {
-      return res.status(409).json(fail('Department with this code already exists'));
+      return res.status(409).json(fail('Department with this code already exists in this institution'));
     }
 
-    const department = await Department.create({ name, code });
+    const department = await Department.create({
+      name: name.trim(),
+      code: normalizedCode,
+      institutionId
+    });
 
     await logAudit(
       req,
       'DEPARTMENT_CREATED',
       department._id.toString(),
       'Department',
-      { name, code }
+      { name, code: normalizedCode, institutionId }
     );
 
     res.status(201).json(success({ department }));
@@ -33,7 +41,14 @@ const createDepartment = async (req, res) => {
 
 const listDepartments = async (req, res) => {
   try {
-    const departments = await Department.find().sort({ name: 1 }).lean();
+    const filter = {};
+    if (req.user?.institutionId) {
+      filter.institutionId = req.user.institutionId;
+    } else if (req.query.institutionId) {
+      filter.institutionId = req.query.institutionId;
+    }
+
+    const departments = await Department.find(filter).sort({ name: 1 }).lean();
     res.status(200).json(success(departments));
   } catch (err) {
     console.error('[DepartmentController] Failed to list departments:', err);
@@ -43,7 +58,14 @@ const listDepartments = async (req, res) => {
 
 const resolveDeptTree = async (req, res) => {
   try {
-    const departments = await Department.find().sort({ name: 1 }).lean();
+    const filter = {};
+    if (req.user?.institutionId) {
+      filter.institutionId = req.user.institutionId;
+    } else if (req.query.institutionId) {
+      filter.institutionId = req.query.institutionId;
+    }
+
+    const departments = await Department.find(filter).sort({ name: 1 }).lean();
 
     const tree = await Promise.all(departments.map(async (dept) => {
       let years = [];

@@ -11,6 +11,7 @@ const userRoute = require('./routes/user.route');
 const auditRoute = require('./routes/audit.route');
 const reportsRoute = require('./routes/reports.route');
 const settingsRoute = require('./routes/settings.route');
+const institutionRoute = require('./routes/institution.route');
 
 const app = express();
 
@@ -22,12 +23,14 @@ app.use(express.json());
 app.use('/', healthRoute);
 
 // Feature routes
+app.use('/institutions', institutionRoute);
 app.use('/departments', departmentRoute);
 app.use('/users', userRoute);
 app.use('/audit', auditRoute);
 app.use('/reports', reportsRoute);
 app.use('/settings', settingsRoute);
 
+app.use('/api/institutions', institutionRoute);
 app.use('/api/departments', departmentRoute);
 app.use('/api/users', userRoute);
 app.use('/api/audit', auditRoute);

@@ -44,6 +44,7 @@ import { reportsApi }      from '../api/reportsApi';
 import { auditApi }        from '../api/auditApi';
 import { settingsApi }     from '../api/settingsApi';
 import { searchApi }       from '../api/searchApi';
+import { institutionsApi } from '../api/institutionsApi';
 
 // ── Store ──────────────────────────────────────────────────────────────────────
 export const store = configureStore({
@@ -56,6 +57,7 @@ export const store = configureStore({
 
     // RTK Query caches (each has its own reducerPath key)
     [authApi.reducerPath]:         authApi.reducer,
+    [institutionsApi.reducerPath]: institutionsApi.reducer,
     [usersApi.reducerPath]:        usersApi.reducer,
     [departmentsApi.reducerPath]:  departmentsApi.reducer,
     [academicApi.reducerPath]:     academicApi.reducer,
@@ -75,6 +77,7 @@ export const store = configureStore({
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(
       authApi.middleware,
+      institutionsApi.middleware,
       usersApi.middleware,
       departmentsApi.middleware,
       academicApi.middleware,

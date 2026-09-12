@@ -10,6 +10,7 @@ const userSchema = new mongoose.Schema({
     type: String, 
     enum: Object.values(ROLES) 
   }],
+  institutionId: { type: mongoose.Schema.Types.ObjectId, ref: 'Institution', default: null },
   phone: { type: String },
   avatarUrl: { type: String },
   isActive: { type: Boolean, default: true }

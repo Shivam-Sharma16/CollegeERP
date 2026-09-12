@@ -5,6 +5,7 @@ const userSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   passwordHash: { type: String, required: true },
   roles: [{ type: String }],
+  institutionId: { type: mongoose.Schema.Types.ObjectId, ref: 'Institution', default: null },
   isActive: { type: Boolean, default: true }
 }, {
   timestamps: true
