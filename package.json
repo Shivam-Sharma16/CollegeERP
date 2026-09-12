@@ -26,6 +26,7 @@
     "lint": "npm run lint --workspaces --if-present",
     "lint:all": "eslint .",
     "migrate:tenancy": "node scripts/migrate-tenancy.js",
+    "seed:multi-tenant": "node infra/scripts/seed-multi-tenant.js",
     "build": "npm run build --workspaces --if-present"
   },
   "devDependencies": {
