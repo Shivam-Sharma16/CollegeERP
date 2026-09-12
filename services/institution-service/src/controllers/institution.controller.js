@@ -2,6 +2,7 @@ const bcrypt = require('bcrypt');
 const mongoose = require('mongoose');
 const Institution = require('../models/Institution.model');
 const { success, fail, logAudit } = require('@college-erp/shared-utils');
+const { invalidateTenantCache } = require('../config/redis');
 
 const BCRYPT_COST = 12;
 
@@ -341,6 +342,8 @@ const updateInstitution = async (req, res) => {
     if (!updated) {
       return res.status(404).json(fail('Institution not found'));
     }
+
+    await invalidateTenantCache(updated.subdomain, updated.slug, updated.customDomain, updated.domain);
 
     await logAudit(
       req,

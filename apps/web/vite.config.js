@@ -20,6 +20,21 @@ export default defineConfig({
   server: {
     host: '0.0.0.0',
     port: 5173,
+    cors: true,
+    allowedHosts: true,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:4000',
+        changeOrigin: false,
+        configure: (proxy) => {
+          proxy.on('proxyReq', (proxyReq, req) => {
+            if (req.headers.host) {
+              proxyReq.setHeader('x-forwarded-host', req.headers.host);
+            }
+          });
+        }
+      }
+    }
   },
   build: {
     chunkSizeWarningLimit: 1000,

@@ -7,15 +7,24 @@
     "dev": "node src/index.js",
     "start": "node src/index.js",
     "build": "node --check src/index.js",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "test": "jest --forceExit"
   },
   "dependencies": {
-    "express": "^4.18.2",
-    "mongoose": "^8.2.0",
-    "envalid": "^8.0.0",
-    "dotenv": "^16.4.5",
+    "@college-erp/shared-utils": "*",
     "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "envalid": "^8.0.0",
+    "express": "^4.18.2",
     "helmet": "^7.1.0",
+    "ioredis": "^6.0.0",
+    "mongoose": "^8.2.0",
     "morgan": "^1.10.0"
+  },
+  "devDependencies": {
+    "ioredis-mock": "^8.9.0",
+    "jest": "^30.5.1",
+    "mongodb-memory-server": "^11.2.0",
+    "supertest": "^7.2.2"
   }
 }

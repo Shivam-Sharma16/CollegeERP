@@ -2,6 +2,7 @@ const { requirePermission } = require('./rbac');
 const { setupSecurity } = require('./security');
 const { logAudit } = require('./audit');
 const { authenticate } = require('./auth');
+const { verifyTenantContext } = require('./tenant');
 
 const success = (data) => ({
   success: true,
@@ -25,5 +26,6 @@ module.exports = {
   requirePermission,
   setupSecurity,
   logAudit,
-  authenticate
+  authenticate,
+  verifyTenantContext
 };
