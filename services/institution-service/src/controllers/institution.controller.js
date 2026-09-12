@@ -6,6 +6,11 @@ const { invalidateTenantCache } = require('../config/redis');
 
 const BCRYPT_COST = 12;
 
+const RESERVED_SUBDOMAINS = new Set([
+  'admin', 'superadmin', 'api', 'app', 'portal', 'auth', 'www', 'mail', 
+  'support', 'help', 'root', 'localhost', 'dashboard', 'status'
+]);
+
 const checkSuperAdmin = async (req) => {
   if (req.user?.roles && req.user.roles.includes('SUPERADMIN')) return true;
   if (mongoose.connection.db) {
@@ -22,10 +27,14 @@ const checkSuperAdmin = async (req) => {
 
 /**
  * Create a new Institution along with its designated initial Admin
- * Access: SUPERADMIN only
+ * Access: SUPERADMIN only (Root domain only)
  */
 const createInstitution = async (req, res) => {
   try {
+    if (req.tenantId) {
+      return res.status(403).json(fail('SuperAdmin institution management is only allowed on the root domain'));
+    }
+
     const isSuperAdmin = await checkSuperAdmin(req);
     if (!isSuperAdmin) {
       return res.status(403).json(fail('Only SUPERADMIN can create institutions'));
@@ -56,6 +65,10 @@ const createInstitution = async (req, res) => {
     const subdomainRegex = /^[a-z0-9-]+$/;
     if (!subdomainRegex.test(normalizedSubdomain)) {
       return res.status(400).json(fail('Subdomain must contain only lowercase letters, numbers, and hyphens'));
+    }
+
+    if (RESERVED_SUBDOMAINS.has(normalizedSubdomain)) {
+      return res.status(409).json(fail('This subdomain is reserved by the platform'));
     }
 
     if (!admin || !admin.name || !admin.email || !admin.password) {
@@ -96,7 +109,7 @@ const createInstitution = async (req, res) => {
       faviconUrl: themeConfig?.faviconUrl || branding?.faviconUrl || ''
     };
     const resolvedLogo = logoUrl || branding?.logoUrl || '';
-    const resolvedCustomDomain = customDomain || domain || null;
+    const resolvedCustomDomain = (customDomain || domain) ? (customDomain || domain).trim().toLowerCase() : undefined;
 
     const institution = await Institution.create({
       name: normalizedName,
@@ -180,10 +193,14 @@ const createInstitution = async (req, res) => {
 
 /**
  * List all institutions
- * Access: SUPERADMIN only
+ * Access: SUPERADMIN only (Root domain only)
  */
 const listInstitutions = async (req, res) => {
   try {
+    if (req.tenantId) {
+      return res.status(403).json(fail('SuperAdmin institution management is only allowed on the root domain'));
+    }
+
     const isSuperAdmin = await checkSuperAdmin(req);
     if (!isSuperAdmin) {
       return res.status(403).json(fail('Only SUPERADMIN can view all institutions'));
@@ -194,23 +211,63 @@ const listInstitutions = async (req, res) => {
       .sort({ createdAt: -1 })
       .lean();
 
-    // Aggregate user counts per institution
-    let countMap = {};
+    // Aggregate user counts per institution (students, faculty, total)
+    let userStatsMap = {};
     if (mongoose.connection.db) {
       const counts = await mongoose.connection.db.collection('users').aggregate([
         { $match: { institutionId: { $ne: null } } },
-        { $group: { _id: '$institutionId', count: { $sum: 1 } } }
+        {
+          $group: {
+            _id: '$institutionId',
+            totalUsers: { $sum: 1 },
+            studentCount: {
+              $sum: { $cond: [{ $in: ['STUDENT', '$roles'] }, 1, 0] }
+            },
+            facultyCount: {
+              $sum: { $cond: [{ $in: ['FACULTY', '$roles'] }, 1, 0] }
+            }
+          }
+        }
       ]).toArray();
 
       counts.forEach(c => {
-        countMap[c._id.toString()] = c.count;
+        userStatsMap[c._id.toString()] = {
+          studentCount: c.studentCount || 0,
+          facultyCount: c.facultyCount || 0,
+          totalUsers: c.totalUsers || 0
+        };
       });
     }
 
-    const result = institutions.map(inst => ({
-      ...inst,
-      userCount: countMap[inst._id.toString()] || 0
-    }));
+    // Aggregate department counts per institution
+    let deptMap = {};
+    if (mongoose.connection.db) {
+      const deptCounts = await mongoose.connection.db.collection('departments').aggregate([
+        { $match: { institutionId: { $ne: null } } },
+        {
+          $group: {
+            _id: '$institutionId',
+            departmentCount: { $sum: 1 }
+          }
+        }
+      ]).toArray();
+
+      deptCounts.forEach(d => {
+        deptMap[d._id.toString()] = d.departmentCount || 0;
+      });
+    }
+
+    const result = institutions.map(inst => {
+      const idStr = inst._id.toString();
+      const uStats = userStatsMap[idStr] || { studentCount: 0, facultyCount: 0, totalUsers: 0 };
+      return {
+        ...inst,
+        studentCount: uStats.studentCount,
+        facultyCount: uStats.facultyCount,
+        departmentCount: deptMap[idStr] || 0,
+        userCount: uStats.totalUsers
+      };
+    });
 
     res.status(200).json(success(result));
   } catch (err) {
@@ -335,6 +392,12 @@ const updateInstitution = async (req, res) => {
         updateData.status = status;
         updateData.isActive = status === 'ACTIVE';
       }
+    } else if (isActive !== undefined || status !== undefined) {
+      return res.status(403).json(fail('Only SUPERADMIN can activate or deactivate institutions'));
+    }
+
+    if ((isActive !== undefined || status !== undefined) && req.tenantId) {
+      return res.status(403).json(fail('SuperAdmin institution management is only allowed on the root domain'));
     }
 
     const updated = await Institution.findByIdAndUpdate(id, updateData, { new: true })
@@ -361,10 +424,68 @@ const updateInstitution = async (req, res) => {
   }
 };
 
+/**
+ * Live Subdomain Availability Check
+ * Access: Public / SuperAdmin (Frontend live typing validation)
+ * Query/Param: ?subdomain=... or /:subdomain/check-subdomain or /:id/check-subdomain
+ */
+const checkSubdomainAvailability = async (req, res) => {
+  try {
+    const rawSubdomain = req.query.subdomain || req.params.subdomain || req.params.id || '';
+    const normalized = rawSubdomain.trim().toLowerCase();
+
+    if (!normalized) {
+      return res.status(400).json(fail('Subdomain is required'));
+    }
+
+    const subdomainRegex = /^[a-z0-9-]+$/;
+    if (!subdomainRegex.test(normalized)) {
+      return res.status(200).json(success({
+        available: false,
+        subdomain: normalized,
+        reason: 'Subdomain must contain only lowercase letters, numbers, and hyphens'
+      }));
+    }
+
+    if (RESERVED_SUBDOMAINS.has(normalized)) {
+      return res.status(200).json(success({
+        available: false,
+        subdomain: normalized,
+        reason: 'This subdomain is reserved by the platform'
+      }));
+    }
+
+    const existing = await Institution.findOne({
+      $or: [
+        { subdomain: normalized },
+        { slug: normalized }
+      ]
+    }).select('_id subdomain name').lean();
+
+    if (existing) {
+      return res.status(200).json(success({
+        available: false,
+        subdomain: normalized,
+        reason: 'Subdomain is already taken'
+      }));
+    }
+
+    return res.status(200).json(success({
+      available: true,
+      subdomain: normalized,
+      message: 'Subdomain is available'
+    }));
+  } catch (err) {
+    console.error('[InstitutionController] Subdomain check error:', err);
+    return res.status(500).json(fail('Internal server error'));
+  }
+};
+
 module.exports = {
   createInstitution,
   listInstitutions,
   resolveInstitutionBySlug,
   getInstitutionById,
-  updateInstitution
+  updateInstitution,
+  checkSubdomainAvailability
 };

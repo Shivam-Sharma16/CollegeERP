@@ -79,8 +79,11 @@ function registerProxies(app) {
     '/superadmin/signup', '/superadmin-signup', '/api/superadmin/signup'
   ], (req, res) => forward(env.AUTH_SERVICE_URL, req, res));
 
-  // 2. Institution Service (Institutions, Multi-tenant onboarding, Theme resolution)
-  app.use(['/api/institutions', '/institutions'], (req, res) => forward(env.INSTITUTION_SERVICE_URL, req, res));
+  // 2. Institution Service (Institutions, Multi-tenant onboarding, Theme resolution, SuperAdmin institution management)
+  app.use([
+    '/api/institutions', '/institutions',
+    '/superadmin/institutions', '/api/superadmin/institutions'
+  ], (req, res) => forward(env.INSTITUTION_SERVICE_URL, req, res));
 
   // 3. User Service (Users, Departments, Audit, Reports, Settings)
   app.use([

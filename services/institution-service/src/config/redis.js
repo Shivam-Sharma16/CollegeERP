@@ -52,7 +52,12 @@ const invalidateTenantCache = async (...subdomains) => {
   }
 };
 
+const setRedisClient = (client) => {
+  redisClient = client;
+};
+
 module.exports = {
   getRedisClient,
+  setRedisClient,
   invalidateTenantCache
 };

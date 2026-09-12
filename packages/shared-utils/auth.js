@@ -30,7 +30,7 @@ const authenticate = (req, res, next) => {
 
     if (currentTenantId) {
       // Current request is scoped to a specific institution/tenant subdomain
-      if (!tokenTenantId || tokenTenantId !== currentTenantId.toString()) {
+      if (!req.user.roles?.includes('SUPERADMIN') && (!tokenTenantId || tokenTenantId !== currentTenantId.toString())) {
         return res.status(401).json({
           success: false,
           error: 'Token tenant mismatch: JWT issued for a different institution cannot be used on this tenant domain'
