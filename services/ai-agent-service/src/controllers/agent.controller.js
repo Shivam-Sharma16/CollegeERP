@@ -10,9 +10,12 @@ const env                      = require('../config/env');
 
 /** Build a production context from req.user and env */
 function buildContext(req) {
+  const tenantId = req.tenantId || req.headers['x-tenant-id'] || req.user?.institutionId || null;
   return {
-    userId:      req.user.userId || req.user.id || req.user._id,
-    internalKey: env.INTERNAL_SERVICE_KEY,
+    userId:        req.user.userId || req.user.id || req.user._id,
+    tenantId:      tenantId,
+    institutionId: tenantId,
+    internalKey:   env.INTERNAL_SERVICE_KEY,
     serviceUrls: {
       attendanceService: env.ATTENDANCE_SERVICE_URL,
       resultsService:    env.RESULTS_SERVICE_URL,
@@ -50,7 +53,9 @@ const runAttendanceIntegrity = async (req, res) => {
 
     // Write flagged students to review queue (controller responsibility, not agent)
     if (result && result.toLowerCase().includes('flagged')) {
+      const tenantId = req.tenantId || req.headers['x-tenant-id'] || req.user?.institutionId;
       await AgentReviewItem.create({
+        institutionId:   tenantId,
         agentName:       'attendanceIntegrityAgent',
         targetStudentId: req.user.userId || req.user.id, // placeholder — real impl parses result
         sessionId:       sessionId,
@@ -86,7 +91,9 @@ const runAtRisk = async (req, res) => {
     if (error) return res.status(500).json({ success: false, error, toolCallLog });
 
     // Write to pending-review queue
+    const tenantId = req.tenantId || req.headers['x-tenant-id'] || req.user?.institutionId;
     const reviewItem = await AgentReviewItem.create({
+      institutionId:   tenantId,
       agentName:       'atRiskStudentAgent',
       targetStudentId: studentId,
       summary:         result || 'No risk detected',
@@ -169,10 +176,50 @@ const runStudentPersonal = async (req, res) => {
   }
 };
 
+// ─── GET /api/agents/review-items ───────────────────────────────────────────
+const getReviewItems = async (req, res) => {
+  try {
+    const tenantId = req.tenantId || req.headers['x-tenant-id'] || req.user?.institutionId;
+    const { status, agentName } = req.query;
+
+    const filter = {};
+    if (tenantId) filter.institutionId = tenantId;
+    if (status) filter.status = status;
+    if (agentName) filter.agentName = agentName;
+
+    const items = await AgentReviewItem.find(filter).sort({ createdAt: -1 }).lean();
+    return res.json({ success: true, data: items });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+};
+
+// ─── GET /api/agents/review-items/:id ───────────────────────────────────────
+const getReviewItemById = async (req, res) => {
+  try {
+    const tenantId = req.tenantId || req.headers['x-tenant-id'] || req.user?.institutionId;
+    const { id } = req.params;
+
+    const query = { _id: id };
+    if (tenantId) query.institutionId = tenantId;
+
+    const item = await AgentReviewItem.findOne(query).lean();
+    if (!item) {
+      return res.status(404).json({ success: false, error: 'Review item not found' });
+    }
+
+    return res.json({ success: true, data: item });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+};
+
 module.exports = {
   runAttendanceIntegrity,
   runAtRisk,
   runNlQuery,
   runNoticeDraft,
   runStudentPersonal,
+  getReviewItems,
+  getReviewItemById,
 };

@@ -28,4 +28,9 @@ router.get('/cc', userController.listCC);
 router.post('/students', requirePermission('write', 'Section'), userController.onboardStudent);
 router.get('/students', requirePermission('read', 'Section'), userController.listStudents);
 
+router.get('/', userController.listUsers);
+router.get('/:id', userController.getUserById);
+router.patch('/:id', requirePermission('write', 'Institution'), userController.updateUser);
+router.delete('/:id', requirePermission('write', 'Institution'), userController.deleteUser);
+
 module.exports = router;

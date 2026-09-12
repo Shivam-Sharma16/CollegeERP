@@ -40,22 +40,49 @@ const requirePermission = (action, resourceType) => {
       }
 
       const userIdStr = req.user.userId.toString();
+      const currentTenantId = req.tenantId || (req.headers && req.headers['x-tenant-id']) || (req.user.institutionId ? req.user.institutionId.toString() : null);
+      if (currentTenantId) {
+        req.tenantId = currentTenantId;
+      }
 
-      // 1. Resolve Effective Roles (Cached per request)
+      // Outermost check: Institution Match (Phase 68)
+      // A caller's department/section scope check is meaningless if their institution does not match.
+      const isSuperAdmin = req.user.roles && req.user.roles.includes('SUPERADMIN');
+      if (currentTenantId && !isSuperAdmin) {
+        const userTenantId = req.user.institutionId ? req.user.institutionId.toString() : null;
+        if (!userTenantId || userTenantId !== currentTenantId.toString()) {
+          return res.status(403).json(fail('Access Denied: Tenant mismatch'));
+        }
+
+        // If resource is preloaded on req, verify its institutionId matches
+        if (req.resource && req.resource.institutionId) {
+          if (req.resource.institutionId.toString() !== currentTenantId.toString()) {
+            return res.status(403).json(fail('Access Denied: Resource belongs to a different institution'));
+          }
+        }
+      }
+
+      // 1. Resolve Effective Roles (Cached per request, strictly scoped by current tenant)
       if (!req.effectiveRoles) {
         if (!mongoose.connection.db) {
           throw new Error('Database connection not established');
         }
 
+        const roleQuery = { userId: new mongoose.Types.ObjectId(userIdStr) };
+        if (currentTenantId && !isSuperAdmin && mongoose.Types.ObjectId.isValid(currentTenantId)) {
+          roleQuery.institutionId = new mongoose.Types.ObjectId(currentTenantId);
+        }
+
         const roleAssignments = await mongoose.connection.db
           .collection('roleassignments')
-          .find({ userId: new mongoose.Types.ObjectId(userIdStr) })
+          .find(roleQuery)
           .toArray();
 
         req.effectiveRoles = roleAssignments.map(ra => ({
           role: ra.role,
           departmentId: ra.departmentId?.toString(),
-          sectionId: ra.sectionId?.toString()
+          sectionId: ra.sectionId?.toString(),
+          institutionId: ra.institutionId?.toString()
         }));
 
         // Include JWT token roles (like SUPERADMIN) which might not have scoped RoleAssignments

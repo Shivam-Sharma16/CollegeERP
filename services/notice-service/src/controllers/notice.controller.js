@@ -76,9 +76,18 @@ const toStringArray = (arr) => {
 // ---------------------------------------------------------------------------
 // getNoticesForUser  (Phase 7 pipeline)
 // ---------------------------------------------------------------------------
-const getNoticesForUser = async (userId, searchQuery = '') => {
+const getNoticesForUser = async (userId, searchQuery = '', tenantId = null) => {
+  const matchUser = { userId: new mongoose.Types.ObjectId(userId) };
+  if (tenantId) {
+    try {
+      matchUser.institutionId = new mongoose.Types.ObjectId(tenantId);
+    } catch {
+      matchUser.institutionId = tenantId;
+    }
+  }
+
   const rolesPipeline = [
-    { $match: { userId: new mongoose.Types.ObjectId(userId) } },
+    { $match: matchUser },
     { $lookup: { from: 'sections',  localField: 'sectionId',       foreignField: '_id', as: 'section'  } },
     { $unwind: { path: '$section',  preserveNullAndEmptyArrays: true } },
     { $lookup: { from: 'semesters', localField: 'section.semesterId', foreignField: '_id', as: 'semester' } },
@@ -130,6 +139,14 @@ const getNoticesForUser = async (userId, searchQuery = '') => {
     ],
   };
 
+  if (tenantId) {
+    try {
+      query.institutionId = new mongoose.Types.ObjectId(tenantId);
+    } catch {
+      query.institutionId = tenantId;
+    }
+  }
+
   if (searchQuery) {
     const regex = new RegExp(searchQuery, 'i');
     query.$and.push({
@@ -171,7 +188,8 @@ exports.createNotice = async (req, res) => {
     // --- The core security guarantee ---
     // targeting is REBUILT from callerScope; client payload targeting is ignored.
     const targeting = clampTargeting(req.body.targeting, callerScope);
-    const institutionId = req.user?.institutionId || callerScope?.institutionId || req.body.institutionId;
+    const rawInstitutionId = req.tenantId || req.headers['x-tenant-id'] || req.user?.institutionId || callerScope?.institutionId || req.body.institutionId;
+    const institutionId = rawInstitutionId ? new mongoose.Types.ObjectId(rawInstitutionId) : null;
 
     const notice = await Notice.create({
       institutionId,
@@ -195,7 +213,8 @@ exports.createNotice = async (req, res) => {
  */
 exports.getNoticesMine = async (req, res) => {
   try {
-    const notices = await getNoticesForUser(req.user.userId);
+    const tenantId = req.tenantId || req.headers['x-tenant-id'] || req.user?.institutionId;
+    const notices = await getNoticesForUser(req.user.userId, '', tenantId);
     res.status(200).json({ success: true, data: notices });
   } catch (err) {
     console.error('[getNoticesMine]', err);
@@ -212,7 +231,8 @@ exports.searchNotices = async (req, res) => {
     const { q } = req.query;
     if (!q) return res.status(200).json({ success: true, data: [] });
     
-    const notices = await getNoticesForUser(req.user.userId, q);
+    const tenantId = req.tenantId || req.headers['x-tenant-id'] || req.user?.institutionId;
+    const notices = await getNoticesForUser(req.user.userId, q, tenantId);
     res.status(200).json({ success: true, data: notices });
   } catch (err) {
     console.error('[searchNotices]', err);
@@ -306,9 +326,13 @@ exports.createNote = async (req, res) => {
       };
     }
 
+    const rawInstitutionId = req.tenantId || req.headers['x-tenant-id'] || req.user?.institutionId || callerScope?.institutionId;
+    const institutionId = rawInstitutionId ? new mongoose.Types.ObjectId(rawInstitutionId) : null;
+
     // Persist the Note record with the expected URL
     // (In production the client would confirm upload; here we pre-create the record)
     const note = await Note.create({
+      institutionId,
       subjectId:       new mongoose.Types.ObjectId(subjectId),
       sectionId:       clampedSectionId,
       yearLevel:       null,
@@ -329,3 +353,66 @@ exports.createNote = async (req, res) => {
     res.status(500).json({ success: false, error: err.message });
   }
 };
+
+/**
+ * GET /notices/:id
+ */
+exports.getNoticeById = async (req, res) => {
+  try {
+    const tenantId = req.tenantId || req.headers['x-tenant-id'] || req.user?.institutionId;
+    const { id } = req.params;
+    const query = { _id: id };
+    if (tenantId) query.institutionId = tenantId;
+
+    const notice = await Notice.findOne(query).lean();
+    if (!notice) {
+      return res.status(404).json({ success: false, error: 'Notice not found' });
+    }
+    res.status(200).json({ success: true, data: notice });
+  } catch (err) {
+    console.error('[getNoticeById]', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+};
+
+/**
+ * GET /notes
+ */
+exports.listNotes = async (req, res) => {
+  try {
+    const tenantId = req.tenantId || req.headers['x-tenant-id'] || req.user?.institutionId;
+    const { subjectId, sectionId } = req.query;
+    const query = {};
+    if (tenantId) query.institutionId = tenantId;
+    if (subjectId) query.subjectId = subjectId;
+    if (sectionId) query.sectionId = sectionId;
+
+    const notes = await Note.find(query).sort({ createdAt: -1 }).lean();
+    res.status(200).json({ success: true, data: notes });
+  } catch (err) {
+    console.error('[listNotes]', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+};
+
+/**
+ * GET /notes/:id
+ */
+exports.getNoteById = async (req, res) => {
+  try {
+    const tenantId = req.tenantId || req.headers['x-tenant-id'] || req.user?.institutionId;
+    const { id } = req.params;
+    const query = { _id: id };
+    if (tenantId) query.institutionId = tenantId;
+
+    const note = await Note.findOne(query).lean();
+    if (!note) {
+      return res.status(404).json({ success: false, error: 'Note not found' });
+    }
+    res.status(200).json({ success: true, data: note });
+  } catch (err) {
+    console.error('[getNoteById]', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+};
+

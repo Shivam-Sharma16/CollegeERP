@@ -74,9 +74,14 @@ const createAdmin = (req, res) => {
 };
 
 const createHOD = async (req, res) => {
-  // Validate department exists
+  // Validate department exists within caller's institution
   if (req.body.departmentId) {
-    const dept = await Department.findById(req.body.departmentId).catch(() => null);
+    const tenantId = req.tenantId || req.headers['x-tenant-id'] || req.user?.institutionId;
+    const deptFilter = { _id: req.body.departmentId };
+    if (tenantId && !req.user?.roles?.includes('SUPERADMIN')) {
+      deptFilter.institutionId = tenantId;
+    }
+    const dept = await Department.findOne(deptFilter).catch(() => null);
     if (!dept) {
       return res.status(404).json(fail('Department not found'));
     }
@@ -137,17 +142,17 @@ const onboardStudent = async (req, res) => {
       return res.status(403).json(fail('You are not assigned to a section'));
     }
 
-    const existingEmail = await User.findOne({ email });
+    const institutionId = req.tenantId || req.headers['x-tenant-id'] || req.user?.institutionId || ccRole.institutionId || null;
+
+    const existingEmail = await User.findOne({ email: email.toLowerCase().trim(), institutionId });
     if (existingEmail) {
       return res.status(409).json(fail('Email already exists', { field: 'email' }));
     }
 
-    const existingRoll = await User.findOne({ rollNumber });
+    const existingRoll = await User.findOne({ rollNumber: rollNumber.trim(), institutionId });
     if (existingRoll) {
       return res.status(409).json(fail('Roll number already exists', { field: 'rollNumber' }));
     }
-
-    const institutionId = req.user?.institutionId || ccRole.institutionId || null;
 
     const passwordHash = await bcrypt.hash(password, BCRYPT_COST);
     const user = await User.create({
@@ -480,6 +485,79 @@ const listCC = async (req, res) => {
   }
 };
 
+const getUserById = async (req, res) => {
+  try {
+    const tenantId = req.tenantId || req.headers['x-tenant-id'] || req.user?.institutionId;
+    const filter = { _id: req.params.id };
+    if (tenantId && !req.user?.roles?.includes('SUPERADMIN')) {
+      filter.institutionId = tenantId;
+    }
+    const user = await User.findOne(filter).select('-passwordHash').lean();
+    if (!user) {
+      return res.status(404).json(fail('User not found'));
+    }
+    res.status(200).json(success(user));
+  } catch (err) {
+    console.error('[UserController] Failed to get user:', err);
+    res.status(500).json(fail('Internal server error'));
+  }
+};
+
+const updateUser = async (req, res) => {
+  try {
+    const tenantId = req.tenantId || req.headers['x-tenant-id'] || req.user?.institutionId;
+    const filter = { _id: req.params.id };
+    if (tenantId && !req.user?.roles?.includes('SUPERADMIN')) {
+      filter.institutionId = tenantId;
+    }
+    const updateData = {};
+    if (req.body.name) updateData.name = req.body.name.trim();
+    if (req.body.avatarUrl !== undefined) updateData.avatarUrl = req.body.avatarUrl;
+    if (req.body.isActive !== undefined) updateData.isActive = req.body.isActive;
+
+    const updatedUser = await User.findOneAndUpdate(filter, updateData, { new: true }).select('-passwordHash').lean();
+    if (!updatedUser) {
+      return res.status(404).json(fail('User not found'));
+    }
+    res.status(200).json(success(updatedUser));
+  } catch (err) {
+    console.error('[UserController] Failed to update user:', err);
+    res.status(500).json(fail('Internal server error'));
+  }
+};
+
+const deleteUser = async (req, res) => {
+  try {
+    const tenantId = req.tenantId || req.headers['x-tenant-id'] || req.user?.institutionId;
+    const filter = { _id: req.params.id };
+    if (tenantId && !req.user?.roles?.includes('SUPERADMIN')) {
+      filter.institutionId = tenantId;
+    }
+    const user = await User.findOneAndDelete(filter).lean();
+    if (!user) {
+      return res.status(404).json(fail('User not found'));
+    }
+    await RoleAssignment.deleteMany({ userId: user._id });
+    res.status(200).json(success({ message: 'User deleted successfully' }));
+  } catch (err) {
+    console.error('[UserController] Failed to delete user:', err);
+    res.status(500).json(fail('Internal server error'));
+  }
+};
+
+const listUsers = async (req, res) => {
+  try {
+    const tenantId = req.tenantId || req.headers['x-tenant-id'] || req.user?.institutionId;
+    const query = {};
+    if (tenantId) query.institutionId = tenantId;
+    const users = await User.find(query).select('-passwordHash').lean();
+    res.status(200).json(success(users));
+  } catch (err) {
+    console.error('[UserController] Failed to list users:', err);
+    res.status(500).json(fail('Internal server error'));
+  }
+};
+
 module.exports = {
   createAdmin,
   createHOD,
@@ -491,6 +569,10 @@ module.exports = {
   listAdmins,
   listFaculty,
   listCC,
+  listUsers,
   updateOwnProfile,
-  searchUsers
+  searchUsers,
+  getUserById,
+  updateUser,
+  deleteUser
 };

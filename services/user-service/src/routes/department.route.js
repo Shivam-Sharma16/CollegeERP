@@ -11,5 +11,8 @@ router.use(authenticate);
 router.post('/', requirePermission('write', 'Institution'), departmentController.createDepartment);
 router.get('/tree', departmentController.resolveDeptTree);
 router.get('/', departmentController.listDepartments);
+router.get('/:id', departmentController.getDepartmentById);
+router.patch('/:id', requirePermission('write', 'Institution'), departmentController.updateDepartment);
+router.delete('/:id', requirePermission('write', 'Institution'), departmentController.deleteDepartment);
 
 module.exports = router;

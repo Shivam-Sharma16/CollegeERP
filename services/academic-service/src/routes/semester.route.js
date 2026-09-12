@@ -7,6 +7,7 @@ router.use(authenticate);
 
 router.post('/',         requirePermission('write', 'Department'), ctrl.createSemester);
 router.get('/',          requirePermission('read',  'Department'), ctrl.listSemesters);
+router.get('/:id',      requirePermission('read',  'Department'), ctrl.getSemesterById);
 router.patch('/:id',     requirePermission('write', 'Department'), ctrl.updateSemester);
 router.delete('/:id',    requirePermission('write', 'Department'), ctrl.deleteSemester);
 

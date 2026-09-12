@@ -8,14 +8,54 @@ const Payment = require('../models/Payment.model');
 exports.createFeeStructure = async (req, res) => {
   try {
     const { departmentId, year, totalAmount, installments } = req.body;
+    const tenantId = req.tenantId || req.headers['x-tenant-id'] || req.user?.institutionId || req.body.institutionId;
+
     const feeStructure = new FeeStructure({
       departmentId,
       year,
       totalAmount,
-      installments
+      installments,
+      ...(tenantId ? { institutionId: tenantId } : {})
     });
     await feeStructure.save();
     res.status(201).json({ success: true, data: feeStructure });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+exports.listFeeStructures = async (req, res) => {
+  try {
+    const tenantId = req.tenantId || req.headers['x-tenant-id'] || req.user?.institutionId;
+    const { departmentId, year } = req.query;
+    const filter = {};
+    if (departmentId) filter.departmentId = departmentId;
+    if (year) filter.year = year;
+    if (tenantId && !req.user?.roles?.includes('SUPERADMIN')) {
+      filter.institutionId = tenantId;
+    }
+
+    const feeStructures = await FeeStructure.find(filter);
+    res.status(200).json({ success: true, data: feeStructures });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+exports.getFeeStructureById = async (req, res) => {
+  try {
+    const tenantId = req.tenantId || req.headers['x-tenant-id'] || req.user?.institutionId;
+    const filter = { _id: req.params.id };
+    if (tenantId && !req.user?.roles?.includes('SUPERADMIN')) {
+      filter.institutionId = tenantId;
+    }
+
+    const feeStructure = await FeeStructure.findOne(filter);
+    if (!feeStructure) {
+      return res.status(404).json({ success: false, message: 'Fee structure not found' });
+    }
+
+    res.status(200).json({ success: true, data: feeStructure });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -73,14 +113,24 @@ exports.paymentWebhook = async (req, res) => {
 // GET /defaulters
 exports.getDefaulters = async (req, res) => {
   try {
+    const tenantId = req.tenantId || req.headers['x-tenant-id'] || req.user?.institutionId;
     const { departmentId, year } = req.query;
     
-    const matchObj = {};
-    if (departmentId) matchObj['roleAssignment.departmentId'] = new mongoose.Types.ObjectId(departmentId);
-    if (year) matchObj['yearDoc.yearNumber'] = Number(year);
+    const roleMatch = { role: 'STUDENT' };
+    if (tenantId && !req.user?.roles?.includes('SUPERADMIN') && mongoose.Types.ObjectId.isValid(tenantId)) {
+      roleMatch.institutionId = new mongoose.Types.ObjectId(tenantId);
+    }
+
+    const feeMatchExpr = [
+      { $eq: ['$departmentId', '$$deptId'] },
+      { $eq: ['$year', '$$yearNum'] }
+    ];
+    if (tenantId && !req.user?.roles?.includes('SUPERADMIN') && mongoose.Types.ObjectId.isValid(tenantId)) {
+      feeMatchExpr.push({ $eq: ['$institutionId', new mongoose.Types.ObjectId(tenantId)] });
+    }
 
     const pipeline = [
-      { $match: { role: 'STUDENT' } },
+      { $match: roleMatch },
       
       { $lookup: {
           from: 'sections',
@@ -117,10 +167,7 @@ exports.getDefaulters = async (req, res) => {
           pipeline: [
             { $match: {
                 $expr: {
-                  $and: [
-                    { $eq: ['$departmentId', '$$deptId'] },
-                    { $eq: ['$year', '$$yearNum'] }
-                  ]
+                  $and: feeMatchExpr
                 }
             }}
           ],
@@ -181,7 +228,13 @@ exports.getDefaulters = async (req, res) => {
 // GET /payments/:id/receipt
 exports.getReceipt = async (req, res) => {
   try {
-    const payment = await Payment.findById(req.params.id).populate('feeStructureId');
+    const tenantId = req.tenantId || req.headers['x-tenant-id'] || req.user?.institutionId;
+    const filter = { _id: req.params.id };
+    if (tenantId && !req.user?.roles?.includes('SUPERADMIN')) {
+      filter.institutionId = tenantId;
+    }
+
+    const payment = await Payment.findOne(filter).populate('feeStructureId');
     if (!payment) {
       return res.status(404).json({ success: false, message: 'Payment not found' });
     }
@@ -223,37 +276,65 @@ exports.getReceipt = async (req, res) => {
 // GET /students/me/status
 exports.getOwnFeeStatus = async (req, res) => {
   try {
-    const roleAssignment = await mongoose.connection.collection('roleassignments').findOne({
+    const tenantId = req.tenantId || req.headers['x-tenant-id'] || req.user?.institutionId;
+    const roleQuery = {
       userId: new mongoose.Types.ObjectId(req.user.id),
       role: 'STUDENT'
-    });
+    };
+    if (tenantId && !req.user?.roles?.includes('SUPERADMIN') && mongoose.Types.ObjectId.isValid(tenantId)) {
+      roleQuery.institutionId = new mongoose.Types.ObjectId(tenantId);
+    }
+
+    const roleAssignment = await mongoose.connection.collection('roleassignments').findOne(roleQuery);
 
     if (!roleAssignment) {
       return res.status(404).json({ success: false, message: 'Student role not found' });
     }
 
-    const section = await mongoose.connection.collection('sections').findOne({ _id: roleAssignment.sectionId });
+    const secQuery = { _id: roleAssignment.sectionId };
+    if (tenantId && !req.user?.roles?.includes('SUPERADMIN') && mongoose.Types.ObjectId.isValid(tenantId)) {
+      secQuery.institutionId = new mongoose.Types.ObjectId(tenantId);
+    }
+    const section = await mongoose.connection.collection('sections').findOne(secQuery);
     if (!section) return res.status(404).json({ success: false, message: 'Section not found' });
 
-    const semester = await mongoose.connection.collection('semesters').findOne({ _id: section.semesterId });
+    const semQuery = { _id: section.semesterId };
+    if (tenantId && !req.user?.roles?.includes('SUPERADMIN') && mongoose.Types.ObjectId.isValid(tenantId)) {
+      semQuery.institutionId = new mongoose.Types.ObjectId(tenantId);
+    }
+    const semester = await mongoose.connection.collection('semesters').findOne(semQuery);
     if (!semester) return res.status(404).json({ success: false, message: 'Semester not found' });
 
-    const yearDoc = await mongoose.connection.collection('years').findOne({ _id: semester.yearId });
+    const yrQuery = { _id: semester.yearId };
+    if (tenantId && !req.user?.roles?.includes('SUPERADMIN') && mongoose.Types.ObjectId.isValid(tenantId)) {
+      yrQuery.institutionId = new mongoose.Types.ObjectId(tenantId);
+    }
+    const yearDoc = await mongoose.connection.collection('years').findOne(yrQuery);
     if (!yearDoc) return res.status(404).json({ success: false, message: 'Year not found' });
 
-    const feeStructure = await FeeStructure.findOne({
+    const feeQuery = {
       departmentId: roleAssignment.departmentId,
       year: yearDoc.yearNumber
-    });
+    };
+    if (tenantId && !req.user?.roles?.includes('SUPERADMIN')) {
+      feeQuery.institutionId = tenantId;
+    }
+
+    const feeStructure = await FeeStructure.findOne(feeQuery);
 
     if (!feeStructure) {
       return res.json({ success: true, data: { pendingAmount: 0, installments: [] } });
     }
 
-    const payments = await Payment.find({
+    const payQuery = {
       studentId: req.user.id,
       feeStructureId: feeStructure._id
-    });
+    };
+    if (tenantId && !req.user?.roles?.includes('SUPERADMIN')) {
+      payQuery.institutionId = tenantId;
+    }
+
+    const payments = await Payment.find(payQuery);
 
     const installments = feeStructure.installments.map((inst, index) => {
       const payment = payments.find(p => p.installmentIndex === index);
@@ -294,15 +375,21 @@ exports.getOwnFeeStatus = async (req, res) => {
 // POST /payments/initiate
 exports.initiatePayment = async (req, res) => {
   try {
+    const tenantId = req.tenantId || req.headers['x-tenant-id'] || req.user?.institutionId;
     const { feeStructureId, installmentIndex, amount } = req.body;
     
     // Create or find pending payment
-    let payment = await Payment.findOne({
+    const payQuery = {
       studentId: req.user.id,
       feeStructureId,
       installmentIndex,
       status: 'pending'
-    });
+    };
+    if (tenantId && !req.user?.roles?.includes('SUPERADMIN')) {
+      payQuery.institutionId = tenantId;
+    }
+
+    let payment = await Payment.findOne(payQuery);
 
     if (!payment) {
       payment = new Payment({
@@ -310,7 +397,8 @@ exports.initiatePayment = async (req, res) => {
         feeStructureId,
         installmentIndex,
         amount,
-        status: 'pending'
+        status: 'pending',
+        ...(tenantId ? { institutionId: tenantId } : {})
       });
       await payment.save();
     }

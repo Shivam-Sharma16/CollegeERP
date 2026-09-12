@@ -15,6 +15,7 @@ const authenticate = (req, res, next) => {
     const token = authHeader.split(' ')[1];
     const decoded = jwt.verify(token, env.JWT_SECRET);
     req.user = decoded;
+    req.tenantId = req.headers['x-tenant-id'] || decoded.institutionId || null;
     next();
   } catch (err) {
     return res.status(401).json({ success: false, error: 'Invalid or expired token' });

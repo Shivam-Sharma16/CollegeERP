@@ -40,8 +40,10 @@ function getDistance(lat1, lon1, lat2, lon2) {
   return R * c;
 }
 
-const verifyCheckIn = async ({ lectureSessionId, studentId, qrToken, deviceFingerprint, gpsCoords }) => {
-  const session = await LectureSession.findById(lectureSessionId);
+const verifyCheckIn = async ({ lectureSessionId, studentId, qrToken, deviceFingerprint, gpsCoords, tenantId = null }) => {
+  const sessionFilter = { _id: lectureSessionId };
+  if (tenantId) sessionFilter.institutionId = tenantId;
+  const session = await LectureSession.findOne(sessionFilter);
   if (!session) {
     throw new Error('LectureSession not found');
   }
@@ -69,10 +71,12 @@ const verifyCheckIn = async ({ lectureSessionId, studentId, qrToken, deviceFinge
   }
 
   // 3. Device fingerprint check
-  const existingRecord = await AttendanceRecord.findOne({
+  const fpQuery = {
     lectureSessionId: session._id,
     deviceFingerprint
-  });
+  };
+  if (session.institutionId) fpQuery.institutionId = session.institutionId;
+  const existingRecord = await AttendanceRecord.findOne(fpQuery);
 
   if (existingRecord && existingRecord.studentId.toString() !== studentId.toString()) {
     status = 'flagged';
@@ -112,11 +116,16 @@ const verifyCheckIn = async ({ lectureSessionId, studentId, qrToken, deviceFinge
   return record;
 };
 
-const getStudentAttendancePercent = async (studentId) => {
+const getStudentAttendancePercent = async (studentId, tenantId = null) => {
   const studentObjectId = typeof studentId === 'string' ? new mongoose.Types.ObjectId(studentId) : studentId;
   
+  const match = { studentId: studentObjectId };
+  if (tenantId && mongoose.Types.ObjectId.isValid(tenantId)) {
+    match.institutionId = new mongoose.Types.ObjectId(tenantId);
+  }
+
   const result = await AttendanceRecord.aggregate([
-    { $match: { studentId: studentObjectId } },
+    { $match: match },
     {
       $group: {
         _id: null,

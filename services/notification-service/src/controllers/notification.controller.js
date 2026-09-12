@@ -12,9 +12,13 @@ const { createNotification } = require('../services/notification.service');
 const getNotifications = async (req, res) => {
   try {
     const userId = req.user.userId || req.user.id || req.user._id;
+    const tenantId = req.tenantId || req.headers['x-tenant-id'] || req.user?.institutionId;
     const { unreadOnly, page = 1, limit = 20 } = req.query;
 
-    const filter = { userId };
+    const filter = { userId: new mongoose.Types.ObjectId(userId) };
+    if (tenantId) {
+      filter.institutionId = new mongoose.Types.ObjectId(tenantId);
+    }
     if (unreadOnly === 'true') filter.read = false;
 
     const skip = (Number(page) - 1) * Number(limit);
@@ -44,18 +48,52 @@ const getNotifications = async (req, res) => {
   }
 };
 
-// ─── Public: PATCH /api/notifications/:id/read ───────────────────────────────
-const markRead = async (req, res) => {
+// ─── Public: GET /api/notifications/:id ──────────────────────────────────────
+const getNotificationById = async (req, res) => {
   try {
     const userId = req.user.userId || req.user.id || req.user._id;
+    const tenantId = req.tenantId || req.headers['x-tenant-id'] || req.user?.institutionId;
     const { id } = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({ success: false, error: 'Invalid notification id' });
     }
 
+    const query = { _id: id, userId: new mongoose.Types.ObjectId(userId) };
+    if (tenantId) {
+      query.institutionId = new mongoose.Types.ObjectId(tenantId);
+    }
+
+    const notification = await Notification.findOne(query).lean();
+    if (!notification) {
+      return res.status(404).json({ success: false, error: 'Notification not found' });
+    }
+
+    return res.json({ success: true, data: notification });
+  } catch (err) {
+    console.error('[notification.controller] getNotificationById:', err.message);
+    return res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+};
+
+// ─── Public: PATCH /api/notifications/:id/read ───────────────────────────────
+const markRead = async (req, res) => {
+  try {
+    const userId = req.user.userId || req.user.id || req.user._id;
+    const tenantId = req.tenantId || req.headers['x-tenant-id'] || req.user?.institutionId;
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ success: false, error: 'Invalid notification id' });
+    }
+
+    const query = { _id: id, userId: new mongoose.Types.ObjectId(userId) };
+    if (tenantId) {
+      query.institutionId = new mongoose.Types.ObjectId(tenantId);
+    }
+
     const notification = await Notification.findOneAndUpdate(
-      { _id: id, userId },    // ownership check — users can only read their own
+      query,
       { read: true },
       { new: true }
     );
@@ -75,9 +113,15 @@ const markRead = async (req, res) => {
 const markAllRead = async (req, res) => {
   try {
     const userId = req.user.userId || req.user.id || req.user._id;
+    const tenantId = req.tenantId || req.headers['x-tenant-id'] || req.user?.institutionId;
+
+    const query = { userId: new mongoose.Types.ObjectId(userId), read: false };
+    if (tenantId) {
+      query.institutionId = new mongoose.Types.ObjectId(tenantId);
+    }
 
     const result = await Notification.updateMany(
-      { userId, read: false },
+      query,
       { read: true }
     );
 
@@ -95,10 +139,17 @@ const markAllRead = async (req, res) => {
 const getUnreadCount = async (req, res) => {
   try {
     const userId = req.user.userId || req.user.id || req.user._id;
-    const count = await Notification.countDocuments({
+    const tenantId = req.tenantId || req.headers['x-tenant-id'] || req.user?.institutionId;
+
+    const query = {
       userId: new mongoose.Types.ObjectId(userId),
       read: false
-    });
+    };
+    if (tenantId) {
+      query.institutionId = new mongoose.Types.ObjectId(tenantId);
+    }
+
+    const count = await Notification.countDocuments(query);
     return res.json({
       success: true,
       data: { count, unreadCount: count }
@@ -112,12 +163,12 @@ const getUnreadCount = async (req, res) => {
 // ─── Internal: POST /internal/events ─────────────────────────────────────────
 /**
  * Called by other services (attendance-service, fees-service, …).
- * Body: { userId, type, payload }
+ * Body: { userId, type, payload, institutionId }
  * Protected by internalAuth middleware — never exposed to public JWT clients.
  */
 const internalCreateEvent = async (req, res) => {
   try {
-    const { userId, type, payload } = req.body;
+    const { userId, type, payload, institutionId } = req.body;
 
     if (!userId || !type || payload === undefined) {
       return res.status(400).json({
@@ -130,7 +181,8 @@ const internalCreateEvent = async (req, res) => {
       return res.status(400).json({ success: false, error: 'Invalid userId' });
     }
 
-    const notification = await createNotification(userId, type, payload);
+    const resolvedInstId = req.headers['x-tenant-id'] || institutionId || payload?.institutionId || null;
+    const notification = await createNotification(userId, type, payload, resolvedInstId);
 
     return res.status(201).json({ success: true, data: notification });
   } catch (err) {
@@ -139,4 +191,11 @@ const internalCreateEvent = async (req, res) => {
   }
 };
 
-module.exports = { getNotifications, markRead, markAllRead, getUnreadCount, internalCreateEvent };
+module.exports = {
+  getNotifications,
+  getNotificationById,
+  markRead,
+  markAllRead,
+  getUnreadCount,
+  internalCreateEvent
+};

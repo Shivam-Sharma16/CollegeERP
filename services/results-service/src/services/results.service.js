@@ -2,8 +2,11 @@ const mongoose = require('mongoose');
 const ExamType = require('../models/ExamType.model');
 const MarksRecord = require('../models/MarksRecord.model');
 
-const checkWeightage = async (subjectId, weightageToAdd, excludeExamTypeId = null) => {
+const checkWeightage = async (subjectId, weightageToAdd, excludeExamTypeId = null, tenantId = null) => {
   const query = { subjectId };
+  if (tenantId) {
+    query.institutionId = tenantId;
+  }
   if (excludeExamTypeId) {
     query._id = { $ne: excludeExamTypeId };
   }
@@ -18,24 +21,33 @@ const checkWeightage = async (subjectId, weightageToAdd, excludeExamTypeId = nul
 };
 
 const createExamType = async (data) => {
-  await checkWeightage(data.subjectId, data.weightage);
+  await checkWeightage(data.subjectId, data.weightage, null, data.institutionId);
   const exam = new ExamType(data);
   return await exam.save();
 };
 
-const updateExamType = async (id, data) => {
+const updateExamType = async (id, data, tenantId = null) => {
+  const filter = { _id: id };
+  if (tenantId) filter.institutionId = tenantId;
+
+  const exam = await ExamType.findOne(filter);
+  if (!exam) throw new Error('ExamType not found');
+
   if (data.weightage !== undefined) {
-    const exam = await ExamType.findById(id);
-    if (!exam) throw new Error('ExamType not found');
     const subjectId = data.subjectId || exam.subjectId;
-    await checkWeightage(subjectId, data.weightage, id);
+    await checkWeightage(subjectId, data.weightage, id, tenantId || exam.institutionId);
   }
-  return await ExamType.findByIdAndUpdate(id, data, { new: true });
+  return await ExamType.findOneAndUpdate(filter, data, { new: true });
 };
 
-const computeFinalGrade = async (studentId, subjectId) => {
+const computeFinalGrade = async (studentId, subjectId, tenantId = null) => {
+  const studentMatch = { studentId: new mongoose.Types.ObjectId(studentId) };
+  if (tenantId && mongoose.Types.ObjectId.isValid(tenantId)) {
+    studentMatch.institutionId = new mongoose.Types.ObjectId(tenantId);
+  }
+
   const result = await MarksRecord.aggregate([
-    { $match: { studentId: new mongoose.Types.ObjectId(studentId) } },
+    { $match: studentMatch },
     {
       $lookup: {
         from: 'examtypes',
@@ -70,6 +82,7 @@ const computeFinalGrade = async (studentId, subjectId) => {
 };
 
 module.exports = {
+  checkWeightage,
   createExamType,
   updateExamType,
   computeFinalGrade

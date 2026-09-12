@@ -41,4 +41,14 @@ router.post('/notice-draft', ctrl.runNoticeDraft);
  */
 router.post('/student-personal', ctrl.runStudentPersonal);
 
+/**
+ * GET /api/agents/review-items
+ */
+router.get('/review-items', ctrl.getReviewItems);
+
+/**
+ * GET /api/agents/review-items/:id
+ */
+router.get('/review-items/:id', ctrl.getReviewItemById);
+
 module.exports = router;

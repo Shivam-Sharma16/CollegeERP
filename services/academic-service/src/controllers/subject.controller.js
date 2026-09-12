@@ -4,6 +4,8 @@ const { assertHODOwns, getHODDepartmentId } = require('../utils/assertOwnership'
 
 const createSubject = async (req, res) => {
   try {
+    const tenantId = req.tenantId || req.headers['x-tenant-id'] || req.user?.institutionId;
+
     // departmentId is always taken from the HOD's own scope — never from body
     const departmentId = getHODDepartmentId(req);
     if (!assertHODOwns(req, res, departmentId)) return;
@@ -13,11 +15,21 @@ const createSubject = async (req, res) => {
       return res.status(400).json(fail('name, code, and credits are required'));
     }
 
-    const existing = await Subject.findOne({ code });
+    const query = { code };
+    if (tenantId) query.institutionId = tenantId;
+
+    const existing = await Subject.findOne(query);
     if (existing) return res.status(409).json(fail(`Subject with code '${code}' already exists`));
 
-    const subject = await Subject.create({ departmentId, name, code, credits });
-    await logAudit(req, 'SUBJECT_CREATED', subject._id.toString(), 'Subject', { departmentId, name, code });
+    const subject = await Subject.create({
+      departmentId,
+      name,
+      code,
+      credits,
+      ...(tenantId ? { institutionId: tenantId } : {})
+    });
+
+    await logAudit(req, 'SUBJECT_CREATED', subject._id.toString(), 'Subject', { departmentId, name, code, institutionId: tenantId });
     res.status(201).json(success({ subject }));
   } catch (err) {
     console.error(err);
@@ -27,8 +39,14 @@ const createSubject = async (req, res) => {
 
 const listSubjects = async (req, res) => {
   try {
+    const tenantId = req.tenantId || req.headers['x-tenant-id'] || req.user?.institutionId;
     const departmentId = getHODDepartmentId(req) || req.query.departmentId;
-    const filter = departmentId ? { departmentId } : {};
+    const filter = {};
+    if (departmentId) filter.departmentId = departmentId;
+    if (tenantId && !req.user?.roles?.includes('SUPERADMIN')) {
+      filter.institutionId = tenantId;
+    }
+
     const subjects = await Subject.find(filter).sort({ name: 1 });
     res.json(success({ subjects }));
   } catch (err) {
@@ -36,9 +54,33 @@ const listSubjects = async (req, res) => {
   }
 };
 
+const getSubjectById = async (req, res) => {
+  try {
+    const tenantId = req.tenantId || req.headers['x-tenant-id'] || req.user?.institutionId;
+    const filter = { _id: req.params.id };
+    if (tenantId && !req.user?.roles?.includes('SUPERADMIN')) {
+      filter.institutionId = tenantId;
+    }
+
+    const subject = await Subject.findOne(filter);
+    if (!subject) return res.status(404).json(fail('Subject not found'));
+    if (!assertHODOwns(req, res, subject.departmentId)) return;
+
+    res.json(success({ subject }));
+  } catch (err) {
+    res.status(500).json(fail('Internal server error'));
+  }
+};
+
 const updateSubject = async (req, res) => {
   try {
-    const subject = await Subject.findById(req.params.id);
+    const tenantId = req.tenantId || req.headers['x-tenant-id'] || req.user?.institutionId;
+    const filter = { _id: req.params.id };
+    if (tenantId && !req.user?.roles?.includes('SUPERADMIN')) {
+      filter.institutionId = tenantId;
+    }
+
+    const subject = await Subject.findOne(filter);
     if (!subject) return res.status(404).json(fail('Subject not found'));
     if (!assertHODOwns(req, res, subject.departmentId)) return;
 
@@ -54,16 +96,22 @@ const updateSubject = async (req, res) => {
 
 const deleteSubject = async (req, res) => {
   try {
-    const subject = await Subject.findById(req.params.id);
+    const tenantId = req.tenantId || req.headers['x-tenant-id'] || req.user?.institutionId;
+    const filter = { _id: req.params.id };
+    if (tenantId && !req.user?.roles?.includes('SUPERADMIN')) {
+      filter.institutionId = tenantId;
+    }
+
+    const subject = await Subject.findOne(filter);
     if (!subject) return res.status(404).json(fail('Subject not found'));
     if (!assertHODOwns(req, res, subject.departmentId)) return;
 
     await subject.deleteOne();
-    await logAudit(req, 'SUBJECT_DELETED', subject._id.toString(), 'Subject', {});
+    await logAudit(req, 'SUBJECT_DELETED', subject._id.toString(), 'Subject', { institutionId: tenantId });
     res.json(success({ message: 'Subject deleted' }));
   } catch (err) {
     res.status(500).json(fail('Internal server error'));
   }
 };
 
-module.exports = { createSubject, listSubjects, updateSubject, deleteSubject };
+module.exports = { createSubject, listSubjects, getSubjectById, updateSubject, deleteSubject };

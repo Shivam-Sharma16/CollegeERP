@@ -7,6 +7,12 @@ const mongoose = require('mongoose');
  * via the notice-service API.
  */
 const noticeDraftSchema = new mongoose.Schema({
+  institutionId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Institution',
+    required: true,
+    index: true,
+  },
   title:  { type: String, required: true },
   body:   { type: String, required: true },
   targeting: {
@@ -19,5 +25,7 @@ const noticeDraftSchema = new mongoose.Schema({
   createdBy:    { type: mongoose.Schema.Types.ObjectId, required: true },
   aiGenerated:  { type: Boolean, default: true },
 }, { timestamps: true });
+
+noticeDraftSchema.index({ institutionId: 1, createdAt: -1 });
 
 module.exports = mongoose.model('NoticeDraft', noticeDraftSchema);

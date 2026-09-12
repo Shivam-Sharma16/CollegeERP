@@ -8,6 +8,8 @@ const ctrl = require('../controllers/fees.controller');
 // but Phase 17 specifies Admin only. Using requirePermission('write', 'FeeStructure')
 // will allow ADMIN/SUPERADMIN, and HOD for their own department.
 router.post('/fee-structures', authenticate, requirePermission('write', 'FeeStructure'), ctrl.createFeeStructure);
+router.get('/fee-structures', authenticate, requirePermission('read', 'FeeStructure'), ctrl.listFeeStructures);
+router.get('/fee-structures/:id', authenticate, requirePermission('read', 'FeeStructure'), ctrl.getFeeStructureById);
 
 // Webhook endpoint (unauthenticated, relies on signature)
 router.post('/payments/webhook', ctrl.paymentWebhook);

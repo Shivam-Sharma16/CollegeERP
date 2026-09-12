@@ -10,7 +10,7 @@ const createDepartment = async (req, res) => {
       return res.status(400).json(fail('Name and code are required'));
     }
 
-    const institutionId = req.user?.institutionId || req.body.institutionId || null;
+    const institutionId = req.tenantId || req.headers['x-tenant-id'] || req.user?.institutionId || req.body.institutionId || null;
     const normalizedCode = code.trim().toUpperCase();
 
     const existing = await Department.findOne({ code: normalizedCode, institutionId });
@@ -41,9 +41,10 @@ const createDepartment = async (req, res) => {
 
 const listDepartments = async (req, res) => {
   try {
+    const tenantId = req.tenantId || req.headers['x-tenant-id'] || req.user?.institutionId;
     const filter = {};
-    if (req.user?.institutionId) {
-      filter.institutionId = req.user.institutionId;
+    if (tenantId && !req.user?.roles?.includes('SUPERADMIN')) {
+      filter.institutionId = tenantId;
     } else if (req.query.institutionId) {
       filter.institutionId = req.query.institutionId;
     }
@@ -56,11 +57,92 @@ const listDepartments = async (req, res) => {
   }
 };
 
+const getDepartmentById = async (req, res) => {
+  try {
+    const tenantId = req.tenantId || req.headers['x-tenant-id'] || req.user?.institutionId;
+    const filter = { _id: req.params.id };
+    if (tenantId && !req.user?.roles?.includes('SUPERADMIN')) {
+      filter.institutionId = tenantId;
+    }
+
+    const department = await Department.findOne(filter).lean();
+    if (!department) {
+      return res.status(404).json(fail('Department not found'));
+    }
+
+    res.status(200).json(success(department));
+  } catch (err) {
+    console.error('[DepartmentController] Failed to get department:', err);
+    res.status(500).json(fail('Internal server error'));
+  }
+};
+
+const updateDepartment = async (req, res) => {
+  try {
+    const tenantId = req.tenantId || req.headers['x-tenant-id'] || req.user?.institutionId;
+    const filter = { _id: req.params.id };
+    if (tenantId && !req.user?.roles?.includes('SUPERADMIN')) {
+      filter.institutionId = tenantId;
+    }
+
+    const updateData = {};
+    if (req.body.name) updateData.name = req.body.name.trim();
+    if (req.body.code) updateData.code = req.body.code.trim().toUpperCase();
+
+    const department = await Department.findOneAndUpdate(filter, updateData, { new: true }).lean();
+    if (!department) {
+      return res.status(404).json(fail('Department not found'));
+    }
+
+    await logAudit(
+      req,
+      'DEPARTMENT_UPDATED',
+      department._id.toString(),
+      'Department',
+      { updates: updateData, institutionId: department.institutionId }
+    );
+
+    res.status(200).json(success(department));
+  } catch (err) {
+    console.error('[DepartmentController] Failed to update department:', err);
+    res.status(500).json(fail('Internal server error'));
+  }
+};
+
+const deleteDepartment = async (req, res) => {
+  try {
+    const tenantId = req.tenantId || req.headers['x-tenant-id'] || req.user?.institutionId;
+    const filter = { _id: req.params.id };
+    if (tenantId && !req.user?.roles?.includes('SUPERADMIN')) {
+      filter.institutionId = tenantId;
+    }
+
+    const department = await Department.findOneAndDelete(filter).lean();
+    if (!department) {
+      return res.status(404).json(fail('Department not found'));
+    }
+
+    await logAudit(
+      req,
+      'DEPARTMENT_DELETED',
+      department._id.toString(),
+      'Department',
+      { institutionId: department.institutionId }
+    );
+
+    res.status(200).json(success({ message: 'Department deleted successfully' }));
+  } catch (err) {
+    console.error('[DepartmentController] Failed to delete department:', err);
+    res.status(500).json(fail('Internal server error'));
+  }
+};
+
 const resolveDeptTree = async (req, res) => {
   try {
+    const tenantId = req.tenantId || req.headers['x-tenant-id'] || req.user?.institutionId;
     const filter = {};
-    if (req.user?.institutionId) {
-      filter.institutionId = req.user.institutionId;
+    if (tenantId && !req.user?.roles?.includes('SUPERADMIN')) {
+      filter.institutionId = tenantId;
     } else if (req.query.institutionId) {
       filter.institutionId = req.query.institutionId;
     }
@@ -70,20 +152,26 @@ const resolveDeptTree = async (req, res) => {
     const tree = await Promise.all(departments.map(async (dept) => {
       let years = [];
       if (mongoose.connection.db) {
+        const yearFilter = { departmentId: dept._id };
+        if (filter.institutionId) yearFilter.institutionId = filter.institutionId;
         years = await mongoose.connection.db.collection('years')
-          .find({ departmentId: dept._id })
+          .find(yearFilter)
           .sort({ yearNumber: 1 })
           .toArray();
 
         years = await Promise.all(years.map(async (yr) => {
+          const semFilter = { yearId: yr._id };
+          if (filter.institutionId) semFilter.institutionId = filter.institutionId;
           let semesters = await mongoose.connection.db.collection('semesters')
-            .find({ yearId: yr._id })
+            .find(semFilter)
             .sort({ semesterNumber: 1 })
             .toArray();
 
           semesters = await Promise.all(semesters.map(async (sem) => {
+            const secFilter = { semesterId: sem._id };
+            if (filter.institutionId) secFilter.institutionId = filter.institutionId;
             const sections = await mongoose.connection.db.collection('sections')
-              .find({ semesterId: sem._id })
+              .find(secFilter)
               .sort({ name: 1 })
               .toArray();
 
@@ -118,5 +206,8 @@ const resolveDeptTree = async (req, res) => {
 module.exports = {
   createDepartment,
   listDepartments,
+  getDepartmentById,
+  updateDepartment,
+  deleteDepartment,
   resolveDeptTree
 };

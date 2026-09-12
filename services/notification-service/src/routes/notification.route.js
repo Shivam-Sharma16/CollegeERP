@@ -19,4 +19,7 @@ router.patch('/read-all', ctrl.markAllRead);
 // PATCH /api/notifications/:id/read  — mark a single notification as read
 router.patch('/:id/read', ctrl.markRead);
 
+// GET  /api/notifications/:id        — retrieve notification by id scoped to tenant
+router.get('/:id', ctrl.getNotificationById);
+
 module.exports = router;

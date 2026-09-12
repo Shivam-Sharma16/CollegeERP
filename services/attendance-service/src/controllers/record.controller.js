@@ -13,9 +13,15 @@ const VALID_STATUSES = ['present', 'absent', 'flagged'];
 const listOwnRecords = async (req, res) => {
   try {
     const studentId = req.user.userId;
-    const records = await AttendanceRecord.find({
+    const tenantId = req.tenantId || req.headers['x-tenant-id'] || req.user?.institutionId;
+    const filter = {
       studentId: new mongoose.Types.ObjectId(studentId)
-    })
+    };
+    if (tenantId && !req.user?.roles?.includes('SUPERADMIN')) {
+      filter.institutionId = tenantId;
+    }
+
+    const records = await AttendanceRecord.find(filter)
       .populate('lectureSessionId')
       .sort({ createdAt: -1 });
 
@@ -26,23 +32,44 @@ const listOwnRecords = async (req, res) => {
   }
 };
 
-/**
- * GET /summary/me
- * Student gets personal attendance percentage & summary.
- */
+const getRecordById = async (req, res) => {
+  try {
+    const tenantId = req.tenantId || req.headers['x-tenant-id'] || req.user?.institutionId;
+    const filter = { _id: req.params.id };
+    if (tenantId && !req.user?.roles?.includes('SUPERADMIN')) {
+      filter.institutionId = tenantId;
+    }
+
+    const record = await AttendanceRecord.findOne(filter).populate('lectureSessionId');
+    if (!record) return res.status(404).json(fail('Attendance record not found'));
+
+    res.json(success(record));
+  } catch (err) {
+    console.error(err);
+    res.status(500).json(fail('Internal server error'));
+  }
+};
+
 const getOwnSummary = async (req, res) => {
   try {
     const studentId = req.user.userId;
-    const percentage = await getStudentAttendancePercent(studentId);
-    const totalRecords = await AttendanceRecord.countDocuments({
+    const tenantId = req.tenantId || req.headers['x-tenant-id'] || req.user?.institutionId;
+    const percentage = await getStudentAttendancePercent(studentId, tenantId);
+
+    const baseFilter = {
       studentId: new mongoose.Types.ObjectId(studentId)
-    });
+    };
+    if (tenantId && !req.user?.roles?.includes('SUPERADMIN')) {
+      baseFilter.institutionId = tenantId;
+    }
+
+    const totalRecords = await AttendanceRecord.countDocuments(baseFilter);
     const presentRecords = await AttendanceRecord.countDocuments({
-      studentId: new mongoose.Types.ObjectId(studentId),
+      ...baseFilter,
       status: 'present'
     });
     const flaggedRecords = await AttendanceRecord.countDocuments({
-      studentId: new mongoose.Types.ObjectId(studentId),
+      ...baseFilter,
       status: 'flagged'
     });
 
@@ -58,32 +85,41 @@ const getOwnSummary = async (req, res) => {
   }
 };
 
-/**
- * POST /records/:id/override
- * Faculty-only manual correction. Writes a full AuditLog with before/after status.
- */
 const overrideRecord = async (req, res) => {
   try {
     const { newStatus, reason } = req.body;
     const facultyId = req.user.userId;
+    const tenantId = req.tenantId || req.headers['x-tenant-id'] || req.user?.institutionId;
 
     if (!newStatus || !VALID_STATUSES.includes(newStatus)) {
       return res.status(400).json(fail(`newStatus must be one of: ${VALID_STATUSES.join(', ')}`));
     }
 
-    const record = await AttendanceRecord.findById(req.params.id);
+    const recordFilter = { _id: req.params.id };
+    if (tenantId && !req.user?.roles?.includes('SUPERADMIN')) {
+      recordFilter.institutionId = tenantId;
+    }
+    const record = await AttendanceRecord.findOne(recordFilter);
     if (!record) return res.status(404).json(fail('Attendance record not found'));
 
     // Verify the faculty owns the session's teaching assignment
-    const session = await LectureSession.findById(record.lectureSessionId);
+    const sessionFilter = { _id: record.lectureSessionId };
+    if (tenantId && !req.user?.roles?.includes('SUPERADMIN')) {
+      sessionFilter.institutionId = tenantId;
+    }
+    const session = await LectureSession.findOne(sessionFilter);
     if (!session) return res.status(404).json(fail('Parent session not found'));
 
+    const assignmentQuery = {
+      _id: new mongoose.Types.ObjectId(session.teachingAssignmentId),
+      facultyId: new mongoose.Types.ObjectId(facultyId)
+    };
+    if (tenantId && mongoose.Types.ObjectId.isValid(tenantId)) {
+      assignmentQuery.institutionId = new mongoose.Types.ObjectId(tenantId);
+    }
     const assignment = await mongoose.connection.db
       .collection('teachingassignments')
-      .findOne({
-        _id: new mongoose.Types.ObjectId(session.teachingAssignmentId),
-        facultyId: new mongoose.Types.ObjectId(facultyId)
-      });
+      .findOne(assignmentQuery);
 
     if (!assignment) {
       return res.status(403).json(fail('You can only override attendance for sessions you teach'));
@@ -104,7 +140,8 @@ const overrideRecord = async (req, res) => {
       oldStatus,
       newStatus,
       reason: reason || 'No reason provided',
-      overriddenAt: new Date().toISOString()
+      overriddenAt: new Date().toISOString(),
+      institutionId: tenantId
     });
 
     res.json(success({ record, audit: { oldStatus, newStatus, reason } }));
@@ -114,5 +151,5 @@ const overrideRecord = async (req, res) => {
   }
 };
 
-module.exports = { overrideRecord, listOwnRecords, getOwnSummary };
+module.exports = { overrideRecord, listOwnRecords, getRecordById, getOwnSummary };
 

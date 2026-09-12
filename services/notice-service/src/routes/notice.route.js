@@ -13,7 +13,16 @@ router.get('/notices/mine', authenticate, ctrl.getNoticesMine);
 // GET /notices/search — search notices visible to the caller
 router.get('/notices/search', authenticate, ctrl.searchNotices);
 
+// GET /notices/:id — retrieve notice by ID scoped to tenant
+router.get('/notices/:id', authenticate, ctrl.getNoticeById);
+
 // POST /notes — signed-URL upload; scope clamped to uploader's own section/dept
 router.post('/notes', authenticate, resolveScope, ctrl.createNote);
+
+// GET /notes — list notes scoped to tenant
+router.get('/notes', authenticate, ctrl.listNotes);
+
+// GET /notes/:id — retrieve note by ID scoped to tenant
+router.get('/notes/:id', authenticate, ctrl.getNoteById);
 
 module.exports = router;

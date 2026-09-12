@@ -7,6 +7,7 @@ router.use(authenticate);
 
 router.post('/',         requirePermission('write', 'Department'), ctrl.createSection);
 router.get('/',          requirePermission('read',  'Department'), ctrl.listSections);
+router.get('/:id',      requirePermission('read',  'Department'), ctrl.getSectionById);
 router.patch('/:id',     requirePermission('write', 'Department'), ctrl.updateSection);
 router.delete('/:id',    requirePermission('write', 'Department'), ctrl.deleteSection);
 

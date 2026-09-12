@@ -10,9 +10,10 @@ const getRecentActivity = async (req, res) => {
 
     const limit = Math.min(Number(req.query.limit) || 20, 100);
     const isSuperAdmin = req.user?.roles && req.user.roles.includes('SUPERADMIN');
+    const tenantId = req.tenantId || req.headers['x-tenant-id'] || req.user?.institutionId;
     const query = {};
-    if (!isSuperAdmin && req.user?.institutionId) {
-      query.institutionId = new mongoose.Types.ObjectId(req.user.institutionId);
+    if (!isSuperAdmin && tenantId) {
+      query.institutionId = new mongoose.Types.ObjectId(tenantId);
     }
 
     const logs = await mongoose.connection.db
@@ -26,7 +27,11 @@ const getRecentActivity = async (req, res) => {
       .map(l => l.actorId)
       .filter(id => id && mongoose.Types.ObjectId.isValid(id));
 
-    const actors = await User.find({ _id: { $in: actorIds } }).select('name email');
+    const userFilter = { _id: { $in: actorIds } };
+    if (!isSuperAdmin && tenantId) {
+      userFilter.institutionId = tenantId;
+    }
+    const actors = await User.find(userFilter).select('name email');
     const actorMap = new Map(actors.map(a => [a._id.toString(), a.email || a.name]));
 
     const formatted = logs.map(l => {

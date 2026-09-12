@@ -6,6 +6,12 @@ const mongoose = require('mongoose');
  * A human (CC / HOD / Faculty) must review and act — the agent never acts directly.
  */
 const agentReviewItemSchema = new mongoose.Schema({
+  institutionId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Institution',
+    required: true,
+    index: true,
+  },
   agentName: {
     type: String,
     required: true,
@@ -25,7 +31,7 @@ const agentReviewItemSchema = new mongoose.Schema({
   reviewedAt: { type: Date, default: null },
 }, { timestamps: true });
 
-agentReviewItemSchema.index({ status: 1, agentName: 1, createdAt: -1 });
-agentReviewItemSchema.index({ targetStudentId: 1 });
+agentReviewItemSchema.index({ institutionId: 1, status: 1, agentName: 1, createdAt: -1 });
+agentReviewItemSchema.index({ institutionId: 1, targetStudentId: 1 });
 
 module.exports = mongoose.model('AgentReviewItem', agentReviewItemSchema);

@@ -5,7 +5,8 @@ const { success, fail } = require('@college-erp/shared-utils');
 
 const getDashboardStats = async (req, res) => {
   try {
-    const filter = req.user?.institutionId ? { institutionId: req.user.institutionId } : {};
+    const tenantId = req.tenantId || req.headers['x-tenant-id'] || req.user?.institutionId;
+    const filter = (tenantId && !req.user?.roles?.includes('SUPERADMIN')) ? { institutionId: tenantId } : {};
 
     const totalDepartments = await Department.countDocuments(filter);
     const totalStudents = await RoleAssignment.countDocuments({
@@ -22,8 +23,8 @@ const getDashboardStats = async (req, res) => {
     let activeSessions = 0;
     if (mongoose.connection.db) {
       const sessionQuery = { status: 'active' };
-      if (req.user?.institutionId) {
-        sessionQuery.institutionId = req.user.institutionId;
+      if (filter.institutionId) {
+        sessionQuery.institutionId = filter.institutionId;
       }
       activeSessions = await mongoose.connection.db
         .collection('lecturesessions')
@@ -51,7 +52,11 @@ const getHodDashboardStats = async (req, res) => {
       departmentId = hodRole.departmentId;
     }
 
+    const tenantId = req.tenantId || req.headers['x-tenant-id'] || req.user?.institutionId;
     const filter = departmentId ? { departmentId } : {};
+    if (tenantId && !req.user?.roles?.includes('SUPERADMIN')) {
+      filter.institutionId = tenantId;
+    }
 
     const totalStudents = await RoleAssignment.countDocuments({
       role: 'STUDENT',

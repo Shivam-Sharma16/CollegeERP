@@ -14,12 +14,18 @@ const getTranscript = async (req, res) => {
   try {
     let { id: studentId } = req.params;
     if (studentId === 'me') studentId = req.user.id;
+    const tenantId = req.tenantId || req.headers['x-tenant-id'] || req.user?.institutionId;
+
+    const studentMatch = { studentId: new mongoose.Types.ObjectId(studentId) };
+    if (tenantId && mongoose.Types.ObjectId.isValid(tenantId)) {
+      studentMatch.institutionId = new mongoose.Types.ObjectId(tenantId);
+    }
 
     // Step 1: Find all distinct subjects the student has been assessed on
     const subjectGroups = await mongoose.connection.db
       .collection('marksrecords')
       .aggregate([
-        { $match: { studentId: new mongoose.Types.ObjectId(studentId) } },
+        { $match: studentMatch },
         {
           $lookup: {
             from: 'examtypes',
@@ -43,9 +49,14 @@ const getTranscript = async (req, res) => {
 
     // Step 2: Fetch subject metadata (name, code, credits) from subjects collection
     const subjectIds = subjectGroups.map(g => g._id);
+    const subjectQuery = { _id: { $in: subjectIds } };
+    if (tenantId && mongoose.Types.ObjectId.isValid(tenantId)) {
+      subjectQuery.institutionId = new mongoose.Types.ObjectId(tenantId);
+    }
+
     const subjectDocs = await mongoose.connection.db
       .collection('subjects')
-      .find({ _id: { $in: subjectIds } })
+      .find(subjectQuery)
       .toArray();
 
     const subjectMap = Object.fromEntries(subjectDocs.map(s => [s._id.toString(), s]));
@@ -53,7 +64,7 @@ const getTranscript = async (req, res) => {
     // Step 3: Compute grade per subject using the existing aggregation pipeline
     const subjectBreakdown = await Promise.all(
       subjectIds.map(async (subjectId) => {
-        const gradeData = await computeFinalGrade(studentId, subjectId.toString());
+        const gradeData = await computeFinalGrade(studentId, subjectId.toString(), tenantId);
         const grade = typeof gradeData === 'number' ? gradeData : gradeData.finalGrade;
         const breakdown = typeof gradeData === 'number' ? [] : gradeData.breakdown;
         

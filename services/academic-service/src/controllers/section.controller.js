@@ -5,22 +5,31 @@ const { assertHODOwns } = require('../utils/assertOwnership');
 
 const createSection = async (req, res) => {
   try {
+    const tenantId = req.tenantId || req.headers['x-tenant-id'] || req.user?.institutionId;
     const { semesterId, name } = req.body;
     if (!semesterId || !name) {
       return res.status(400).json(fail('semesterId and name are required'));
     }
 
     // Fetch parent Semester and traverse ownership chain
-    const semester = await Semester.findById(semesterId);
+    const semFilter = { _id: semesterId };
+    if (tenantId && !req.user?.roles?.includes('SUPERADMIN')) {
+      semFilter.institutionId = tenantId;
+    }
+    const semester = await Semester.findOne(semFilter);
     if (!semester) return res.status(404).json(fail('Semester not found'));
 
     // CRITICAL: Reject cross-department section creation even with a valid semesterId
     if (!assertHODOwns(req, res, semester.departmentId)) return;
 
-    const section = await Section.create({ semesterId, name });
+    const section = await Section.create({
+      semesterId,
+      name,
+      ...(tenantId ? { institutionId: tenantId } : {})
+    });
 
     await logAudit(req, 'SECTION_CREATED', section._id.toString(), 'Section', {
-      departmentId: semester.departmentId, semesterId, name
+      departmentId: semester.departmentId, semesterId, name, institutionId: tenantId
     });
     res.status(201).json(success({ section }));
   } catch (err) {
@@ -31,8 +40,13 @@ const createSection = async (req, res) => {
 
 const listSections = async (req, res) => {
   try {
+    const tenantId = req.tenantId || req.headers['x-tenant-id'] || req.user?.institutionId;
     const { semesterId } = req.query;
     const filter = semesterId ? { semesterId } : {};
+    if (tenantId && !req.user?.roles?.includes('SUPERADMIN')) {
+      filter.institutionId = tenantId;
+    }
+
     const sections = await Section.find(filter).sort({ name: 1 });
     res.json(success({ sections }));
   } catch (err) {
@@ -40,9 +54,33 @@ const listSections = async (req, res) => {
   }
 };
 
+const getSectionById = async (req, res) => {
+  try {
+    const tenantId = req.tenantId || req.headers['x-tenant-id'] || req.user?.institutionId;
+    const filter = { _id: req.params.id };
+    if (tenantId && !req.user?.roles?.includes('SUPERADMIN')) {
+      filter.institutionId = tenantId;
+    }
+
+    const section = await Section.findOne(filter).populate('semesterId');
+    if (!section) return res.status(404).json(fail('Section not found'));
+    if (!assertHODOwns(req, res, section.semesterId?.departmentId)) return;
+
+    res.json(success({ section }));
+  } catch (err) {
+    res.status(500).json(fail('Internal server error'));
+  }
+};
+
 const updateSection = async (req, res) => {
   try {
-    const section = await Section.findById(req.params.id).populate('semesterId');
+    const tenantId = req.tenantId || req.headers['x-tenant-id'] || req.user?.institutionId;
+    const filter = { _id: req.params.id };
+    if (tenantId && !req.user?.roles?.includes('SUPERADMIN')) {
+      filter.institutionId = tenantId;
+    }
+
+    const section = await Section.findOne(filter).populate('semesterId');
     if (!section) return res.status(404).json(fail('Section not found'));
     if (!assertHODOwns(req, res, section.semesterId?.departmentId)) return;
 
@@ -57,20 +95,30 @@ const updateSection = async (req, res) => {
 
 const deleteSection = async (req, res) => {
   try {
-    const section = await Section.findById(req.params.id);
+    const tenantId = req.tenantId || req.headers['x-tenant-id'] || req.user?.institutionId;
+    const filter = { _id: req.params.id };
+    if (tenantId && !req.user?.roles?.includes('SUPERADMIN')) {
+      filter.institutionId = tenantId;
+    }
+
+    const section = await Section.findOne(filter);
     if (!section) return res.status(404).json(fail('Section not found'));
 
     // Must look up the semester to assert ownership
-    const semester = await Semester.findById(section.semesterId);
+    const semFilter = { _id: section.semesterId };
+    if (tenantId && !req.user?.roles?.includes('SUPERADMIN')) {
+      semFilter.institutionId = tenantId;
+    }
+    const semester = await Semester.findOne(semFilter);
     if (!semester) return res.status(404).json(fail('Parent semester not found'));
     if (!assertHODOwns(req, res, semester.departmentId)) return;
 
     await section.deleteOne();
-    await logAudit(req, 'SECTION_DELETED', section._id.toString(), 'Section', {});
+    await logAudit(req, 'SECTION_DELETED', section._id.toString(), 'Section', { institutionId: tenantId });
     res.json(success({ message: 'Section deleted' }));
   } catch (err) {
     res.status(500).json(fail('Internal server error'));
   }
 };
 
-module.exports = { createSection, listSections, updateSection, deleteSection };
+module.exports = { createSection, listSections, getSectionById, updateSection, deleteSection };

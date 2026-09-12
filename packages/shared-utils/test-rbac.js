@@ -86,7 +86,7 @@ async function runTest() {
   res = mockRes();
   nextCalled = false;
 
-  await requirePermission('write', 'Department')(req, res, () => { nextCalled = true; });
+  await requirePermission('write', 'Subject')(req, res, () => { nextCalled = true; });
 
   if (res.statusCode === 403 && res.data.success === false) {
     console.log('✅ TEST PASSED: HOD A correctly received 403 on Dept B resource.');
@@ -143,6 +143,64 @@ async function runTest() {
     console.log('✅ TEST PASSED: Superadmin correctly bypassed all restrictions.');
   } else {
     console.error('❌ TEST FAILED: Superadmin was incorrectly rejected.');
+  }
+
+  // Test 6: Tenant Mismatch (Phase 68 outermost check)
+  console.log('\\n--- Test 6: User with Tenant A accessing Tenant B context ---');
+  const tenantA = new mongoose.Types.ObjectId();
+  const tenantB = new mongoose.Types.ObjectId();
+  req = {
+    user: { userId: hodId, roles: ['HOD'], institutionId: tenantA },
+    tenantId: tenantB.toString(),
+    body: { departmentId: deptA.toString() }
+  };
+  res = mockRes();
+  nextCalled = false;
+
+  await requirePermission('write', 'Department')(req, res, () => { nextCalled = true; });
+
+  if (res.statusCode === 403 && res.data.error === 'Access Denied: Tenant mismatch') {
+    console.log('✅ TEST PASSED: Caller rejected with 403 when user institution does not match tenant.');
+  } else {
+    console.error('❌ TEST FAILED: Tenant mismatch was not caught properly.', res.statusCode, res.data);
+  }
+
+  // Test 7: Preloaded resource belonging to a different tenant
+  console.log('\\n--- Test 7: Preloaded resource from foreign institution ---');
+  req = {
+    user: { userId: hodId, roles: ['HOD'], institutionId: tenantA },
+    tenantId: tenantA.toString(),
+    resource: { institutionId: tenantB },
+    body: { departmentId: deptA.toString() }
+  };
+  res = mockRes();
+  nextCalled = false;
+
+  await requirePermission('write', 'Department')(req, res, () => { nextCalled = true; });
+
+  if (res.statusCode === 403 && res.data.error === 'Access Denied: Resource belongs to a different institution') {
+    console.log('✅ TEST PASSED: Preloaded foreign resource rejected with 403.');
+  } else {
+    console.error('❌ TEST FAILED: Foreign resource was not rejected properly.', res.statusCode, res.data);
+  }
+
+  // Test 8: SuperAdmin bypasses tenant mismatch
+  console.log('\\n--- Test 8: Superadmin ignores tenant mismatch ---');
+  req = {
+    user: { userId: new mongoose.Types.ObjectId(), roles: ['SUPERADMIN'], institutionId: null },
+    tenantId: tenantB.toString(),
+    resource: { institutionId: tenantB },
+    params: { studentId: studentBId.toString() }
+  };
+  res = mockRes();
+  nextCalled = false;
+
+  await requirePermission('read', 'Marks')(req, res, () => { nextCalled = true; });
+
+  if (nextCalled) {
+    console.log('✅ TEST PASSED: SuperAdmin successfully bypassed tenant restrictions.');
+  } else {
+    console.error('❌ TEST FAILED: SuperAdmin was blocked by tenant check.', res.statusCode, res.data);
   }
 
   await mongoose.disconnect();

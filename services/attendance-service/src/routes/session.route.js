@@ -7,6 +7,7 @@ router.use(authenticate);
 
 // Faculty-facing (requires TeachingAssignment ownership, validated inside controller)
 router.post('/',           ctrl.createSession);
+router.get('/:id',         ctrl.getSessionById);
 router.get('/:id/qr',     ctrl.rotateQR);
 router.post('/:id/close', ctrl.closeSession);
 

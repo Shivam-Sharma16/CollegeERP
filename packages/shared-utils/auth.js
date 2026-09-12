@@ -28,6 +28,8 @@ const authenticate = (req, res, next) => {
     const currentTenantId = req.tenantId || req.headers['x-tenant-id'] || null;
     const tokenTenantId = req.user.institutionId ? req.user.institutionId.toString() : null;
 
+    req.tenantId = currentTenantId || tokenTenantId || null;
+
     if (currentTenantId) {
       // Current request is scoped to a specific institution/tenant subdomain
       if (!req.user.roles?.includes('SUPERADMIN') && (!tokenTenantId || tokenTenantId !== currentTenantId.toString())) {

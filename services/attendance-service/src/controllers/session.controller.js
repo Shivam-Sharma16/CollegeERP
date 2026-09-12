@@ -13,13 +13,22 @@ const generateQRToken = () => crypto.randomUUID();
  * Verifies the caller (facultyId) has a TeachingAssignment for the given teachingAssignmentId.
  * Queries the shared 'teachingassignments' collection directly (cross-service DB access).
  */
-const verifyFacultyOwnsAssignment = async (facultyId, teachingAssignmentId) => {
+/**
+ * Verifies the caller (facultyId) has a TeachingAssignment for the given teachingAssignmentId.
+ * Queries the shared 'teachingassignments' collection directly (cross-service DB access).
+ */
+const verifyFacultyOwnsAssignment = async (facultyId, teachingAssignmentId, tenantId = null) => {
+  const query = {
+    _id: new mongoose.Types.ObjectId(teachingAssignmentId),
+    facultyId: new mongoose.Types.ObjectId(facultyId)
+  };
+  if (tenantId && mongoose.Types.ObjectId.isValid(tenantId)) {
+    query.institutionId = new mongoose.Types.ObjectId(tenantId);
+  }
+
   const assignment = await mongoose.connection.db
     .collection('teachingassignments')
-    .findOne({
-      _id: new mongoose.Types.ObjectId(teachingAssignmentId),
-      facultyId: new mongoose.Types.ObjectId(facultyId)
-    });
+    .findOne(query);
   return assignment !== null;
 };
 
@@ -28,13 +37,14 @@ const createSession = async (req, res) => {
   try {
     const { teachingAssignmentId, date, timeSlot, topic, geofence } = req.body;
     const facultyId = req.user.userId;
+    const tenantId = req.tenantId || req.headers['x-tenant-id'] || req.user?.institutionId || req.body.institutionId;
 
     if (!teachingAssignmentId || !date || !timeSlot || !geofence) {
       return res.status(400).json(fail('teachingAssignmentId, date, timeSlot, and geofence are required'));
     }
 
     // Gate: verify faculty owns this teaching assignment BEFORE creating session
-    const owns = await verifyFacultyOwnsAssignment(facultyId, teachingAssignmentId);
+    const owns = await verifyFacultyOwnsAssignment(facultyId, teachingAssignmentId, tenantId);
     if (!owns) {
       return res.status(403).json(fail('You do not have a TeachingAssignment for this subject/section'));
     }
@@ -42,10 +52,8 @@ const createSession = async (req, res) => {
     const qrTokenSecret = generateQRToken();
     const qrTokenExpiresAt = new Date(Date.now() + QR_WINDOW_SECONDS * 1000);
 
-    const institutionId = req.user?.institutionId || req.body.institutionId;
-
     const session = await LectureSession.create({
-      institutionId,
+      institutionId: tenantId,
       teachingAssignmentId,
       date: new Date(date),
       timeSlot,
@@ -57,7 +65,7 @@ const createSession = async (req, res) => {
     });
 
     await logAudit(req, 'SESSION_CREATED', session._id.toString(), 'LectureSession', {
-      teachingAssignmentId, date, timeSlot
+      teachingAssignmentId, date, timeSlot, institutionId: tenantId
     });
 
     res.status(201).json(success({
@@ -69,15 +77,40 @@ const createSession = async (req, res) => {
   }
 };
 
+// GET /sessions/:id — Single session lookup
+const getSessionById = async (req, res) => {
+  try {
+    const tenantId = req.tenantId || req.headers['x-tenant-id'] || req.user?.institutionId;
+    const filter = { _id: req.params.id };
+    if (tenantId && !req.user?.roles?.includes('SUPERADMIN')) {
+      filter.institutionId = tenantId;
+    }
+
+    const session = await LectureSession.findOne(filter);
+    if (!session) return res.status(404).json(fail('Session not found'));
+
+    res.json(success({ session }));
+  } catch (err) {
+    console.error(err);
+    res.status(500).json(fail('Internal server error'));
+  }
+};
+
 // GET /sessions/:id/qr — Rotate and return fresh QR token
 const rotateQR = async (req, res) => {
   try {
-    const session = await LectureSession.findById(req.params.id);
+    const tenantId = req.tenantId || req.headers['x-tenant-id'] || req.user?.institutionId;
+    const filter = { _id: req.params.id };
+    if (tenantId && !req.user?.roles?.includes('SUPERADMIN')) {
+      filter.institutionId = tenantId;
+    }
+
+    const session = await LectureSession.findOne(filter);
     if (!session) return res.status(404).json(fail('Session not found'));
     if (session.status === 'closed') return res.status(400).json(fail('Session is already closed'));
 
     // Verify faculty owns the session
-    const owns = await verifyFacultyOwnsAssignment(req.user.userId, session.teachingAssignmentId);
+    const owns = await verifyFacultyOwnsAssignment(req.user.userId, session.teachingAssignmentId, tenantId);
     if (!owns) return res.status(403).json(fail('Access denied'));
 
     // Rotate token
@@ -98,6 +131,7 @@ const rotateQR = async (req, res) => {
 // POST /sessions/:id/checkin — Full Phase 4 verification pipeline
 const checkIn = async (req, res) => {
   try {
+    const tenantId = req.tenantId || req.headers['x-tenant-id'] || req.user?.institutionId;
     const { studentId, qrToken, deviceFingerprint, gpsCoords } = req.body;
 
     if (!studentId || !qrToken || !deviceFingerprint) {
@@ -105,7 +139,12 @@ const checkIn = async (req, res) => {
     }
 
     // Gate: ensure session is still active
-    const session = await LectureSession.findById(req.params.id);
+    const filter = { _id: req.params.id };
+    if (tenantId && !req.user?.roles?.includes('SUPERADMIN')) {
+      filter.institutionId = tenantId;
+    }
+
+    const session = await LectureSession.findOne(filter);
     if (!session) return res.status(404).json(fail('Session not found'));
     if (session.status === 'closed') {
       return res.status(400).json(fail('Session is closed — check-ins are no longer accepted'));
@@ -117,7 +156,8 @@ const checkIn = async (req, res) => {
       studentId,
       qrToken,
       deviceFingerprint,
-      gpsCoords
+      gpsCoords,
+      tenantId
     });
 
     res.status(201).json(success({ record }));
@@ -137,25 +177,34 @@ const checkIn = async (req, res) => {
 // POST /sessions/:id/close — Lock session, aggregate, fire event
 const closeSession = async (req, res) => {
   try {
-    const session = await LectureSession.findById(req.params.id);
+    const tenantId = req.tenantId || req.headers['x-tenant-id'] || req.user?.institutionId;
+    const filter = { _id: req.params.id };
+    if (tenantId && !req.user?.roles?.includes('SUPERADMIN')) {
+      filter.institutionId = tenantId;
+    }
+
+    const session = await LectureSession.findOne(filter);
     if (!session) return res.status(404).json(fail('Session not found'));
     if (session.status === 'closed') return res.status(400).json(fail('Session already closed'));
 
     // Verify faculty owns the session
-    const owns = await verifyFacultyOwnsAssignment(req.user.userId, session.teachingAssignmentId);
+    const owns = await verifyFacultyOwnsAssignment(req.user.userId, session.teachingAssignmentId, tenantId);
     if (!owns) return res.status(403).json(fail('Access denied'));
 
     session.status = 'closed';
     await session.save();
 
     // Final aggregation of all students in section
-    const records = await AttendanceRecord.find({ lectureSessionId: session._id });
+    const recordFilter = { lectureSessionId: session._id };
+    if (tenantId) recordFilter.institutionId = tenantId;
+    const records = await AttendanceRecord.find(recordFilter);
     const presentCount = records.filter(r => r.status === 'present').length;
 
     await logAudit(req, 'SESSION_CLOSED', session._id.toString(), 'LectureSession', {
       teachingAssignmentId: session.teachingAssignmentId,
       totalRecords: records.length,
-      presentCount
+      presentCount,
+      institutionId: tenantId
     });
 
     // Fire session.closed event to notification-service (fire-and-forget)
@@ -163,7 +212,10 @@ const closeSession = async (req, res) => {
     if (notificationUrl) {
       fetch(`${notificationUrl}/internal/session-closed`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(tenantId ? { 'x-tenant-id': tenantId.toString() } : {})
+        },
         body: JSON.stringify({
           sessionId: session._id.toString(),
           teachingAssignmentId: session.teachingAssignmentId.toString(),
@@ -183,4 +235,4 @@ const closeSession = async (req, res) => {
   }
 };
 
-module.exports = { createSession, rotateQR, checkIn, closeSession };
+module.exports = { createSession, getSessionById, rotateQR, checkIn, closeSession };

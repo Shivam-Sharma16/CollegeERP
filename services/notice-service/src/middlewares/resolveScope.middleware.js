@@ -20,9 +20,19 @@ const resolveScope = async (req, res, next) => {
       return res.status(401).json({ success: false, error: 'Unauthorized' });
     }
 
+    const tenantId = req.tenantId || req.headers['x-tenant-id'] || req.user?.institutionId;
+    const query = { userId: new mongoose.Types.ObjectId(req.user.userId) };
+    if (tenantId) {
+      try {
+        query.institutionId = new mongoose.Types.ObjectId(tenantId);
+      } catch {
+        // if not valid objectid, keep as-is
+      }
+    }
+
     const assignments = await mongoose.connection
       .collection('roleassignments')
-      .find({ userId: new mongoose.Types.ObjectId(req.user.userId) })
+      .find(query)
       .toArray();
 
     // Derive the highest-privilege role in the set
