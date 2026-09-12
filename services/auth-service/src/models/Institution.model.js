@@ -16,11 +16,8 @@ const institutionSchema = new mongoose.Schema({
   },
   customDomain: {
     type: String,
-    default: null,
     trim: true,
-    lowercase: true,
-    unique: true,
-    sparse: true
+    lowercase: true
   },
   logoUrl: {
     type: String,
@@ -71,5 +68,10 @@ const institutionSchema = new mongoose.Schema({
 }, {
   timestamps: true
 });
+
+institutionSchema.index(
+  { customDomain: 1 },
+  { unique: true, partialFilterExpression: { customDomain: { $type: 'string' } } }
+);
 
 module.exports = mongoose.model('Institution', institutionSchema);

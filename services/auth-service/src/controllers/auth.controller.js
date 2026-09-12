@@ -122,12 +122,74 @@ const registerStudent = async (req, res) => {
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
-    const tenantId = req.tenantId || req.headers['x-tenant-id'] || null;
+    let tenantId = req.tenantId || req.headers['x-tenant-id'] || null;
+
+    if (!tenantId && (req.body?.institutionSlug || req.body?.subdomain)) {
+      const targetSlug = (req.body.institutionSlug || req.body.subdomain).toLowerCase().trim();
+      const targetInst = await Institution.findOne({
+        $or: [{ subdomain: targetSlug }, { slug: targetSlug }]
+      });
+      if (targetInst) {
+        tenantId = targetInst._id;
+      }
+    }
 
     if (!tenantId) {
+      // Check if this is a platform SuperAdmin logging in on root domain
+      const normalizedEmail = (email || '').toLowerCase().trim();
+      const superAdmin = await User.findOne({
+        email: normalizedEmail,
+        institutionId: null,
+        roles: { $in: ['SUPERADMIN', 'superadmin'] },
+      });
+
+      if (superAdmin && superAdmin.isActive) {
+        const isValid = await bcrypt.compare(password, superAdmin.passwordHash);
+        if (isValid) {
+          const { accessToken, refreshToken } = generateTokens(
+            superAdmin._id.toString(),
+            null,
+            superAdmin.roles || ['SUPERADMIN']
+          );
+
+          res.cookie('refreshToken', refreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            maxAge: 7 * 24 * 60 * 60 * 1000,
+          });
+
+          const userPayload = {
+            id: superAdmin._id.toString(),
+            name: superAdmin.name,
+            email: superAdmin.email,
+            roles: superAdmin.roles,
+            institutionId: null,
+          };
+
+          return res.status(200).json({
+            success: true,
+            accessToken,
+            token: accessToken,
+            roles: superAdmin.roles,
+            userId: superAdmin._id,
+            institutionId: null,
+            user: userPayload,
+            data: {
+              token: accessToken,
+              accessToken,
+              userId: superAdmin._id,
+              roles: superAdmin.roles,
+              institutionId: null,
+              user: userPayload,
+            },
+          });
+        }
+      }
+
       return res.status(400).json({
         success: false,
-        message: 'Tenant context is required for login. Please access your institution portal via its subdomain.'
+        message:
+          'Tenant context is required for login. Please access your institution portal via its subdomain.',
       });
     }
 

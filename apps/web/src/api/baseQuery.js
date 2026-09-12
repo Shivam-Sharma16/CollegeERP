@@ -16,6 +16,14 @@ const rawBaseQuery = fetchBaseQuery({
   prepareHeaders: (headers, { getState }) => {
     const token = getState().auth.token;
     if (token) headers.set('Authorization', `Bearer ${token}`);
+
+    if (typeof window !== 'undefined' && window.location?.pathname) {
+      const match = window.location.pathname.match(/^\/inst\/([a-z0-9-]+)/i);
+      if (match && match[1]) {
+        headers.set('x-tenant-subdomain', match[1]);
+      }
+    }
+
     return headers;
   },
 });

@@ -16,11 +16,8 @@ const institutionSchema = new mongoose.Schema({
   },
   customDomain: {
     type: String,
-    default: null,
     trim: true,
-    lowercase: true,
-    unique: true,
-    sparse: true
+    lowercase: true
   },
   logoUrl: {
     type: String,
@@ -96,5 +93,10 @@ institutionSchema.pre('save', function (next) {
   }
   next();
 });
+
+institutionSchema.index(
+  { customDomain: 1 },
+  { unique: true, partialFilterExpression: { customDomain: { $type: 'string' } } }
+);
 
 module.exports = mongoose.model('Institution', institutionSchema);

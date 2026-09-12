@@ -103,7 +103,7 @@ jobs:
             sleep 2
           done
 
-      - name: Run Phase 62 E2E critical-chain tests
+      - name: Run E2E Tests (Phase 62 Critical Chain & Phase 74 Multi-Tenancy)
         run: npm run test:e2e --workspace=apps/web
         env:
           CI: true

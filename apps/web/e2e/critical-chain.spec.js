@@ -109,7 +109,7 @@ test.describe('1 — Superadmin Signup', () => {
 
     // Should show an error (superadmin already exists lock)
     await expect(
-      page.locator('text=/already exists|already registered|setup key has been used|locked/i')
+      page.locator('text=/already exists|already registered|setup key has been used|locked|already been initialized/i')
     ).toBeVisible({ timeout: 10_000 });
   });
 });

@@ -31,13 +31,6 @@ const tenantResolver = async (req, res, next) => {
     const isRootDomain = ROOT_DOMAINS.has(host);
 
     if (isRootDomain) {
-      // If path starts with /superadmin or /api/superadmin -> proceed as global/no-tenant request
-      if (path.startsWith('/superadmin') || path.startsWith('/api/superadmin')) {
-        req.tenantId = null;
-        req.isSuperAdminRoute = true;
-        return next();
-      }
-
       // Check if client explicitly passed an x-tenant-subdomain header for testing or path-based tenant portals
       if (req.headers['x-tenant-subdomain']) {
         return resolveSubdomain(req.headers['x-tenant-subdomain'].toLowerCase().trim(), req, res, next);
@@ -52,6 +45,23 @@ const tenantResolver = async (req, res, next) => {
       const pathParamMatch = path.match(/^\/(?:api\/)?institutions\/(?:branding|resolve)(?:\/subdomain)?\/([a-z0-9-]+)/i);
       if (pathParamMatch && pathParamMatch[1]) {
         return resolveSubdomain(pathParamMatch[1].toLowerCase().trim(), req, res, next);
+      }
+
+      // If path starts with /superadmin or /api/superadmin, or is a global institution or superadmin route -> proceed as global/no-tenant request
+      if (
+        path.startsWith('/superadmin') ||
+        path.startsWith('/api/superadmin') ||
+        path.includes('superadmin') ||
+        path.startsWith('/api/institutions') ||
+        path.startsWith('/institutions') ||
+        path === '/api/auth/login' ||
+        path === '/auth/login' ||
+        path === '/api/auth/refresh' ||
+        path === '/api/auth/logout'
+      ) {
+        req.tenantId = null;
+        req.isSuperAdminRoute = true;
+        return next();
       }
 
       // If on root domain without subdomain and not accessing /superadmin, no tenant can be inferred
