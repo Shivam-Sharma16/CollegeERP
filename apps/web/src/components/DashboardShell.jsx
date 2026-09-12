@@ -200,11 +200,11 @@ export function DashboardShell({ title, subtitle, icon, children }) {
       {/* ── Main content area ────────────────────────────────────────────── */}
       <main className={styles.main}>
         <header className={styles.header}>
-          <div>
+          <div className={styles.headerInfo}>
             <h1 className={styles.pageTitle}>{title}</h1>
             {subtitle && <p className={styles.pageSubtitle}>{subtitle}</p>}
           </div>
-          <div className={styles.headerRight} style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div className={styles.headerRight}>
             <NotificationDropdown />
             <div className={styles.roleBadge}>
               {user?.roles?.join(', ') ?? ''}

@@ -2,58 +2,216 @@
   display: flex;
   flex-direction: column;
   gap: var(--spacing-4);
-  padding: var(--spacing-2) 0;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
+/* ── Form Intro Banner ────────────────────────────────────────────────────── */
+.formIntro {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-3);
+  padding: var(--spacing-3);
+  background: color-mix(in srgb, var(--color-primary) 8%, var(--color-surface-elevated));
+  border: 1px solid color-mix(in srgb, var(--color-primary) 22%, transparent);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--spacing-1);
+}
+
+.introIcon {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--color-primary) 18%, transparent);
+  color: var(--color-primary-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.introText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.introTitle {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0;
+}
+
+.introDesc {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  line-height: 1.4;
+  margin: 0;
+}
+
+/* ── Form Fields ──────────────────────────────────────────────────────────── */
 .field {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-1);
+  gap: 6px;
+  min-width: 0;
+  width: 100%;
 }
 
-.field label {
-  font-size: var(--text-sm);
+.label {
+  font-size: 0.8125rem;
   font-weight: 500;
+  color: var(--color-text);
+}
+
+.required {
+  color: var(--color-danger);
+  font-weight: 700;
+}
+
+.inputWithIcon {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+}
+
+.inputIcon {
+  position: absolute;
+  left: 12px;
   color: var(--color-text-muted);
+  pointer-events: none;
+  z-index: 1;
 }
 
 .input {
-  padding: 0.6rem var(--spacing-3);
-  background: var(--color-bg);
+  height: 40px;
+  width: 100%;
+  max-width: 100%;
+  padding: 0 var(--spacing-3) 0 38px;
+  background: var(--color-surface-elevated);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   color: var(--color-text);
   font-family: var(--font-body);
-  font-size: var(--text-base);
+  font-size: 0.875rem;
   outline: none;
-  transition: border-color var(--transition);
+  transition: border-color var(--transition), box-shadow var(--transition);
+  box-sizing: border-box;
+  min-width: 0;
 }
 
 .input:focus {
   border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 20%, transparent);
 }
 
 .input:disabled {
-  opacity: 0.7;
-  background: var(--color-surface-elevated);
+  opacity: 0.65;
+  background: var(--color-bg);
   cursor: not-allowed;
+}
+
+select.input {
+  appearance: none;
+  cursor: pointer;
+}
+
+.warningBox {
+  padding: var(--spacing-3);
+  background: color-mix(in srgb, var(--color-warning) 12%, transparent);
+  color: var(--color-warning);
+  border-radius: var(--radius-sm);
+  font-size: 0.8125rem;
+  border: 1px solid color-mix(in srgb, var(--color-warning) 28%, transparent);
+  line-height: 1.4;
+}
+
+/* ── Password Card ────────────────────────────────────────────────────────── */
+.passwordCard {
+  background: color-mix(in srgb, var(--color-surface-elevated) 70%, var(--color-surface));
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+  margin-top: var(--spacing-1);
+}
+
+.passwordHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.passwordTitleWrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.passwordIcon {
+  color: var(--color-primary-light);
+}
+
+.passwordLabel {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.autoGenBadge {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-primary) 15%, transparent);
+  color: var(--color-primary-light);
 }
 
 .passwordWrap {
   display: flex;
   gap: var(--spacing-2);
+  width: 100%;
+  min-width: 0;
 }
 
 .passwordInput {
   flex: 1;
+  padding-left: var(--spacing-3);
+  font-family: var(--font-mono, monospace);
+  font-size: 0.9375rem;
+  letter-spacing: 0.04em;
+  background: var(--color-bg);
+  border-color: var(--color-border);
 }
 
+.copyBtn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.passwordHelp {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  margin: 0;
+  line-height: 1.35;
+}
+
+/* ── Modal Actions ────────────────────────────────────────────────────────── */
 .actions {
   display: flex;
   justify-content: flex-end;
   gap: var(--spacing-3);
-  margin-top: var(--spacing-6);
-  padding-top: var(--spacing-4);
+  margin-top: var(--spacing-2);
+  padding-top: var(--spacing-3);
   border-top: 1px solid var(--color-border);
 }
 
@@ -64,11 +222,11 @@
 
 .inputError:focus {
   border-color: var(--color-danger);
-  box-shadow: 0 0 0 1px var(--color-danger);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-danger) 20%, transparent);
 }
 
 .errorText {
   color: var(--color-danger);
-  font-size: 12px;
+  font-size: 0.75rem;
   margin-top: 2px;
 }

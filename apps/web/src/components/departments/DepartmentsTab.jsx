@@ -119,8 +119,8 @@ export function DepartmentsTab() {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-4)' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-4)', minWidth: 0, width: '100%' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 'var(--spacing-3)', minWidth: 0 }}>
         <input 
           type="text" 
           placeholder="Search departments..." 
@@ -130,7 +130,10 @@ export function DepartmentsTab() {
             padding: 'var(--spacing-2) var(--spacing-3)',
             borderRadius: 'var(--radius-sm)',
             border: '1px solid var(--color-border)',
-            width: '300px'
+            width: '100%',
+            maxWidth: '300px',
+            minWidth: 0,
+            boxSizing: 'border-box'
           }}
         />
         <Button onClick={() => setCreateModalOpen(true)}>Add Department</Button>

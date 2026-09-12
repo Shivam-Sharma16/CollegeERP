@@ -49,6 +49,11 @@ export const institutionsApi = createApi({
       }),
       invalidatesTags: (result, error, { id }) => [{ type: 'Institution', id }, 'Institution'],
     }),
+
+    checkSubdomainAvailability: builder.query({
+      query: (subdomain) => `/api/institutions/check-subdomain?subdomain=${encodeURIComponent(subdomain)}`,
+      transformResponse: (response) => response?.data ?? response,
+    }),
   }),
 });
 
@@ -59,4 +64,6 @@ export const {
   useGetInstitutionByIdQuery,
   useCreateInstitutionMutation,
   useUpdateInstitutionMutation,
+  useCheckSubdomainAvailabilityQuery,
+  useLazyCheckSubdomainAvailabilityQuery,
 } = institutionsApi;

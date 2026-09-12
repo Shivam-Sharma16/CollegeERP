@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
-import { Copy, Check } from 'lucide-react';
+import { Copy, Check, User, Mail, Key, Building2, ShieldCheck } from 'lucide-react';
 import { useToast } from '../ui/ToastContext';
 import styles from './CreateUserModal.module.css';
 
@@ -58,7 +58,6 @@ export function CreateUserModal({
       if (showDepartmentSelect) {
         payload.departmentId = departmentId;
       }
-      // Note: disabledDepartmentText implies backend auto-scopes it, so no departmentId sent
       
       await createUser(payload).unwrap();
       showToast(`${roleLabel} created successfully`, 'success');
@@ -71,74 +70,120 @@ export function CreateUserModal({
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={title}>
       <form onSubmit={handleSubmit} className={styles.form}>
-        
-        <div className={styles.field}>
-          <label htmlFor="name">Full Name</label>
-          <input
-            id="name"
-            className={styles.input}
-            type="text"
-            required
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            disabled={isLoading}
-          />
+        <div className={styles.formIntro}>
+          <div className={styles.introIcon}>
+            <ShieldCheck size={18} />
+          </div>
+          <div className={styles.introText}>
+            <p className={styles.introTitle}>New {roleLabel} Account</p>
+            <p className={styles.introDesc}>
+              Provision an institutional account with direct role permissions and initial login credentials.
+            </p>
+          </div>
         </div>
 
+        {/* Full Name */}
         <div className={styles.field}>
-          <label htmlFor="email">Email Address</label>
-          <input
-            id="email"
-            className={styles.input}
-            type="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            disabled={isLoading}
-          />
+          <label htmlFor="name" className={styles.label}>
+            Full Name <span className={styles.required}>*</span>
+          </label>
+          <div className={styles.inputWithIcon}>
+            <User size={16} className={styles.inputIcon} />
+            <input
+              id="name"
+              className={styles.input}
+              type="text"
+              required
+              placeholder="e.g. Prof. Alan Turing"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              disabled={isLoading}
+            />
+          </div>
         </div>
 
+        {/* Email Address */}
+        <div className={styles.field}>
+          <label htmlFor="email" className={styles.label}>
+            Email Address <span className={styles.required}>*</span>
+          </label>
+          <div className={styles.inputWithIcon}>
+            <Mail size={16} className={styles.inputIcon} />
+            <input
+              id="email"
+              className={styles.input}
+              type="email"
+              required
+              placeholder="name@institution.edu"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              disabled={isLoading}
+            />
+          </div>
+        </div>
+
+        {/* Department Selection */}
         {showDepartmentSelect && (
           <div className={styles.field}>
-            <label htmlFor="department">Department</label>
+            <label htmlFor="department" className={styles.label}>
+              Assigned Department <span className={styles.required}>*</span>
+            </label>
             {departments.length === 0 ? (
-              <div style={{ padding: '12px', background: 'color-mix(in srgb, var(--color-warning) 15%, transparent)', color: 'var(--color-warning)', borderRadius: 'var(--radius-sm)', fontSize: '14px', border: '1px solid color-mix(in srgb, var(--color-warning) 30%, transparent)' }}>
-                No departments exist yet. Please contact a SuperAdmin to create a department before assigning an HOD.
+              <div className={styles.warningBox}>
+                No departments exist yet. Please configure a department before assigning this role.
               </div>
             ) : (
-              <select
-                id="department"
-                className={styles.input}
-                required
-                value={departmentId}
-                onChange={(e) => setDepartmentId(e.target.value)}
-                disabled={isLoading}
-              >
-                <option value="" disabled>Select Department</option>
-                {departments.map((dept) => (
-                  <option key={dept._id} value={dept._id}>
-                    {dept.name} ({dept.code})
+              <div className={styles.inputWithIcon}>
+                <Building2 size={16} className={styles.inputIcon} />
+                <select
+                  id="department"
+                  className={styles.input}
+                  required
+                  value={departmentId}
+                  onChange={(e) => setDepartmentId(e.target.value)}
+                  disabled={isLoading}
+                >
+                  <option value="" disabled>
+                    Select Department
                   </option>
-                ))}
-              </select>
+                  {departments.map((dept) => (
+                    <option key={dept._id} value={dept._id}>
+                      {dept.name} ({dept.code})
+                    </option>
+                  ))}
+                </select>
+              </div>
             )}
           </div>
         )}
 
         {disabledDepartmentText && (
           <div className={styles.field}>
-            <label>Department</label>
-            <input
-              className={styles.input}
-              type="text"
-              disabled
-              value={disabledDepartmentText}
-            />
+            <label className={styles.label}>Assigned Department</label>
+            <div className={styles.inputWithIcon}>
+              <Building2 size={16} className={styles.inputIcon} />
+              <input
+                className={styles.input}
+                type="text"
+                disabled
+                value={disabledDepartmentText}
+              />
+            </div>
           </div>
         )}
 
-        <div className={styles.field}>
-          <label htmlFor="password">Temporary Password</label>
+        {/* Generated Password Card */}
+        <div className={styles.passwordCard}>
+          <div className={styles.passwordHeader}>
+            <div className={styles.passwordTitleWrap}>
+              <Key size={14} className={styles.passwordIcon} />
+              <label htmlFor="password" className={styles.passwordLabel}>
+                Initial System Password
+              </label>
+            </div>
+            <span className={styles.autoGenBadge}>Auto-Generated</span>
+          </div>
+
           <div className={styles.passwordWrap}>
             <input
               id="password"
@@ -149,25 +194,36 @@ export function CreateUserModal({
             />
             <Button
               type="button"
-              variant="secondary"
+              variant={copied ? 'primary' : 'secondary'}
               onClick={handleCopy}
               disabled={isLoading}
+              className={styles.copyBtn}
+              title="Copy credentials to clipboard"
             >
-              {copied ? <Check size={16} /> : <Copy size={16} />}
+              {copied ? (
+                <>
+                  <Check size={14} style={{ marginRight: '4px' }} /> Copied
+                </>
+              ) : (
+                <>
+                  <Copy size={14} style={{ marginRight: '4px' }} /> Copy
+                </>
+              )}
             </Button>
           </div>
-          <small style={{ color: 'var(--color-text-muted)', fontSize: '12px' }}>
-            Copy this password. It will not be shown again.
-          </small>
+          <p className={styles.passwordHelp}>
+            Secure temporary key. Please copy and provide it to the user upon initial provisioning.
+          </p>
         </div>
 
+        {/* Modal Actions */}
         <div className={styles.actions}>
           <Button type="button" variant="ghost" onClick={onClose} disabled={isLoading}>
             Cancel
           </Button>
-          <Button 
-            type="submit" 
-            variant="primary" 
+          <Button
+            type="submit"
+            variant="primary"
             disabled={isLoading || (showDepartmentSelect && departments.length === 0)}
           >
             {isLoading ? 'Creating...' : `Create ${roleLabel}`}

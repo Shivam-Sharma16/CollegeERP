@@ -3,6 +3,7 @@ import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { useToast } from '../ui/ToastContext';
 import { useCreateDepartmentMutation } from '../../api/departmentsApi';
+import { Building2, Hash, Layers } from 'lucide-react';
 import styles from './CreateDepartmentModal.module.css';
 
 export function CreateDepartmentModal({ isOpen, onClose }) {
@@ -30,19 +31,14 @@ export function CreateDepartmentModal({ isOpen, onClose }) {
       showToast('Department created successfully', 'success');
       onClose();
     } catch (err) {
-      // Simulate/Parse field-level errors
-      // E.g. backend returns { data: { message: 'duplicate key error... code_1 dup key' } }
-      // Or { data: { errors: { code: 'Code already exists' } } }
       const errData = err?.data || {};
       const newErrors = {};
 
       if (errData.errors) {
-        // Explicit field errors
-        Object.keys(errData.errors).forEach(key => {
+        Object.keys(errData.errors).forEach((key) => {
           newErrors[key] = errData.errors[key];
         });
       } else if (errData.message && errData.message.toLowerCase().includes('duplicate')) {
-        // Fallback for Mongo Duplicate key on 'code'
         if (errData.message.includes('code')) {
           newErrors.code = 'This department code is already in use.';
         } else if (errData.message.includes('name')) {
@@ -61,40 +57,64 @@ export function CreateDepartmentModal({ isOpen, onClose }) {
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Create Department">
       <form onSubmit={handleSubmit} className={styles.form}>
+        <div className={styles.formIntro}>
+          <div className={styles.introIcon}>
+            <Layers size={18} />
+          </div>
+          <div className={styles.introText}>
+            <p className={styles.introTitle}>Academic Department</p>
+            <p className={styles.introDesc}>
+              Define an academic faculty branch to organize courses, professors, and students.
+            </p>
+          </div>
+        </div>
+
         <div className={styles.field}>
-          <label htmlFor="deptName">Department Name</label>
-          <input
-            id="deptName"
-            className={`${styles.input} ${fieldErrors.name ? styles.inputError : ''}`}
-            type="text"
-            required
-            value={name}
-            onChange={(e) => {
-              setName(e.target.value);
-              if (fieldErrors.name) setFieldErrors({ ...fieldErrors, name: null });
-            }}
-            disabled={isLoading}
-            placeholder="e.g. Computer Science"
-          />
+          <label htmlFor="deptName" className={styles.label}>
+            Department Name <span className={styles.required}>*</span>
+          </label>
+          <div className={styles.inputWithIcon}>
+            <Building2 size={16} className={styles.inputIcon} />
+            <input
+              id="deptName"
+              className={`${styles.input} ${fieldErrors.name ? styles.inputError : ''}`}
+              type="text"
+              required
+              value={name}
+              onChange={(e) => {
+                setName(e.target.value);
+                if (fieldErrors.name) setFieldErrors({ ...fieldErrors, name: null });
+              }}
+              disabled={isLoading}
+              placeholder="e.g. Computer Science & Engineering"
+            />
+          </div>
           {fieldErrors.name && <span className={styles.errorText}>{fieldErrors.name}</span>}
         </div>
 
         <div className={styles.field}>
-          <label htmlFor="deptCode">Department Code</label>
-          <input
-            id="deptCode"
-            className={`${styles.input} ${fieldErrors.code ? styles.inputError : ''}`}
-            type="text"
-            required
-            value={code}
-            onChange={(e) => {
-              setCode(e.target.value);
-              if (fieldErrors.code) setFieldErrors({ ...fieldErrors, code: null });
-            }}
-            disabled={isLoading}
-            placeholder="e.g. CS"
-          />
+          <label htmlFor="deptCode" className={styles.label}>
+            Department Code <span className={styles.required}>*</span>
+          </label>
+          <div className={styles.inputWithIcon}>
+            <Hash size={16} className={styles.inputIcon} />
+            <input
+              id="deptCode"
+              className={`${styles.input} ${fieldErrors.code ? styles.inputError : ''}`}
+              type="text"
+              required
+              value={code}
+              onChange={(e) => {
+                setCode(e.target.value.toUpperCase());
+                if (fieldErrors.code) setFieldErrors({ ...fieldErrors, code: null });
+              }}
+              disabled={isLoading}
+              placeholder="e.g. CSE"
+              maxLength={10}
+            />
+          </div>
           {fieldErrors.code && <span className={styles.errorText}>{fieldErrors.code}</span>}
+          <span className={styles.helpText}>Short uppercase identifier used across course codes.</span>
         </div>
 
         <div className={styles.actions}>
