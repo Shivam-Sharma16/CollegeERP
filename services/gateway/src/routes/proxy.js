@@ -72,8 +72,12 @@ function forward(targetBaseUrl, req, res) {
 }
 
 function registerProxies(app) {
-  // 1. Auth Service
-  app.use(['/api/auth', '/auth'], (req, res) => forward(env.AUTH_SERVICE_URL, req, res));
+  // 1. Auth Service (including root domain SuperAdmin login/signup)
+  app.use([
+    '/api/auth', '/auth',
+    '/superadmin/login', '/superadmin-login', '/api/superadmin/login',
+    '/superadmin/signup', '/superadmin-signup', '/api/superadmin/signup'
+  ], (req, res) => forward(env.AUTH_SERVICE_URL, req, res));
 
   // 2. Institution Service (Institutions, Multi-tenant onboarding, Theme resolution)
   app.use(['/api/institutions', '/institutions'], (req, res) => forward(env.INSTITUTION_SERVICE_URL, req, res));

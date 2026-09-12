@@ -10,7 +10,7 @@ const connectDB = require('./config/db');
 const healthRoute = require('./routes/health.route');
 const authRoute = require('./routes/auth.route');
 
-const { setupSecurity } = require('@college-erp/shared-utils');
+const { setupSecurity, verifyTenantContext } = require('@college-erp/shared-utils');
 
 const app = express();
 
@@ -21,10 +21,14 @@ app.use(morgan('dev'));
 app.use(express.json());
 app.use(cookieParser());
 
+// Tenant context verification (from Gateway)
+app.use(verifyTenantContext({ required: false }));
+
 // Mount health route
 app.use('/', healthRoute);
 
 // Mount auth routes
+app.use('/', authRoute);
 app.use('/auth', authRoute);
 app.use('/api/auth', authRoute);
 

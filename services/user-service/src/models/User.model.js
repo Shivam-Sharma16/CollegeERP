@@ -3,7 +3,7 @@ const { ROLES } = require('@college-erp/shared-config');
 
 const userSchema = new mongoose.Schema({
   name: { type: String, required: true },
-  email: { type: String, required: true, unique: true },
+  email: { type: String, required: true, trim: true, lowercase: true },
   rollNumber: { type: String, sparse: true },
   passwordHash: { type: String, required: true },
   roles: [{ 
@@ -26,6 +26,10 @@ const userSchema = new mongoose.Schema({
   timestamps: true
 });
 
-userSchema.index({ institutionId: 1, rollNumber: 1 }, { unique: true, sparse: true });
+userSchema.index({ institutionId: 1, email: 1 }, { unique: true });
+userSchema.index(
+  { institutionId: 1, rollNumber: 1 }, 
+  { unique: true, partialFilterExpression: { rollNumber: { $type: 'string' } } }
+);
 
 module.exports = mongoose.model('User', userSchema);

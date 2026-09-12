@@ -78,12 +78,13 @@ const createInstitution = async (req, res) => {
       return res.status(409).json(fail('An institution with this code already exists'));
     }
 
-    // Check if admin email already taken
-    const existingUser = await mongoose.connection.db.collection('users').findOne({
-      email: admin.email.toLowerCase().trim()
+    // Check if admin email already taken by a SUPERADMIN
+    const existingSuperAdmin = await mongoose.connection.db.collection('users').findOne({
+      email: admin.email.toLowerCase().trim(),
+      roles: 'SUPERADMIN'
     });
-    if (existingUser) {
-      return res.status(409).json(fail('Admin email is already registered in the system'));
+    if (existingSuperAdmin) {
+      return res.status(409).json(fail('Admin email cannot be a SuperAdmin email'));
     }
 
     const superAdminUserId = req.user?.userId ? new mongoose.Types.ObjectId(req.user.userId) : null;

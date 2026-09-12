@@ -22,6 +22,31 @@ const authenticate = (req, res, next) => {
       roles: decoded.roles || []
     };
     req.institutionId = decoded.institutionId ? decoded.institutionId.toString() : null;
+
+    // Tenant Replay Protection (Phase 66)
+    // Every subsequent authenticated request re-validates req.user.institutionId === req.tenantId
+    const currentTenantId = req.tenantId || req.headers['x-tenant-id'] || null;
+    const tokenTenantId = req.user.institutionId ? req.user.institutionId.toString() : null;
+
+    if (currentTenantId) {
+      // Current request is scoped to a specific institution/tenant subdomain
+      if (!tokenTenantId || tokenTenantId !== currentTenantId.toString()) {
+        return res.status(401).json({
+          success: false,
+          error: 'Token tenant mismatch: JWT issued for a different institution cannot be used on this tenant domain'
+        });
+      }
+    } else {
+      // Root domain / global scope (no req.tenantId)
+      // Tenant-scoped JWT cannot access root platform endpoints
+      if (tokenTenantId !== null && !req.user.roles?.includes('SUPERADMIN')) {
+        return res.status(401).json({
+          success: false,
+          error: 'Token tenant mismatch: Tenant-scoped JWT cannot be used on root platform domain'
+        });
+      }
+    }
+
     next();
   } catch (err) {
     return res.status(401).json({ success: false, error: 'Invalid or expired token' });

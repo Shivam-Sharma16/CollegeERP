@@ -68,12 +68,14 @@ const superadminSignup = async (req, res) => {
 const registerStudent = async (req, res) => {
   try {
     const { name, email, password, departmentId, sectionId, institutionId } = req.body;
+    const resolvedTenantId = req.tenantId || req.headers['x-tenant-id'] || institutionId || null;
 
     if (!departmentId || !sectionId) {
       return res.status(400).json({ message: 'departmentId and sectionId are required' });
     }
 
-    const existingUser = await User.findOne({ email });
+    const normalizedEmail = (email || '').toLowerCase().trim();
+    const existingUser = await User.findOne({ email: normalizedEmail, institutionId: resolvedTenantId });
     if (existingUser) {
       return res.status(409).json({ message: 'Email already in use' });
     }
@@ -83,10 +85,10 @@ const registerStudent = async (req, res) => {
     // HARDCODED ROLE
     const user = await User.create({
       name,
-      email,
+      email: normalizedEmail,
       passwordHash,
       roles: ['STUDENT'],
-      institutionId: institutionId || null
+      institutionId: resolvedTenantId
     });
 
     await RoleAssignment.create({
@@ -94,7 +96,7 @@ const registerStudent = async (req, res) => {
       role: 'STUDENT',
       departmentId,
       sectionId,
-      institutionId: institutionId || null,
+      institutionId: resolvedTenantId,
       validFrom: new Date()
     });
 
@@ -103,7 +105,7 @@ const registerStudent = async (req, res) => {
       'STUDENT_CREATED', 
       user._id.toString(), 
       'User', 
-      { email: user.email, departmentId, sectionId, institutionId }
+      { email: user.email, departmentId, sectionId, institutionId: resolvedTenantId }
     );
 
     res.status(201).json({ message: 'Student registered successfully', userId: user._id });
@@ -112,47 +114,46 @@ const registerStudent = async (req, res) => {
   }
 };
 
+/**
+ * Standard Tenant Login
+ * Access: Scoped strictly to tenant subdomain (req.tenantId required)
+ * Query: User.findOne({ email, institutionId: req.tenantId })
+ */
 const login = async (req, res) => {
   try {
-    const { email, password, institutionSlug } = req.body;
-    const headerSlug = req.headers['x-institution-slug'];
-    const slug = institutionSlug || headerSlug;
+    const { email, password } = req.body;
+    const tenantId = req.tenantId || req.headers['x-tenant-id'] || null;
+
+    if (!tenantId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Tenant context is required for login. Please access your institution portal via its subdomain.'
+      });
+    }
+
+    const normalizedEmail = (email || '').toLowerCase().trim();
     
-    const user = await User.findOne({ email });
+    // Phase 66 core mechanism: Scoped strictly to tenantId
+    const user = await User.findOne({
+      email: normalizedEmail,
+      institutionId: tenantId
+    });
+
     if (!user || !user.isActive) {
-      return res.status(401).json({ message: 'Invalid credentials' });
+      return res.status(401).json({ success: false, message: 'Invalid credentials' });
     }
 
     const isValid = await bcrypt.compare(password, user.passwordHash);
     if (!isValid) {
-      return res.status(401).json({ message: 'Invalid credentials' });
+      return res.status(401).json({ success: false, message: 'Invalid credentials' });
     }
 
-    let userInstitution = null;
-
-    if (slug) {
-      // Institution-scoped login
-      userInstitution = await Institution.findOne({ slug: slug.toLowerCase() });
-      if (!userInstitution) {
-        return res.status(404).json({ message: 'Institution not found' });
-      }
-      if (userInstitution.status !== 'ACTIVE') {
-        return res.status(403).json({ message: 'Institution is suspended or inactive' });
-      }
-
-      // Verify tenant isolation: user must belong to this institution
-      if (!user.institutionId || user.institutionId.toString() !== userInstitution._id.toString()) {
-        return res.status(403).json({ message: 'Access denied: You do not belong to this institution' });
-      }
-    } else {
-      // Platform (SuperAdmin) login - only global superadmins with null institutionId
-      if (!user.roles.includes('SUPERADMIN') || user.institutionId !== null) {
-        return res.status(403).json({ message: 'Please log in through your institution portal URL' });
-      }
-    }
-
-    const resolvedInstitutionId = userInstitution ? userInstitution._id.toString() : (user.institutionId ? user.institutionId.toString() : null);
-    const { accessToken, refreshToken } = generateTokens(user._id.toString(), resolvedInstitutionId, user.roles || []);
+    const resolvedInstId = user.institutionId ? user.institutionId.toString() : tenantId.toString();
+    const { accessToken, refreshToken } = generateTokens(
+      user._id.toString(),
+      resolvedInstId,
+      user.roles || []
+    );
 
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
@@ -165,7 +166,7 @@ const login = async (req, res) => {
       name: user.name,
       email: user.email,
       roles: user.roles,
-      institutionId: resolvedInstitutionId
+      institutionId: resolvedInstId
     };
 
     res.status(200).json({
@@ -174,19 +175,96 @@ const login = async (req, res) => {
       token: accessToken,
       roles: user.roles,
       userId: user._id,
-      institutionId: resolvedInstitutionId,
+      institutionId: resolvedInstId,
       user: userPayload,
       data: {
         token: accessToken,
         accessToken,
         userId: user._id,
         roles: user.roles,
-        institutionId: resolvedInstitutionId,
+        institutionId: resolvedInstId,
         user: userPayload
       }
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+/**
+ * SuperAdmin Login
+ * Access: Root domain only (institutionId: null, roles: SUPERADMIN)
+ * Rejects requests with tenantId attached
+ */
+const superadminLogin = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const tenantId = req.tenantId || req.headers['x-tenant-id'] || null;
+
+    if (tenantId) {
+      return res.status(403).json({
+        success: false,
+        message: 'SuperAdmin login is only allowed on the root domain, not on tenant subdomains'
+      });
+    }
+
+    const normalizedEmail = (email || '').toLowerCase().trim();
+
+    // Query matches strictly platform SuperAdmin with institutionId: null
+    const user = await User.findOne({
+      email: normalizedEmail,
+      institutionId: null,
+      roles: { $in: ['SUPERADMIN', 'superadmin'] }
+    });
+
+    if (!user || !user.isActive) {
+      return res.status(401).json({ success: false, message: 'Invalid credentials' });
+    }
+
+    const isValid = await bcrypt.compare(password, user.passwordHash);
+    if (!isValid) {
+      return res.status(401).json({ success: false, message: 'Invalid credentials' });
+    }
+
+    const { accessToken, refreshToken } = generateTokens(
+      user._id.toString(),
+      null,
+      user.roles || ['SUPERADMIN']
+    );
+
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 7 * 24 * 60 * 60 * 1000
+    });
+
+    const userPayload = {
+      id: user._id.toString(),
+      name: user.name,
+      email: user.email,
+      roles: user.roles,
+      institutionId: null
+    };
+
+    res.status(200).json({
+      success: true,
+      accessToken,
+      token: accessToken,
+      roles: user.roles,
+      userId: user._id,
+      institutionId: null,
+      user: userPayload,
+      data: {
+        token: accessToken,
+        accessToken,
+        userId: user._id,
+        roles: user.roles,
+        institutionId: null,
+        user: userPayload
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
@@ -250,6 +328,7 @@ const logout = (req, res) => {
 
 module.exports = {
   superadminSignup,
+  superadminLogin,
   registerStudent,
   login,
   refresh,

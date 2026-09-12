@@ -156,6 +156,27 @@ async function resolveSubdomain(subdomain, req, res, next) {
   req.tenantSubdomain = institution.subdomain;
   req.institution = institution;
 
+  // 7. Perimeter Token Replay Check (Phase 66)
+  // Re-validates that any JWT presented matches the resolved tenantId
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const token = authHeader.split(' ')[1];
+    try {
+      const parts = token.split('.');
+      if (parts.length >= 2) {
+        const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString('utf8'));
+        if (payload && payload.institutionId && payload.institutionId.toString() !== req.tenantId) {
+          return res.status(401).json({
+            success: false,
+            error: 'Token tenant mismatch: JWT issued for a different institution cannot be used on this tenant domain'
+          });
+        }
+      }
+    } catch (e) {
+      // Invalid JWT format will be handled downstream by authenticate middleware
+    }
+  }
+
   return next();
 }
 

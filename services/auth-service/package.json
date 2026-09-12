@@ -8,9 +8,10 @@
     "start": "node src/index.js",
     "build": "node --check src/index.js",
     "lint": "eslint .",
-    "test": "jest"
+    "test": "jest --forceExit"
   },
   "dependencies": {
+    "@college-erp/shared-utils": "*",
     "bcrypt": "^6.0.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",

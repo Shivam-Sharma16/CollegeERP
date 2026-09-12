@@ -26,14 +26,14 @@ const createUser = async (req, res, targetRole, enforceHierarchyCallback, extrac
       return res.status(403).json(fail(scope.error));
     }
 
-    // 4. Check for existing user
-    const existing = await User.findOne({ email: email.toLowerCase().trim() });
-    if (existing) {
-      return res.status(409).json(fail('User with this email already exists'));
-    }
-
-    // 5. Tenant institution scoping
+    // 4. Tenant institution scoping
     const institutionId = req.user?.institutionId || req.body.institutionId || null;
+
+    // 5. Check for existing user within the same institution
+    const existing = await User.findOne({ email: email.toLowerCase().trim(), institutionId });
+    if (existing) {
+      return res.status(409).json(fail('User with this email already exists in this institution'));
+    }
 
     // 6. Create user
     const passwordHash = await bcrypt.hash(password, BCRYPT_COST);
