@@ -9,5 +9,7 @@ router.use(authenticate);
 // Only SuperAdmin or Admin (who inherently have institution-wide scope) can create departments.
 // Note: we can map the 'Institution' resourceType to bypass checks unless they have SUPERADMIN/ADMIN role in RBAC.
 router.post('/', requirePermission('write', 'Institution'), departmentController.createDepartment);
+router.get('/tree', departmentController.resolveDeptTree);
+router.get('/', departmentController.listDepartments);
 
 module.exports = router;

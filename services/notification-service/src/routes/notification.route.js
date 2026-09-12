@@ -9,6 +9,9 @@ router.use(authenticate);
 // GET  /api/notifications            — list (paginated, optional ?unreadOnly=true)
 router.get('/', ctrl.getNotifications);
 
+// GET  /api/notifications/unread-count — total unread notifications count
+router.get('/unread-count', ctrl.getUnreadCount);
+
 // PATCH /api/notifications/read-all  — bulk-mark all as read
 // Must be registered BEFORE /:id/read so Express doesn't treat "read-all" as an :id
 router.patch('/read-all', ctrl.markAllRead);

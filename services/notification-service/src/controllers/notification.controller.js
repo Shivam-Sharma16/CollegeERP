@@ -91,6 +91,24 @@ const markAllRead = async (req, res) => {
   }
 };
 
+// ─── Public: GET /api/notifications/unread-count ─────────────────────────────
+const getUnreadCount = async (req, res) => {
+  try {
+    const userId = req.user.userId || req.user.id || req.user._id;
+    const count = await Notification.countDocuments({
+      userId: new mongoose.Types.ObjectId(userId),
+      read: false
+    });
+    return res.json({
+      success: true,
+      data: { count, unreadCount: count }
+    });
+  } catch (err) {
+    console.error('[notification.controller] getUnreadCount:', err.message);
+    return res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+};
+
 // ─── Internal: POST /internal/events ─────────────────────────────────────────
 /**
  * Called by other services (attendance-service, fees-service, …).
@@ -121,4 +139,4 @@ const internalCreateEvent = async (req, res) => {
   }
 };
 
-module.exports = { getNotifications, markRead, markAllRead, internalCreateEvent };
+module.exports = { getNotifications, markRead, markAllRead, getUnreadCount, internalCreateEvent };

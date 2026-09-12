@@ -275,6 +275,156 @@ const searchUsers = async (req, res) => {
   }
 };
 
+const listHods = async (req, res) => {
+  try {
+    const assignments = await RoleAssignment.find({
+      role: 'HOD',
+      $or: [{ validTo: null }, { validTo: { $gt: new Date() } }]
+    })
+      .populate('userId', 'name email isActive avatarUrl')
+      .populate('departmentId', 'name code');
+
+    const hods = assignments
+      .filter(a => a.userId && a.userId.isActive)
+      .map(a => ({
+        _id: a.userId._id,
+        name: a.userId.name,
+        email: a.userId.email,
+        departmentId: a.departmentId ? {
+          _id: a.departmentId._id,
+          name: a.departmentId.name,
+          code: a.departmentId.code
+        } : null,
+        role: 'HOD'
+      }));
+
+    res.status(200).json(success(hods));
+  } catch (err) {
+    console.error('[UserController] Failed to list HODs:', err);
+    res.status(500).json(fail('Internal server error'));
+  }
+};
+
+const listAdmins = async (req, res) => {
+  try {
+    const [adminAssignments, directAdmins] = await Promise.all([
+      RoleAssignment.find({
+        role: 'ADMIN',
+        $or: [{ validTo: null }, { validTo: { $gt: new Date() } }]
+      }).populate('userId', 'name email isActive avatarUrl'),
+      User.find({
+        roles: { $in: ['ADMIN', 'SUPERADMIN'] },
+        isActive: true
+      }).select('name email isActive avatarUrl roles')
+    ]);
+
+    const adminMap = new Map();
+
+    directAdmins.forEach(u => {
+      adminMap.set(u._id.toString(), {
+        _id: u._id,
+        name: u.name,
+        email: u.email,
+        roles: u.roles
+      });
+    });
+
+    adminAssignments.forEach(a => {
+      if (a.userId && a.userId.isActive) {
+        const idStr = a.userId._id.toString();
+        if (!adminMap.has(idStr)) {
+          adminMap.set(idStr, {
+            _id: a.userId._id,
+            name: a.userId.name,
+            email: a.userId.email,
+            roles: ['ADMIN']
+          });
+        }
+      }
+    });
+
+    res.status(200).json(success(Array.from(adminMap.values())));
+  } catch (err) {
+    console.error('[UserController] Failed to list Admins:', err);
+    res.status(500).json(fail('Internal server error'));
+  }
+};
+
+const listFaculty = async (req, res) => {
+  try {
+    const filter = {
+      role: 'FACULTY',
+      $or: [{ validTo: null }, { validTo: { $gt: new Date() } }]
+    };
+
+    if (req.user.roles?.includes('HOD') && !req.user.roles?.includes('SUPERADMIN') && !req.user.roles?.includes('ADMIN')) {
+      const hodRole = req.effectiveRoles?.find(r => r.role === 'HOD');
+      if (hodRole && hodRole.departmentId) {
+        filter.departmentId = hodRole.departmentId;
+      }
+    } else if (req.query.departmentId) {
+      filter.departmentId = req.query.departmentId;
+    }
+
+    const assignments = await RoleAssignment.find(filter)
+      .populate('userId', 'name email isActive avatarUrl')
+      .populate('departmentId', 'name code');
+
+    const faculty = assignments
+      .filter(a => a.userId && a.userId.isActive)
+      .map(a => ({
+        _id: a.userId._id,
+        name: a.userId.name,
+        email: a.userId.email,
+        departmentId: a.departmentId,
+        role: 'FACULTY'
+      }));
+
+    res.status(200).json(success(faculty));
+  } catch (err) {
+    console.error('[UserController] Failed to list Faculty:', err);
+    res.status(500).json(fail('Internal server error'));
+  }
+};
+
+const listCC = async (req, res) => {
+  try {
+    const filter = {
+      role: 'CC',
+      $or: [{ validTo: null }, { validTo: { $gt: new Date() } }]
+    };
+
+    if (req.user.roles?.includes('HOD') && !req.user.roles?.includes('SUPERADMIN') && !req.user.roles?.includes('ADMIN')) {
+      const hodRole = req.effectiveRoles?.find(r => r.role === 'HOD');
+      if (hodRole && hodRole.departmentId) {
+        filter.departmentId = hodRole.departmentId;
+      }
+    } else if (req.query.departmentId) {
+      filter.departmentId = req.query.departmentId;
+    }
+
+    const assignments = await RoleAssignment.find(filter)
+      .populate('userId', 'name email isActive avatarUrl')
+      .populate('departmentId', 'name code');
+
+    const ccs = assignments
+      .filter(a => a.userId && a.userId.isActive)
+      .map(a => ({
+        _id: a.userId._id,
+        name: a.userId.name,
+        email: a.userId.email,
+        departmentId: a.departmentId,
+        sectionId: a.sectionId,
+        role: 'CC'
+      }));
+
+    res.status(200).json(success(ccs));
+  } catch (err) {
+    console.error('[UserController] Failed to list CCs:', err);
+    res.status(500).json(fail('Internal server error'));
+  }
+};
+
 module.exports = {
   createAdmin,
   createHOD,
@@ -282,6 +432,10 @@ module.exports = {
   createCC,
   onboardStudent,
   listStudents,
+  listHods,
+  listAdmins,
+  listFaculty,
+  listCC,
   updateOwnProfile,
   searchUsers
 };

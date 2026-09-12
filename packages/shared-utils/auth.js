@@ -14,7 +14,7 @@ const authenticate = (req, res, next) => {
       return res.status(401).json({ success: false, error: 'No token provided' });
     }
 
-    const secret = process.env.JWT_ACCESS_SECRET || 'fallback_secret';
+    const secret = process.env.JWT_ACCESS_SECRET || process.env.JWT_SECRET || 'ny+cq<I;(UL.LR#vzDM2j4>*Xc8^|4l^woMWm#|.iD0';
     const decoded = jwt.verify(token, secret);
     
     req.user = decoded;
