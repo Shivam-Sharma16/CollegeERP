@@ -14,10 +14,11 @@ const createExamTypeHandler = async (req, res) => {
       return res.status(400).json(fail('subjectId, type, maxMarks, and weightage are required'));
     }
 
-    const examType = await createExamType({ subjectId, type, maxMarks, weightage });
+    const institutionId = req.user?.institutionId || req.body.institutionId;
+    const examType = await createExamType({ institutionId, subjectId, type, maxMarks, weightage });
 
     await logAudit(req, 'EXAM_TYPE_CREATED', examType._id.toString(), 'ExamType', {
-      subjectId, type, maxMarks, weightage
+      institutionId, subjectId, type, maxMarks, weightage
     });
 
     res.status(201).json(success({ examType }));

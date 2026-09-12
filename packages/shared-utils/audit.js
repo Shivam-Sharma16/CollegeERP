@@ -17,7 +17,17 @@ const logAudit = async (req, action, targetId, targetType, details = {}) => {
       return;
     }
 
+    let instId = null;
+    if (req?.user?.institutionId) {
+      instId = new mongoose.Types.ObjectId(req.user.institutionId);
+    } else if (targetType === 'Institution' && targetId) {
+      instId = new mongoose.Types.ObjectId(targetId);
+    } else if (details?.institutionId) {
+      instId = new mongoose.Types.ObjectId(details.institutionId);
+    }
+
     const auditLog = {
+      institutionId: instId,
       action,
       actorId: req?.user?.userId ? new mongoose.Types.ObjectId(req.user.userId) : null,
       actorRole: req?.user?.roles || [],

@@ -77,6 +77,7 @@ describe('Priority 5: Fee Webhook Signature Verification (Phase 17)', () => {
   it('successfully processes webhook payload with a valid cryptographic signature', async () => {
     // Seed the order in the DB so it can be fulfilled
     const p = await Payment.create({
+      institutionId: new mongoose.Types.ObjectId(),
       studentId: new mongoose.Types.ObjectId().toString(),
       feeStructureId: new mongoose.Types.ObjectId().toString(),
       installmentIndex: 0,

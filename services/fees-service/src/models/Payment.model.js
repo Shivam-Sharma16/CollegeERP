@@ -1,6 +1,12 @@
 const mongoose = require('mongoose');
 
 const paymentSchema = new mongoose.Schema({
+  institutionId: { 
+    type: mongoose.Schema.Types.ObjectId, 
+    ref: 'Institution', 
+    required: true, 
+    index: true 
+  },
   studentId: { type: mongoose.Schema.Types.ObjectId, required: true },
   feeStructureId: { type: mongoose.Schema.Types.ObjectId, ref: 'FeeStructure', required: true },
   installmentIndex: { type: Number, required: true },
@@ -16,8 +22,7 @@ const paymentSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Index for high performance aggregation checks
-paymentSchema.index({ studentId: 1, feeStructureId: 1, installmentIndex: 1, status: 1 });
-paymentSchema.index({ studentId: 1, feeStructureId: 1 });
+paymentSchema.index({ institutionId: 1, studentId: 1, feeStructureId: 1, installmentIndex: 1 });
+paymentSchema.index({ institutionId: 1, studentId: 1, feeStructureId: 1 });
 
 module.exports = mongoose.model('Payment', paymentSchema);

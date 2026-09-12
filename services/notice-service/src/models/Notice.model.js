@@ -1,6 +1,12 @@
 const mongoose = require('mongoose');
 
 const noticeSchema = new mongoose.Schema({
+  institutionId: { 
+    type: mongoose.Schema.Types.ObjectId, 
+    ref: 'Institution', 
+    required: true, 
+    index: true 
+  },
   title: { type: String, required: true },
   body: { type: String, required: true },
   attachments: [{ type: String }],
@@ -17,10 +23,10 @@ const noticeSchema = new mongoose.Schema({
 });
 
 // Indexes for fast targeting lookups
-noticeSchema.index({ 'targeting.departments': 1 });
-noticeSchema.index({ 'targeting.years': 1 });
-noticeSchema.index({ 'targeting.sections': 1 });
-noticeSchema.index({ 'targeting.roles': 1 });
-noticeSchema.index({ publishedAt: -1 });
+noticeSchema.index({ institutionId: 1, publishedAt: -1 });
+noticeSchema.index({ institutionId: 1, 'targeting.departments': 1 });
+noticeSchema.index({ institutionId: 1, 'targeting.years': 1 });
+noticeSchema.index({ institutionId: 1, 'targeting.sections': 1 });
+noticeSchema.index({ institutionId: 1, 'targeting.roles': 1 });
 
 module.exports = mongoose.model('Notice', noticeSchema);

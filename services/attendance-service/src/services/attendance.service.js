@@ -90,6 +90,7 @@ const verifyCheckIn = async ({ lectureSessionId, studentId, qrToken, deviceFinge
 
   // 4. Create record
   const record = new AttendanceRecord({
+    institutionId: session.institutionId,
     lectureSessionId: session._id,
     studentId,
     status,

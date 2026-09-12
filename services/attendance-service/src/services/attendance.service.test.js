@@ -32,9 +32,12 @@ describe('Attendance Verification Pipeline', () => {
   const student1 = new mongoose.Types.ObjectId();
   const student2 = new mongoose.Types.ObjectId();
   
+  const testInstId = new mongoose.Types.ObjectId();
+  
   beforeEach(async () => {
     // Create a default valid session
     session = new LectureSession({
+      institutionId: testInstId,
       teachingAssignmentId: new mongoose.Types.ObjectId(),
       date: new Date(),
       timeSlot: '10:00-11:00',
@@ -52,6 +55,7 @@ describe('Attendance Verification Pipeline', () => {
 
   it('1. Rejects expired or mismatched QR token (fails fast)', async () => {
     const expiredSession = new LectureSession({
+      institutionId: testInstId,
       teachingAssignmentId: new mongoose.Types.ObjectId(),
       date: new Date(),
       timeSlot: '11:00-12:00',
@@ -134,6 +138,7 @@ describe('Attendance Verification Pipeline', () => {
     const sessions = [];
     for (let i = 0; i < 4; i++) {
       const sess = new LectureSession({
+        institutionId: testInstId,
         teachingAssignmentId: new mongoose.Types.ObjectId(),
         date: new Date(),
         timeSlot: '10:00-11:00',
@@ -151,10 +156,10 @@ describe('Attendance Verification Pipeline', () => {
     // session 2: flagged
     // session 3: absent
     await AttendanceRecord.create([
-      { lectureSessionId: sessions[0]._id, studentId: s1, status: 'present', deviceFingerprint: '1' },
-      { lectureSessionId: sessions[1]._id, studentId: s1, status: 'present', deviceFingerprint: '2' },
-      { lectureSessionId: sessions[2]._id, studentId: s1, status: 'flagged', deviceFingerprint: '3' },
-      { lectureSessionId: sessions[3]._id, studentId: s1, status: 'absent', deviceFingerprint: '4' }
+      { institutionId: testInstId, lectureSessionId: sessions[0]._id, studentId: s1, status: 'present', deviceFingerprint: '1' },
+      { institutionId: testInstId, lectureSessionId: sessions[1]._id, studentId: s1, status: 'present', deviceFingerprint: '2' },
+      { institutionId: testInstId, lectureSessionId: sessions[2]._id, studentId: s1, status: 'flagged', deviceFingerprint: '3' },
+      { institutionId: testInstId, lectureSessionId: sessions[3]._id, studentId: s1, status: 'absent', deviceFingerprint: '4' }
     ]);
 
     const percentage = await getStudentAttendancePercent(s1);

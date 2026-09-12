@@ -171,8 +171,10 @@ exports.createNotice = async (req, res) => {
     // --- The core security guarantee ---
     // targeting is REBUILT from callerScope; client payload targeting is ignored.
     const targeting = clampTargeting(req.body.targeting, callerScope);
+    const institutionId = req.user?.institutionId || callerScope?.institutionId || req.body.institutionId;
 
     const notice = await Notice.create({
+      institutionId,
       title,
       body,
       attachments,

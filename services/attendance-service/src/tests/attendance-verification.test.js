@@ -70,6 +70,7 @@ describe('Priority 3: Attendance Verification Pipeline (Phase 4/15)', () => {
     await AttendanceRecord.deleteMany({});
     
     activeSession = await LectureSession.create({
+      institutionId: new mongoose.Types.ObjectId(),
       teachingAssignmentId: new mongoose.Types.ObjectId(),
       date: new Date(),
       timeSlot: '10:00-11:00',
@@ -142,6 +143,7 @@ describe('Priority 3: Attendance Verification Pipeline (Phase 4/15)', () => {
     // Since liveness ping is a schema field (Phase 15 extended), verify that missing liveness logic
     // can be updated onto the record.
     const record = await AttendanceRecord.create({
+      institutionId: activeSession.institutionId,
       lectureSessionId: activeSession._id,
       studentId: student1,
       status: 'present',
@@ -162,6 +164,7 @@ describe('Priority 3: Attendance Verification Pipeline (Phase 4/15)', () => {
   it('Branch 5: Override with audit trail', async () => {
     // 1. Create a flagged record
     const record = await AttendanceRecord.create({
+      institutionId: activeSession.institutionId,
       lectureSessionId: activeSession._id,
       studentId: student1,
       status: 'flagged',

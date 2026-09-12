@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const Notification = require('../models/Notification.model');
 const { getIO } = require('../socket');
 
@@ -7,11 +8,24 @@ const { getIO } = require('../socket');
  * @param {string} userId - The target user's ObjectId string
  * @param {string} type - Notification type (e.g. NEW_NOTICE, FEE_REMINDER)
  * @param {Object} payload - Details about the notification
+ * @param {string|ObjectId} [institutionId] - The tenant institutionId
  * @returns {Promise<Object>} The created notification document
  */
-const createNotification = async (userId, type, payload) => {
+const createNotification = async (userId, type, payload, institutionId = null) => {
+  let resolvedInstId = institutionId || payload?.institutionId;
+
+  if (!resolvedInstId && mongoose.connection.db) {
+    const user = await mongoose.connection.db.collection('users').findOne({
+      _id: typeof userId === 'string' ? new mongoose.Types.ObjectId(userId) : userId
+    });
+    if (user?.institutionId) {
+      resolvedInstId = user.institutionId;
+    }
+  }
+
   // 1. Persist the notification in the DB
   const notification = await Notification.create({
+    institutionId: resolvedInstId,
     userId,
     type,
     payload

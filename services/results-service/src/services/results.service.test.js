@@ -26,10 +26,12 @@ describe('Results Pipeline', () => {
   const subjectId = new mongoose.Types.ObjectId();
   const studentId = new mongoose.Types.ObjectId();
   const facultyId = new mongoose.Types.ObjectId();
+  const testInstId = new mongoose.Types.ObjectId();
 
   it('1. Computes correct weighted percentage for quiz(10%)+midterm(30%)+endterm(60%)', async () => {
     // Create Exam Types
     const quiz = await createExamType({
+      institutionId: testInstId,
       subjectId,
       type: 'quiz',
       maxMarks: 20,
@@ -37,6 +39,7 @@ describe('Results Pipeline', () => {
     });
 
     const midterm = await createExamType({
+      institutionId: testInstId,
       subjectId,
       type: 'midterm',
       maxMarks: 50,
@@ -44,6 +47,7 @@ describe('Results Pipeline', () => {
     });
 
     const endterm = await createExamType({
+      institutionId: testInstId,
       subjectId,
       type: 'endterm',
       maxMarks: 100,
@@ -57,9 +61,9 @@ describe('Results Pipeline', () => {
     // Total Grade: 0.075 + 0.24 + 0.54 = 0.855 => 85.5%
 
     await MarksRecord.create([
-      { examTypeId: quiz._id, studentId, marksObtained: 15, enteredBy: facultyId },
-      { examTypeId: midterm._id, studentId, marksObtained: 40, enteredBy: facultyId },
-      { examTypeId: endterm._id, studentId, marksObtained: 90, enteredBy: facultyId }
+      { institutionId: testInstId, examTypeId: quiz._id, studentId, marksObtained: 15, enteredBy: facultyId },
+      { institutionId: testInstId, examTypeId: midterm._id, studentId, marksObtained: 40, enteredBy: facultyId },
+      { institutionId: testInstId, examTypeId: endterm._id, studentId, marksObtained: 90, enteredBy: facultyId }
     ]);
 
     const grade = await computeFinalGrade(studentId, subjectId);
@@ -71,6 +75,7 @@ describe('Results Pipeline', () => {
   it('2. Rejects creating an ExamType that pushes the sum over 1.0', async () => {
     // Fill up 0.9 weightage
     await createExamType({
+      institutionId: testInstId,
       subjectId,
       type: 'midterm',
       maxMarks: 50,
@@ -79,6 +84,7 @@ describe('Results Pipeline', () => {
 
     // Try to add another 0.2
     await expect(createExamType({
+      institutionId: testInstId,
       subjectId,
       type: 'quiz',
       maxMarks: 20,

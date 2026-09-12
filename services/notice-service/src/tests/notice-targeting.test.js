@@ -63,7 +63,7 @@ describe('Priority 4 & 5: Notice Service Tests', () => {
     const otherDeptId = new mongoose.Types.ObjectId().toString();
 
     const res = await request(app).post('/api/notices').send({
-      _testUser: { userId: new mongoose.Types.ObjectId().toString(), roles: ['HOD'] },
+      _testUser: { userId: new mongoose.Types.ObjectId().toString(), roles: ['HOD'], institutionId: new mongoose.Types.ObjectId().toString() },
       _testCallerScope: { role: 'HOD', departmentIds: [deptId] },
       title: 'HOD Notice',
       body: 'Content',

@@ -9,9 +9,15 @@ const getRecentActivity = async (req, res) => {
     }
 
     const limit = Math.min(Number(req.query.limit) || 20, 100);
+    const isSuperAdmin = req.user?.roles && req.user.roles.includes('SUPERADMIN');
+    const query = {};
+    if (!isSuperAdmin && req.user?.institutionId) {
+      query.institutionId = new mongoose.Types.ObjectId(req.user.institutionId);
+    }
+
     const logs = await mongoose.connection.db
       .collection('auditlogs')
-      .find({})
+      .find(query)
       .sort({ timestamp: -1 })
       .limit(limit)
       .toArray();

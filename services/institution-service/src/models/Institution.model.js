@@ -73,6 +73,7 @@ const institutionSchema = new mongoose.Schema({
   timestamps: true
 });
 
+// Pre-save hook to synchronize backward compatibility fields
 institutionSchema.pre('save', function (next) {
   if (this.subdomain && !this.slug) {
     this.slug = this.subdomain;

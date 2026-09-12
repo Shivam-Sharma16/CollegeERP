@@ -46,9 +46,11 @@ function registerProxies(app) {
   // 1. Auth Service
   app.use(['/api/auth', '/auth'], (req, res) => forward(env.AUTH_SERVICE_URL, req, res));
 
-  // 2. User Service (Institutions, Users, Departments, Audit, Reports, Settings)
+  // 2. Institution Service (Institutions, Multi-tenant onboarding, Theme resolution)
+  app.use(['/api/institutions', '/institutions'], (req, res) => forward(env.INSTITUTION_SERVICE_URL, req, res));
+
+  // 3. User Service (Users, Departments, Audit, Reports, Settings)
   app.use([
-    '/api/institutions', '/institutions',
     '/api/users', '/users', 
     '/api/departments', '/departments',
     '/api/audit', '/audit',

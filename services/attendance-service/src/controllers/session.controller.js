@@ -42,7 +42,10 @@ const createSession = async (req, res) => {
     const qrTokenSecret = generateQRToken();
     const qrTokenExpiresAt = new Date(Date.now() + QR_WINDOW_SECONDS * 1000);
 
+    const institutionId = req.user?.institutionId || req.body.institutionId;
+
     const session = await LectureSession.create({
+      institutionId,
       teachingAssignmentId,
       date: new Date(date),
       timeSlot,

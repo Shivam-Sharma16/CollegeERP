@@ -11,6 +11,7 @@ const env = cleanEnv(process.env, {
   NOTICE_SERVICE_URL: str({ default: 'http://notice-service:4007' }),
   NOTIFICATION_SERVICE_URL: str({ default: 'http://notification-service:4008' }),
   AI_AGENT_SERVICE_URL: str({ default: 'http://ai-agent-service:4009' }),
+  INSTITUTION_SERVICE_URL: str({ default: 'http://institution-service:4010' }),
 });
 
 module.exports = env;

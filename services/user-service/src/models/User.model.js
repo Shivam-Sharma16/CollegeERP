@@ -4,18 +4,28 @@ const { ROLES } = require('@college-erp/shared-config');
 const userSchema = new mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
-  rollNumber: { type: String, unique: true, sparse: true },
+  rollNumber: { type: String, sparse: true },
   passwordHash: { type: String, required: true },
   roles: [{ 
     type: String, 
     enum: Object.values(ROLES) 
   }],
-  institutionId: { type: mongoose.Schema.Types.ObjectId, ref: 'Institution', default: null },
+  institutionId: { 
+    type: mongoose.Schema.Types.ObjectId, 
+    ref: 'Institution',
+    required: function () {
+      return !this.roles || !this.roles.includes('SUPERADMIN');
+    },
+    default: null,
+    index: true
+  },
   phone: { type: String },
   avatarUrl: { type: String },
   isActive: { type: Boolean, default: true }
 }, {
   timestamps: true
 });
+
+userSchema.index({ institutionId: 1, rollNumber: 1 }, { unique: true, sparse: true });
 
 module.exports = mongoose.model('User', userSchema);

@@ -11,12 +11,24 @@ let mongoServer;
 const app = express();
 app.use(express.json());
 
+const testInstId = new mongoose.Types.ObjectId();
+
 // Mock authentication middleware to simulate caller role
 app.use((req, res, next) => {
   if (req.headers.authorization) {
     const role = req.headers.authorization.split(' ')[1]; // "Bearer ADMIN" -> "ADMIN"
-    req.user = { userId: new mongoose.Types.ObjectId().toString(), roles: [role] };
-    req.effectiveRoles = [{ role, departmentId: req.body.departmentId || new mongoose.Types.ObjectId().toString(), sectionId: new mongoose.Types.ObjectId().toString() }];
+    const isSuperAdmin = role === 'SUPERADMIN';
+    req.user = { 
+      userId: new mongoose.Types.ObjectId().toString(), 
+      roles: [role],
+      institutionId: isSuperAdmin ? null : testInstId
+    };
+    req.effectiveRoles = [{ 
+      role, 
+      departmentId: req.body.departmentId || new mongoose.Types.ObjectId().toString(), 
+      sectionId: new mongoose.Types.ObjectId().toString(),
+      institutionId: isSuperAdmin ? null : testInstId
+    }];
   } else {
     return res.status(401).json({ success: false, error: 'Unauthorized' });
   }
@@ -40,7 +52,12 @@ describe('Priority 1: Account-Creation Hierarchy (Phase 12)', () => {
   beforeAll(async () => {
     mongoServer = await MongoMemoryServer.create();
     await mongoose.connect(mongoServer.getUri());
-    const dept = await Department.create({ name: 'Computer Science', code: 'CS', headId: new mongoose.Types.ObjectId() });
+    const dept = await Department.create({ 
+      name: 'Computer Science', 
+      code: 'CS', 
+      institutionId: testInstId,
+      headId: new mongoose.Types.ObjectId() 
+    });
     testDeptId = dept._id;
   });
 
@@ -54,7 +71,13 @@ describe('Priority 1: Account-Creation Hierarchy (Phase 12)', () => {
     await RoleAssignment.deleteMany({});
   });
 
-  const payload = { name: 'Test', email: 'test@example.com', password: 'password123', rollNumber: '123' };
+  const payload = { 
+    name: 'Test', 
+    email: 'test@example.com', 
+    password: 'password123', 
+    rollNumber: '123',
+    institutionId: testInstId 
+  };
 
   it('SUPERADMIN can create ADMIN', async () => {
     const res = await request(app).post('/api/users/admins').set('Authorization', 'Bearer SUPERADMIN').send(payload);
@@ -87,7 +110,7 @@ describe('Priority 1: Account-Creation Hierarchy (Phase 12)', () => {
     expect(res1.status).toBe(403);
 
     // HOD CAN create CC
-    const res2 = await request(app).post('/api/users/cc').set('Authorization', 'Bearer HOD').send({ name: 'Test CC', email: 'cc@test.com', password: 'password123' });
+    const res2 = await request(app).post('/api/users/cc').set('Authorization', 'Bearer HOD').send({ name: 'Test CC', email: 'cc@test.com', password: 'password123', institutionId: testInstId });
     expect(res2.status).toBe(201);
   });
 

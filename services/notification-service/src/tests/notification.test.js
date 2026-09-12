@@ -28,12 +28,14 @@ describe('Notification Service Unit Tests', () => {
 
   it('creates and persists a new notification document', async () => {
     const dummyUserId = new mongoose.Types.ObjectId();
-    const notification = await createNotification(dummyUserId, 'TEST_ALERT', { message: 'Hello World' });
+    const dummyInstId = new mongoose.Types.ObjectId();
+    const notification = await createNotification(dummyUserId, 'TEST_ALERT', { message: 'Hello World' }, dummyInstId);
 
     expect(notification).toBeDefined();
     expect(notification.type).toBe('TEST_ALERT');
     expect(notification.read).toBe(false);
     expect(notification.payload.message).toBe('Hello World');
+    expect(notification.institutionId.toString()).toBe(dummyInstId.toString());
 
     const found = await Notification.findById(notification._id);
     expect(found).toBeTruthy();
@@ -43,6 +45,7 @@ describe('Notification Service Unit Tests', () => {
   it('defaults read status to false', async () => {
     const dummyUserId = new mongoose.Types.ObjectId();
     const notif = await Notification.create({
+      institutionId: new mongoose.Types.ObjectId(),
       userId: dummyUserId,
       type: 'INFO',
       payload: { text: 'Information' }
