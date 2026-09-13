@@ -21,8 +21,13 @@ const tenantResolver = async (req, res, next) => {
     const host = rawHost.split(':')[0]; // Strip port (e.g. jecrc.localhost:5173 -> jecrc.localhost)
     const path = req.path || req.url || '';
 
-    // Allow health checks to bypass tenant resolution
-    if (path === '/health' || path === '/api/health' || path === '/') {
+    // Allow health checks and check-subdomain to bypass tenant resolution
+    if (
+      path === '/health' ||
+      path === '/api/health' ||
+      path === '/' ||
+      path.includes('check-subdomain')
+    ) {
       req.tenantId = null;
       return next();
     }
@@ -37,7 +42,8 @@ const tenantResolver = async (req, res, next) => {
       }
 
       // Check if client passed ?subdomain=... or ?slug=... on branding/resolve endpoints
-      if (req.query && (req.query.subdomain || req.query.slug)) {
+      const isBrandingOrResolve = /^\/(?:api\/)?institutions\/(?:branding|resolve)/i.test(path);
+      if (isBrandingOrResolve && req.query && (req.query.subdomain || req.query.slug)) {
         return resolveSubdomain((req.query.subdomain || req.query.slug).toLowerCase().trim(), req, res, next);
       }
 
@@ -80,23 +86,6 @@ const tenantResolver = async (req, res, next) => {
         path.includes('superadmin') ||
         path.startsWith('/api/institutions') ||
         path.startsWith('/institutions') ||
-        path.startsWith('/api/notifications') ||
-        path.startsWith('/notifications') ||
-        path.startsWith('/api/reports') ||
-        path.startsWith('/reports') ||
-        path.startsWith('/api/settings') ||
-        path.startsWith('/settings') ||
-        path.startsWith('/api/users') ||
-        path.startsWith('/users') ||
-        path.startsWith('/api/notices') ||
-        path.startsWith('/api/notice') ||
-        path.startsWith('/notices') ||
-        path.startsWith('/api/fees') ||
-        path.startsWith('/fees') ||
-        path.startsWith('/api/attendance') ||
-        path.startsWith('/api/academics') ||
-        path.startsWith('/api/results') ||
-        path.startsWith('/api/agents') ||
         path.startsWith('/api/auth') ||
         path.startsWith('/auth')
       ) {

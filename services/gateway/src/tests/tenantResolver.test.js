@@ -143,6 +143,20 @@ describe('Phase 65: Tenant Resolution & Subdomain Routing', () => {
       expect(res.body.status).toBe('healthy');
     });
 
+    it('bypasses /api/institutions/check-subdomain without throwing 404 on uncreated subdomain', async () => {
+      app.get('/api/institutions/check-subdomain', (req, res) => {
+        res.json({ success: true, available: true, subdomain: req.query.subdomain });
+      });
+
+      const res = await request(app)
+        .get('/api/institutions/check-subdomain?subdomain=jecrc')
+        .set('Host', 'collegeerp.com');
+
+      expect(res.status).toBe(200);
+      expect(res.body.available).toBe(true);
+      expect(res.body.subdomain).toBe('jecrc');
+    });
+
     it('returns 404 when root domain accesses tenant route without subdomain', async () => {
       const res = await request(app)
         .get('/api/users/me')
