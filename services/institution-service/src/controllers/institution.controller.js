@@ -354,10 +354,17 @@ const updateInstitution = async (req, res) => {
       return res.status(403).json(fail('Access denied'));
     }
 
-    const { name, themeConfig, branding, customDomain, domain, logoUrl, isActive, status } = req.body;
+    const { name, code, subdomain, slug, themeConfig, branding, customDomain, domain, logoUrl, isActive, status } = req.body;
     const updateData = {};
 
     if (name) updateData.name = name.trim();
+    if (code) updateData.code = code.trim().toUpperCase();
+    if (subdomain || slug) {
+      const targetSub = (subdomain || slug).trim().toLowerCase();
+      updateData.subdomain = targetSub;
+      updateData.slug = targetSub;
+    }
+
     if (customDomain !== undefined) {
       updateData.customDomain = customDomain ? customDomain.trim().toLowerCase() : null;
       updateData.domain = updateData.customDomain;
@@ -422,6 +429,54 @@ const updateInstitution = async (req, res) => {
   } catch (err) {
     console.error('[InstitutionController] Failed to update institution:', err);
     res.status(500).json(fail('Internal server error'));
+  }
+};
+
+/**
+ * Delete an institution and clean up associated records
+ * Access: SUPERADMIN only (Root domain only)
+ */
+const deleteInstitution = async (req, res) => {
+  try {
+    const isSuperAdmin = await checkSuperAdmin(req);
+    if (!isSuperAdmin) {
+      return res.status(403).json(fail('Only SUPERADMIN can delete institutions'));
+    }
+
+    const { id } = req.params;
+    const institution = await Institution.findById(id);
+    if (!institution) {
+      return res.status(404).json(fail('Institution not found'));
+    }
+
+    // Invalidate Redis cache
+    await invalidateTenantCache(institution.subdomain, institution.slug, institution.customDomain, institution.domain);
+
+    // Delete the institution document
+    await Institution.findByIdAndDelete(id);
+
+    // Clean up associated resources in database
+    if (mongoose.connection.db) {
+      const instId = new mongoose.Types.ObjectId(id);
+      await Promise.all([
+        mongoose.connection.db.collection('users').deleteMany({ institutionId: instId }),
+        mongoose.connection.db.collection('roleassignments').deleteMany({ institutionId: instId }),
+        mongoose.connection.db.collection('departments').deleteMany({ institutionId: instId })
+      ]).catch(e => console.warn('[InstitutionController] Cleanup warning:', e.message));
+    }
+
+    await logAudit(
+      req,
+      'INSTITUTION_DELETED',
+      id,
+      'Institution',
+      { name: institution.name, subdomain: institution.subdomain }
+    );
+
+    res.status(200).json(success({ message: `Institution "${institution.name}" deleted successfully.` }));
+  } catch (err) {
+    console.error('[InstitutionController] Failed to delete institution:', err);
+    res.status(500).json(fail(err.message || 'Internal server error'));
   }
 };
 
@@ -538,6 +593,7 @@ module.exports = {
   resolveInstitutionBySlug,
   getInstitutionById,
   updateInstitution,
+  deleteInstitution,
   checkSubdomainAvailability,
   getInstitutionBranding
 };

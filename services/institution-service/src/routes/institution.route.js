@@ -23,5 +23,6 @@ router.post('/', institutionController.createInstitution);
 router.get('/', institutionController.listInstitutions);
 router.get('/:id', institutionController.getInstitutionById);
 router.patch('/:id', institutionController.updateInstitution);
+router.delete('/:id', institutionController.deleteInstitution);
 
 module.exports = router;

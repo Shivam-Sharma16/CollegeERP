@@ -1,9 +1,11 @@
 import { useState, useMemo } from 'react';
-import { useListInstitutionsQuery } from '../../api/institutionsApi';
+import { useListInstitutionsQuery, useDeleteInstitutionMutation } from '../../api/institutionsApi';
 import { Button } from '../ui/Button';
 import { EmptyState } from '../ui/EmptyState';
 import { Skeleton } from '../ui/Skeleton';
+import { ConfirmDialog } from '../ui/ConfirmDialog';
 import { CreateInstitutionModal } from './CreateInstitutionModal';
+import { EditInstitutionModal } from './EditInstitutionModal';
 import { 
   ExternalLink, 
   Copy, 
@@ -14,17 +16,26 @@ import {
   Globe, 
   User, 
   Users,
-  Search 
+  Search,
+  Pencil,
+  Trash2
 } from 'lucide-react';
 import { useToast } from '../ui/ToastContext';
 import styles from './InstitutionsTab.module.css';
 
 export function InstitutionsTab() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [instToEdit, setInstToEdit] = useState(null);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [instToDelete, setInstToDelete] = useState(null);
+
   const [copiedSlug, setCopiedSlug] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
 
   const { data: rawInstitutions, isLoading, error, refetch } = useListInstitutionsQuery();
+  const [deleteInstitution, { isLoading: isDeleting }] = useDeleteInstitutionMutation();
+
   const institutions = useMemo(() => {
     if (!rawInstitutions) return [];
     if (Array.isArray(rawInstitutions)) return rawInstitutions;
@@ -42,6 +53,28 @@ export function InstitutionsTab() {
       showToast('Whitelabel Portal URL copied to clipboard!', 'info');
     }
     setTimeout(() => setCopiedSlug(null), 2500);
+  };
+
+  const handleEditClick = (inst) => {
+    setInstToEdit(inst);
+    setEditModalOpen(true);
+  };
+
+  const handleDeleteClick = (inst) => {
+    setInstToDelete(inst);
+    setDeleteConfirmOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!instToDelete) return;
+    try {
+      await deleteInstitution(instToDelete._id).unwrap();
+      showToast(`Institution "${instToDelete.name}" was permanently deleted.`, 'success');
+      setDeleteConfirmOpen(false);
+      setInstToDelete(null);
+    } catch (err) {
+      showToast(err?.data?.message || 'Failed to delete institution', 'error');
+    }
   };
 
   const filteredInstitutions = useMemo(() => {
@@ -229,17 +262,39 @@ export function InstitutionsTab() {
                       </span>
                     </td>
 
-                    {/* Action Launch Portal */}
+                    {/* Actions: Edit, Delete, Launch */}
                     <td>
-                      <a
-                        href={portalPath}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className={styles.launchBtn}
-                        title={`Open ${inst.name} Whitelabel Portal`}
-                      >
-                        Launch <ExternalLink size={13} />
-                      </a>
+                      <div className={styles.actionsCell}>
+                        <button
+                          type="button"
+                          className={`${styles.actionIconBtn} ${styles.editActionBtn}`}
+                          onClick={() => handleEditClick(inst)}
+                          title={`Edit ${inst.name}`}
+                          aria-label={`Edit ${inst.name}`}
+                        >
+                          <Pencil size={14} />
+                        </button>
+
+                        <button
+                          type="button"
+                          className={`${styles.actionIconBtn} ${styles.deleteActionBtn}`}
+                          onClick={() => handleDeleteClick(inst)}
+                          title={`Delete ${inst.name}`}
+                          aria-label={`Delete ${inst.name}`}
+                        >
+                          <Trash2 size={14} />
+                        </button>
+
+                        <a
+                          href={portalPath}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={styles.launchBtn}
+                          title={`Open ${inst.name} Whitelabel Portal`}
+                        >
+                          Launch <ExternalLink size={13} />
+                        </a>
+                      </div>
                     </td>
                   </tr>
                 );
@@ -253,6 +308,30 @@ export function InstitutionsTab() {
       <CreateInstitutionModal
         isOpen={isCreateOpen}
         onClose={() => setIsCreateOpen(false)}
+      />
+
+      {/* Modal to Edit Institution */}
+      <EditInstitutionModal
+        isOpen={editModalOpen}
+        institution={instToEdit}
+        onClose={() => {
+          setEditModalOpen(false);
+          setInstToEdit(null);
+        }}
+      />
+
+      {/* Confirmation Dialog to Delete Institution */}
+      <ConfirmDialog
+        isOpen={deleteConfirmOpen}
+        onClose={() => {
+          setDeleteConfirmOpen(false);
+          setInstToDelete(null);
+        }}
+        onConfirm={handleConfirmDelete}
+        title={`Delete Institution: ${instToDelete?.name || ''}`}
+        warningText={`Are you sure you want to permanently delete "${instToDelete?.name}" (${instToDelete?.code})? This will delete the institution, invalidate tenant cache, and remove associated tenant records. This action CANNOT be undone.`}
+        confirmLabel={isDeleting ? 'Deleting...' : 'Delete Institution'}
+        isDestructive={true}
       />
     </div>
   );

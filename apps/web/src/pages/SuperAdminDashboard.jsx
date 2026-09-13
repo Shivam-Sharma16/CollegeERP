@@ -14,6 +14,7 @@ import {
 } from '../api/institutionsApi';
 import { useGetDashboardStatsQuery } from '../api/reportsApi';
 import { CreateInstitutionModal } from '../components/institutions/CreateInstitutionModal';
+import { EditInstitutionModal } from '../components/institutions/EditInstitutionModal';
 import {
   Building2,
   Users,
@@ -31,6 +32,7 @@ import {
   Sparkles,
   ArrowUpRight,
   Filter,
+  Pencil,
 } from 'lucide-react';
 import styles from './SuperAdminDashboard.module.css';
 
@@ -38,6 +40,8 @@ export default function SuperAdminDashboard() {
   const navigate = useNavigate();
   const { showToast } = useToast();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [instToEdit, setInstToEdit] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL'); // 'ALL' | 'ACTIVE' | 'SUSPENDED'
 
@@ -389,6 +393,18 @@ export default function SuperAdminDashboard() {
                         <button
                           type="button"
                           className={styles.settingsBtn}
+                          onClick={() => {
+                            setInstToEdit(inst);
+                            setEditModalOpen(true);
+                          }}
+                          title="Edit Institution Details"
+                        >
+                          <Pencil size={13} />
+                          <span>Edit</span>
+                        </button>
+                        <button
+                          type="button"
+                          className={styles.settingsBtn}
                           onClick={() => navigate(`/superadmin/institutions/${inst._id}`)}
                           title="Configure Whitelabel Brand & Theme"
                         >
@@ -429,6 +445,16 @@ export default function SuperAdminDashboard() {
       <CreateInstitutionModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
+      />
+
+      {/* ── Edit Institution Modal ────────────────────────────────────────── */}
+      <EditInstitutionModal
+        isOpen={editModalOpen}
+        institution={instToEdit}
+        onClose={() => {
+          setEditModalOpen(false);
+          setInstToEdit(null);
+        }}
       />
     </DashboardShell>
   );

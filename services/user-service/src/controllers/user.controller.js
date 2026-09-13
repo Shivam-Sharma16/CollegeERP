@@ -636,17 +636,48 @@ const updateUser = async (req, res) => {
 
 const deleteUser = async (req, res) => {
   try {
+    const isSuperAdmin = req.user?.roles?.includes('SUPERADMIN');
+    const isAdmin = req.user?.roles?.includes('ADMIN');
+
+    if (!isSuperAdmin && !isAdmin) {
+      return res.status(403).json(fail('Access Denied: Only SuperAdmin or Admin can delete user accounts'));
+    }
+
     const tenantId = req.tenantId || req.headers['x-tenant-id'] || req.user?.institutionId;
     const filter = { _id: req.params.id };
-    if (tenantId && !req.user?.roles?.includes('SUPERADMIN')) {
+    if (tenantId && !isSuperAdmin) {
       filter.institutionId = tenantId;
     }
+
+    const targetUser = await User.findById(req.params.id);
+    if (!targetUser) {
+      return res.status(404).json(fail('User not found'));
+    }
+
+    // Admins cannot delete SuperAdmins or other Admins
+    if (isAdmin && !isSuperAdmin) {
+      const targetAssignments = await RoleAssignment.find({ userId: targetUser._id });
+      const targetRoles = targetAssignments.map(a => a.role);
+      if (targetRoles.includes('SUPERADMIN') || targetRoles.includes('ADMIN')) {
+        return res.status(403).json(fail('Access Denied: Admins cannot delete SuperAdmins or other Admins'));
+      }
+    }
+
     const user = await User.findOneAndDelete(filter).lean();
     if (!user) {
       return res.status(404).json(fail('User not found'));
     }
     await RoleAssignment.deleteMany({ userId: user._id });
-    res.status(200).json(success({ message: 'User deleted successfully' }));
+
+    // Clear admin reference in institutions if this user was designated admin
+    if (mongoose.connection.db) {
+      await mongoose.connection.db.collection('institutions').updateMany(
+        { adminUserId: user._id },
+        { $set: { adminUserId: null } }
+      ).catch(() => null);
+    }
+
+    res.status(200).json(success({ message: `User "${user.name}" deleted successfully` }));
   } catch (err) {
     console.error('[UserController] Failed to delete user:', err);
     res.status(500).json(fail('Internal server error'));

@@ -50,6 +50,14 @@ export const institutionsApi = createApi({
       invalidatesTags: (result, error, { id }) => [{ type: 'Institution', id }, 'Institution'],
     }),
 
+    deleteInstitution: builder.mutation({
+      query: (id) => ({
+        url: `/api/institutions/${id}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['Institution'],
+    }),
+
     checkSubdomainAvailability: builder.query({
       query: (subdomain) => `/api/institutions/check-subdomain?subdomain=${encodeURIComponent(subdomain)}`,
       transformResponse: (response) => response?.data ?? response,
@@ -64,6 +72,7 @@ export const {
   useGetInstitutionByIdQuery,
   useCreateInstitutionMutation,
   useUpdateInstitutionMutation,
+  useDeleteInstitutionMutation,
   useCheckSubdomainAvailabilityQuery,
   useLazyCheckSubdomainAvailabilityQuery,
 } = institutionsApi;

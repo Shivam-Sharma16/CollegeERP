@@ -138,12 +138,22 @@ export const usersApi = createApi({
             ]
           : [{ type: 'Student', id: 'LIST' }],
     }),
+
+    /** DELETE /api/users/:id — SUPERADMIN or ADMIN deleting user */
+    deleteUser: builder.mutation({
+      query: (id) => ({
+        url: `/api/users/${id}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['Admin', 'Hod', 'Faculty', 'Cc', 'Student'],
+    }),
   }),
 });
 
 export const {
   useUpdateOwnProfileMutation,
   useUpdateUserMutation,
+  useDeleteUserMutation,
   useCreateAdminMutation,
   useCreateHodMutation,
   useCreateFacultyMutation,
