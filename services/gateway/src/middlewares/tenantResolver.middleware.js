@@ -86,6 +86,8 @@ const tenantResolver = async (req, res, next) => {
         path.includes('superadmin') ||
         path.startsWith('/api/institutions') ||
         path.startsWith('/institutions') ||
+        path.startsWith('/api/permissions') ||
+        path.startsWith('/permissions') ||
         path.startsWith('/api/auth') ||
         path.startsWith('/auth')
       ) {

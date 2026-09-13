@@ -3,21 +3,21 @@ const router = express.Router();
 const { authenticate, requirePermission } = require('@college-erp/shared-utils');
 const roleController = require('../controllers/role.controller');
 
-// 1. Permission Catalog (Anyone authenticated can inspect system catalog)
-router.get('/permissions-catalog', authenticate, roleController.getPermissionCatalog);
+// 1. Permission Catalog (matches /permissions-catalog, /catalog, /permissions/catalog)
+router.get(['/permissions-catalog', '/catalog', '/permissions/catalog'], roleController.getPermissionCatalog);
 
 // 2. Caller's own permissions
 router.get('/my-permissions', authenticate, roleController.getMyPermissions);
 
 // 3. Custom Role CRUD (Protected by 'role.manage' permission)
-router.post('/custom', authenticate, requirePermission('role.manage'), roleController.createCustomRole);
-router.get('/custom', authenticate, requirePermission('role.manage'), roleController.listCustomRoles);
-router.get('/custom/:id', authenticate, requirePermission('role.manage'), roleController.getCustomRoleById);
-router.patch('/custom/:id', authenticate, requirePermission('role.manage'), roleController.updateCustomRole);
-router.delete('/custom/:id', authenticate, requirePermission('role.manage'), roleController.deleteCustomRole);
+router.post(['/', '/custom', '/custom-roles'], authenticate, requirePermission('role.manage'), roleController.createCustomRole);
+router.get(['/', '/custom', '/custom-roles'], authenticate, requirePermission('role.manage'), roleController.listCustomRoles);
+router.get(['/:id', '/custom/:id', '/custom-roles/:id'], authenticate, requirePermission('role.manage'), roleController.getCustomRoleById);
+router.patch(['/:id', '/custom/:id', '/custom-roles/:id'], authenticate, requirePermission('role.manage'), roleController.updateCustomRole);
+router.delete(['/:id', '/custom/:id', '/custom-roles/:id'], authenticate, requirePermission('role.manage'), roleController.deleteCustomRole);
 
 // 4. Role Assignment & Inspection
-router.post('/assign', authenticate, requirePermission('role.manage'), roleController.assignCustomRole);
+router.post(['/assign', '/assign-custom-role'], authenticate, requirePermission('role.manage'), roleController.assignCustomRole);
 router.post('/unassign', authenticate, requirePermission('role.manage'), roleController.unassignCustomRole);
 router.get('/effective-permissions/:userId', authenticate, requirePermission('role.manage'), roleController.getUserEffectivePermissions);
 

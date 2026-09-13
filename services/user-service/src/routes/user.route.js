@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { authenticate, requirePermission } = require('@college-erp/shared-utils');
 const userController = require('../controllers/user.controller');
+const roleController = require('../controllers/role.controller');
 
 router.use(authenticate);
 
@@ -30,6 +31,7 @@ router.post('/students', requirePermission('write', 'Section'), userController.o
 router.get('/students', requirePermission('read', 'Section'), userController.listStudents);
 
 router.get('/', userController.listUsers);
+router.post('/:id/assign-custom-role', requirePermission('role.manage'), roleController.assignCustomRole);
 router.get('/:id', userController.getUserById);
 router.patch('/:id', userController.updateUser);
 router.delete('/:id', userController.deleteUser);

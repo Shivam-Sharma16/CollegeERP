@@ -203,8 +203,9 @@ const updateCustomRole = async (req, res) => {
 };
 
 /**
- * DELETE /api/roles/custom/:id
- * Deletes a custom role and cascades cleanup of any active RoleAssignments.
+ * DELETE /api/roles/custom/:id or /custom-roles/:id
+ * Deletes a custom role.
+ * Blocked if any users still hold active assignments (matching Phase 13 pattern).
  */
 const deleteCustomRole = async (req, res) => {
   try {
@@ -220,7 +221,28 @@ const deleteCustomRole = async (req, res) => {
       return res.status(404).json(fail('Custom role not found'));
     }
 
-    // Cascade: remove assignments pointing to this custom role
+    // Explicit blocking checks — no silent cascade delete (Phase 13 pattern)
+    const now = new Date();
+    const assignFilter = {
+      customRoleId: role._id,
+      $or: [
+        { validTo: null },
+        { validTo: { $gt: now } }
+      ]
+    };
+    if (tenantId && !req.user?.roles?.includes('SUPERADMIN')) {
+      assignFilter.institutionId = new mongoose.Types.ObjectId(tenantId);
+    }
+
+    const activeAssignments = await RoleAssignment.find(assignFilter);
+    const userIds = new Set(activeAssignments.map(a => a.userId.toString()));
+    const activeUsersCount = userIds.size;
+
+    if (activeUsersCount > 0) {
+      return res.status(409).json(fail(`${activeUsersCount} users still hold this role`));
+    }
+
+    // Clean up any historical/expired assignments if any remain
     await RoleAssignment.deleteMany({ customRoleId: role._id });
     await role.deleteOne();
 
@@ -237,12 +259,13 @@ const deleteCustomRole = async (req, res) => {
 };
 
 /**
- * POST /api/roles/assign
+ * POST /api/roles/assign or /users/:id/assign-custom-role
  * Assigns a custom role to a user.
  */
 const assignCustomRole = async (req, res) => {
   try {
-    const { userId, customRoleId, departmentId, sectionId, validFrom, validTo } = req.body;
+    const userId = req.params.id || req.body.userId;
+    const { customRoleId, departmentId, sectionId, validFrom, validTo } = req.body;
     const tenantId = req.tenantId || req.headers['x-tenant-id'] || req.user?.institutionId;
 
     if (!userId || !customRoleId) {
@@ -266,11 +289,15 @@ const assignCustomRole = async (req, res) => {
     }
 
     // Check if duplicate active assignment already exists
+    const now = new Date();
     const existingAssignment = await RoleAssignment.findOne({
       userId: new mongoose.Types.ObjectId(userId),
       customRoleId: customRole._id,
       institutionId: customRole.institutionId,
-      validTo: null
+      $or: [
+        { validTo: null },
+        { validTo: { $gt: now } }
+      ]
     });
 
     if (existingAssignment) {

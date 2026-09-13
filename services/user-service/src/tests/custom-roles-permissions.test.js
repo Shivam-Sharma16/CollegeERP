@@ -57,11 +57,24 @@ describe('Phase 75: Custom Role & Granular Permission System Integration Tests',
       next();
     });
 
-    // Public / semi-public catalog route
+    // Public / semi-public catalog routes
+    app.get('/permissions/catalog', roleController.getPermissionCatalog);
+    app.get('/api/permissions/catalog', roleController.getPermissionCatalog);
     app.get('/api/roles/permissions-catalog', roleController.getPermissionCatalog);
     app.get('/api/roles/my-permissions', roleController.getMyPermissions);
 
-    // Protected by 'role.manage'
+    // Phase 76 Custom Role endpoints: POST/GET/PATCH/DELETE /custom-roles
+    app.post('/custom-roles', requirePermission('role.manage'), roleController.createCustomRole);
+    app.get('/custom-roles', requirePermission('role.manage'), roleController.listCustomRoles);
+    app.get('/custom-roles/:id', requirePermission('role.manage'), roleController.getCustomRoleById);
+    app.patch('/custom-roles/:id', requirePermission('role.manage'), roleController.updateCustomRole);
+    app.delete('/custom-roles/:id', requirePermission('role.manage'), roleController.deleteCustomRole);
+
+    // Phase 76 User assignment endpoint: POST /users/:id/assign-custom-role
+    app.post('/users/:id/assign-custom-role', requirePermission('role.manage'), roleController.assignCustomRole);
+    app.post('/api/users/:id/assign-custom-role', requirePermission('role.manage'), roleController.assignCustomRole);
+
+    // Legacy Phase 75 aliases
     app.post('/api/roles/custom', requirePermission('role.manage'), roleController.createCustomRole);
     app.get('/api/roles/custom', requirePermission('role.manage'), roleController.listCustomRoles);
     app.get('/api/roles/custom/:id', requirePermission('role.manage'), roleController.getCustomRoleById);
@@ -284,14 +297,15 @@ describe('Phase 75: Custom Role & Granular Permission System Integration Tests',
       expect(nowForbidden.status).toBe(403);
     });
 
-    it('deleting a custom role cascades and removes all user assignments', async () => {
+    it('blocks deleting a CustomRole that still has active assignments with "N users still hold this role"', async () => {
       const role = await CustomRole.create({
         institutionId: tenantAId,
-        name: 'Temporary Coordinator',
+        name: 'Active Grievance Coordinator',
         permissions: ['grievance.resolve'],
         createdBy: adminUser._id
       });
 
+      // Assign to customRoleUser
       await RoleAssignment.create({
         userId: customRoleUser._id,
         customRoleId: role._id,
@@ -299,20 +313,113 @@ describe('Phase 75: Custom Role & Granular Permission System Integration Tests',
         validFrom: new Date()
       });
 
+      // Attempt to delete custom role while assigned
       const deleteRes = await request(app)
-        .delete(`/api/roles/custom/${role._id}`)
+        .delete(`/custom-roles/${role._id}`)
         .set('Authorization', 'Bearer ADMIN_TOKEN');
 
-      expect(deleteRes.status).toBe(200);
-      expect(deleteRes.body.success).toBe(true);
+      expect(deleteRes.status).toBe(409);
+      expect(deleteRes.body.success).toBe(false);
+      expect(deleteRes.body.error).toBe('1 users still hold this role');
 
-      // Verify custom role is gone
-      const foundRole = await CustomRole.findById(role._id);
-      expect(foundRole).toBeNull();
+      // Still exists in DB
+      const roleStillInDb = await CustomRole.findById(role._id);
+      expect(roleStillInDb).not.toBeNull();
 
-      // Verify role assignment is deleted
-      const foundAssignment = await RoleAssignment.findOne({ customRoleId: role._id });
-      expect(foundAssignment).toBeNull();
+      // Now unassign the user
+      await RoleAssignment.deleteMany({ customRoleId: role._id });
+
+      // Attempt deletion again — now succeeds
+      const successfulDeleteRes = await request(app)
+        .delete(`/custom-roles/${role._id}`)
+        .set('Authorization', 'Bearer ADMIN_TOKEN');
+
+      expect(successfulDeleteRes.status).toBe(200);
+      expect(successfulDeleteRes.body.success).toBe(true);
+
+      const roleDeletedFromDb = await CustomRole.findById(role._id);
+      expect(roleDeletedFromDb).toBeNull();
+    });
+  });
+
+  describe('3. Phase 76 Custom Role & Permission Backend Endpoints', () => {
+    it('GET /permissions/catalog returns the fixed PERMISSION_CATALOG', async () => {
+      const res = await request(app).get('/permissions/catalog');
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data).toEqual(PERMISSION_CATALOG);
+    });
+
+    it('manages custom role lifecycle via Phase 76 routes: POST/GET/PATCH/DELETE /custom-roles and POST /users/:id/assign-custom-role', async () => {
+      // 1. POST /custom-roles (Admin creates role)
+      const createRes = await request(app)
+        .post('/custom-roles')
+        .set('Authorization', 'Bearer ADMIN_TOKEN')
+        .send({
+          name: 'Librarian Head',
+          description: 'Responsible for library management and student clearance',
+          permissions: ['student.manage', 'notice.create.department']
+        });
+
+      expect(createRes.status).toBe(201);
+      expect(createRes.body.success).toBe(true);
+      const roleId = createRes.body.data._id;
+      expect(createRes.body.data.name).toBe('Librarian Head');
+
+      // 2. GET /custom-roles (Lists roles in institution)
+      const listRes = await request(app)
+        .get('/custom-roles')
+        .set('Authorization', 'Bearer ADMIN_TOKEN');
+
+      expect(listRes.status).toBe(200);
+      expect(listRes.body.success).toBe(true);
+      const createdRoleInList = listRes.body.data.find(r => r._id === roleId);
+      expect(createdRoleInList).toBeDefined();
+
+      // 3. PATCH /custom-roles/:id (Updates role)
+      const patchRes = await request(app)
+        .patch(`/custom-roles/${roleId}`)
+        .set('Authorization', 'Bearer ADMIN_TOKEN')
+        .send({
+          description: 'Updated library management duties',
+          permissions: ['student.manage', 'notice.create.department', 'calendar.manage']
+        });
+
+      expect(patchRes.status).toBe(200);
+      expect(patchRes.body.success).toBe(true);
+      expect(patchRes.body.data.permissions).toContain('calendar.manage');
+
+      // 4. POST /users/:id/assign-custom-role (Assigns role to user)
+      const assignRes = await request(app)
+        .post(`/users/${customRoleUser._id}/assign-custom-role`)
+        .set('Authorization', 'Bearer ADMIN_TOKEN')
+        .send({
+          customRoleId: roleId
+        });
+
+      expect(assignRes.status).toBe(201);
+      expect(assignRes.body.success).toBe(true);
+      expect(assignRes.body.data.userId.toString()).toBe(customRoleUser._id.toString());
+      expect(assignRes.body.data.customRoleId.toString()).toBe(roleId.toString());
+
+      // 5. Attempt DELETE /custom-roles/:id while user is assigned (Blocked with 409)
+      const blockedDelete = await request(app)
+        .delete(`/custom-roles/${roleId}`)
+        .set('Authorization', 'Bearer ADMIN_TOKEN');
+
+      expect(blockedDelete.status).toBe(409);
+      expect(blockedDelete.body.success).toBe(false);
+      expect(blockedDelete.body.error).toBe('1 users still hold this role');
+
+      // 6. Unassign and successfully delete
+      await RoleAssignment.deleteMany({ customRoleId: roleId });
+
+      const finalDelete = await request(app)
+        .delete(`/custom-roles/${roleId}`)
+        .set('Authorization', 'Bearer ADMIN_TOKEN');
+
+      expect(finalDelete.status).toBe(200);
+      expect(finalDelete.body.success).toBe(true);
     });
   });
 });
