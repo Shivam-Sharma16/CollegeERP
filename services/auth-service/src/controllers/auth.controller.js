@@ -44,8 +44,8 @@ const superadminSignup = async (req, res) => {
     const passwordHash = await bcrypt.hash(password, BCRYPT_COST);
     
     const user = await User.create({
-      name,
-      email,
+      name: (name || '').trim(),
+      email: (email || '').toLowerCase().trim(),
       passwordHash,
       roles: ['SUPERADMIN'],
       institutionId: null
@@ -139,51 +139,72 @@ const login = async (req, res) => {
       const normalizedEmail = (email || '').toLowerCase().trim();
       const superAdmin = await User.findOne({
         email: normalizedEmail,
-        institutionId: null,
         roles: { $in: ['SUPERADMIN', 'superadmin'] },
       });
 
-      if (superAdmin && superAdmin.isActive) {
-        const isValid = await bcrypt.compare(password, superAdmin.passwordHash);
-        if (isValid) {
-          const { accessToken, refreshToken } = generateTokens(
-            superAdmin._id.toString(),
-            null,
-            superAdmin.roles || ['SUPERADMIN']
-          );
-
-          res.cookie('refreshToken', refreshToken, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            maxAge: 7 * 24 * 60 * 60 * 1000,
-          });
-
-          const userPayload = {
-            id: superAdmin._id.toString(),
-            name: superAdmin.name,
-            email: superAdmin.email,
-            roles: superAdmin.roles,
-            institutionId: null,
-          };
-
-          return res.status(200).json({
-            success: true,
-            accessToken,
-            token: accessToken,
-            roles: superAdmin.roles,
-            userId: superAdmin._id,
-            institutionId: null,
-            user: userPayload,
-            data: {
-              token: accessToken,
-              accessToken,
-              userId: superAdmin._id,
-              roles: superAdmin.roles,
-              institutionId: null,
-              user: userPayload,
-            },
+      if (superAdmin) {
+        if (!superAdmin.isActive) {
+          return res.status(401).json({
+            success: false,
+            message: 'Account is deactivated. Please contact platform support.',
           });
         }
+
+        const isValid = await bcrypt.compare(password, superAdmin.passwordHash);
+        if (!isValid) {
+          return res.status(401).json({
+            success: false,
+            message: 'Invalid credentials',
+          });
+        }
+
+        const { accessToken, refreshToken } = generateTokens(
+          superAdmin._id.toString(),
+          null,
+          superAdmin.roles || ['SUPERADMIN']
+        );
+
+        res.cookie('refreshToken', refreshToken, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          maxAge: 7 * 24 * 60 * 60 * 1000,
+        });
+
+        const userPayload = {
+          id: superAdmin._id.toString(),
+          name: superAdmin.name,
+          email: superAdmin.email,
+          roles: superAdmin.roles,
+          institutionId: null,
+        };
+
+        return res.status(200).json({
+          success: true,
+          accessToken,
+          token: accessToken,
+          roles: superAdmin.roles,
+          userId: superAdmin._id,
+          institutionId: null,
+          user: userPayload,
+          data: {
+            token: accessToken,
+            accessToken,
+            userId: superAdmin._id,
+            roles: superAdmin.roles,
+            institutionId: null,
+            user: userPayload,
+          },
+        });
+      }
+
+      // Check if an institutional user is trying to log in via the root domain
+      const institutionalUser = await User.findOne({ email: normalizedEmail });
+      if (institutionalUser && institutionalUser.institutionId) {
+        return res.status(400).json({
+          success: false,
+          message:
+            'Tenant context is required for institutional accounts. Please access your institution portal via its subdomain or /inst/:slug/login.',
+        });
       }
 
       return res.status(400).json({

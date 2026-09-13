@@ -1,5 +1,22 @@
 import { useState } from 'react';
 import { useNavigate, useLocation, useParams, Link } from 'react-router-dom';
+import { 
+  GraduationCap, 
+  ShieldCheck, 
+  School, 
+  Mail, 
+  Lock, 
+  Eye, 
+  EyeOff, 
+  ArrowRight, 
+  AlertCircle, 
+  BookOpen, 
+  CalendarCheck2, 
+  BarChart3, 
+  Building2,
+  Sparkles,
+  ChevronRight
+} from 'lucide-react';
 import { useLoginMutation } from '../api/authApi';
 import { useAppSelector, useAppDispatch } from '../store';
 import { setCredentials } from '../features/ui/authSlice';
@@ -31,6 +48,7 @@ export default function LoginPage({ isSuperAdminMode = false }) {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   // Fallback institution data from config/themeSlice
   const defaultInstitutionName = useAppSelector(selectInstitutionName);
@@ -50,7 +68,10 @@ export default function LoginPage({ isSuperAdminMode = false }) {
   async function handleSubmit(e) {
     e.preventDefault();
     try {
-      const payload = { email, password };
+      const payload = { 
+        email: email.trim().toLowerCase(), 
+        password 
+      };
       if (isTenantPortal && slug) {
         payload.institutionSlug = slug;
       }
@@ -104,10 +125,10 @@ export default function LoginPage({ isSuperAdminMode = false }) {
 
   if (isTenantPortal && isTenantLoading) {
     return (
-      <div className={styles.page}>
-        <div className={styles.card} style={{ textAlign: 'center', padding: '3rem 1rem' }}>
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
-          <p style={{ marginTop: '1rem', color: 'var(--color-text-muted)' }}>Resolving institution portal...</p>
+      <div className={styles.stateWrap}>
+        <div className={styles.stateCard}>
+          <div className={styles.spinner}></div>
+          <p style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem' }}>Resolving institution portal…</p>
         </div>
       </div>
     );
@@ -115,11 +136,13 @@ export default function LoginPage({ isSuperAdminMode = false }) {
 
   if (isTenantPortal && (tenantError || (!isTenantLoading && !tenant))) {
     return (
-      <div className={styles.page}>
-        <div className={styles.card} style={{ textAlign: 'center', padding: '2.5rem 1.5rem' }}>
+      <div className={styles.stateWrap}>
+        <div className={styles.stateCard}>
           <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>⚠️</div>
-          <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--color-text)' }}>Institution Not Found</h2>
-          <p style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem', marginTop: '0.5rem', marginBottom: '1.5rem' }}>
+          <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--color-text)', marginBottom: '0.5rem' }}>
+            Institution Not Found
+          </h2>
+          <p style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem', marginBottom: '1.5rem' }}>
             The institution portal <code>/inst/{slug}</code> does not exist or has been suspended.
           </p>
           <Link
@@ -145,73 +168,168 @@ export default function LoginPage({ isSuperAdminMode = false }) {
   return (
     <PageTransition>
       <div className={styles.page}>
-        <div className={styles.card}>
-          <div className={styles.logoWrap}>
-            {institutionLogo ? (
-              <img src={institutionLogo} alt={institutionName} className={styles.institutionLogo} />
-            ) : (
-              <div className={styles.logo}>{isSuperAdminMode ? '🛡️' : (isTenantPortal ? '🏫' : '🎓')}</div>
-            )}
-            <h1 className={styles.appName}>{institutionName}</h1>
-            <p className={styles.tagline}>
-              {isTenantPortal
-                ? `Campus Portal • ${tenant?.code || ''}`
-                : isSuperAdminMode
-                ? 'Central Platform Administration'
-                : 'Unified academic management'}
-            </p>
+
+        {/* ── Left: College campus hero panel ── */}
+        <div className={styles.imagePanelWrap}>
+          <div className={styles.imagePanel} />
+          <div className={styles.imagePanelOverlay}>
+            <div className={styles.imageHeaderBadge}>
+              <Sparkles size={16} className={styles.badgeIcon} />
+              <span>Next-Generation Academic ERP</span>
+            </div>
+
+            <div className={styles.imageContent}>
+              <h2 className={styles.imageTagline}>
+                Empowering Education,{' '}
+                <span className={styles.imageTaglineAccent}>Streamlining Success.</span>
+              </h2>
+              <p className={styles.imageSubtext}>
+                An integrated, intelligent campus management platform designed for students, faculty, and administrators.
+              </p>
+
+              <div className={styles.featurePills}>
+                <span className={styles.pill}><BookOpen size={14} /> Academics & LMS</span>
+                <span className={styles.pill}><CalendarCheck2 size={14} /> Smart Attendance</span>
+                <span className={styles.pill}><BarChart3 size={14} /> Real-time Analytics</span>
+                <span className={styles.pill}><Building2 size={14} /> Multi-Department</span>
+              </div>
+            </div>
+
+            <div className={styles.imageFooterQuote}>
+              <p>"Transforming campus workflow into an effortless digital experience."</p>
+            </div>
           </div>
+        </div>
 
-          <form className={`${styles.form} ${errorMessage ? styles.shake : ''}`} onSubmit={handleSubmit}>
-            <StaggerList>
-              <StaggerItem>
-                <div className={styles.floatingLabel}>
-                  <input
-                    id="email"
-                    type="email"
-                    autoComplete="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder=" "
-                  />
-                  <label htmlFor="email">Email address</label>
+        {/* ── Right: Login form panel ── */}
+        <div className={styles.formPanel}>
+          <div className={styles.formPanelInner}>
+
+            {/* Logo / header */}
+            <div className={styles.logoWrap}>
+              {institutionLogo ? (
+                <img src={institutionLogo} alt={institutionName} className={styles.institutionLogo} />
+              ) : (
+                <div className={styles.logoMark} aria-hidden="true">
+                  {isSuperAdminMode ? (
+                    <ShieldCheck size={28} color="#ffffff" />
+                  ) : isTenantPortal ? (
+                    <School size={28} color="#ffffff" />
+                  ) : (
+                    <GraduationCap size={28} color="#ffffff" />
+                  )}
                 </div>
-              </StaggerItem>
-
-              <StaggerItem>
-                <div className={styles.floatingLabel}>
-                  <input
-                    id="password"
-                    type="password"
-                    autoComplete="current-password"
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder=" "
-                  />
-                  <label htmlFor="password">Password</label>
-                </div>
-              </StaggerItem>
-
-              {errorMessage && (
-                <StaggerItem>
-                  <p className={styles.error} role="alert">{errorMessage}</p>
-                </StaggerItem>
               )}
+              <span className={styles.welcomeBack}>Welcome back</span>
+              <h1 className={styles.appName}>{institutionName}</h1>
+              <p className={styles.tagline}>
+                {isTenantPortal
+                  ? `Campus Portal • ${tenant?.code || 'Sign in to your portal'}`
+                  : isSuperAdminMode
+                  ? 'Central SuperAdmin Control Center'
+                  : 'Enter your credentials to access your portal'}
+              </p>
+            </div>
 
-              <StaggerItem>
-                <button
-                  className={styles.submit}
-                  type="submit"
-                  disabled={isLoading}
-                >
-                  {isLoading ? 'Signing in…' : 'Sign in'}
-                </button>
-              </StaggerItem>
+            {/* Form */}
+            <form
+              className={`${styles.form} ${errorMessage ? styles.shake : ''}`}
+              onSubmit={handleSubmit}
+            >
+              <StaggerList>
 
-              <StaggerItem>
-                <div style={{ marginTop: '1rem', borderTop: '1px solid var(--color-border)', paddingTop: '0.75rem', textAlign: 'center' }}>
+                {/* Email field */}
+                <StaggerItem>
+                  <div className={styles.fieldGroup}>
+                    <label className={styles.fieldLabel} htmlFor="email">Email address</label>
+                    <div className={styles.fieldWrap}>
+                      <span className={styles.fieldIcon}>
+                        <Mail size={18} />
+                      </span>
+                      <input
+                        id="email"
+                        type="email"
+                        autoComplete="email"
+                        required
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="you@institution.edu"
+                      />
+                    </div>
+                  </div>
+                </StaggerItem>
+
+                {/* Password field */}
+                <StaggerItem>
+                  <div className={styles.fieldGroup}>
+                    <div className={styles.fieldRow}>
+                      <label className={styles.fieldLabel} htmlFor="password">Password</label>
+                      <a href="#forgot" onClick={(e) => e.preventDefault()} className={styles.forgotLink}>
+                        Forgot password?
+                      </a>
+                    </div>
+                    <div className={styles.fieldWrap}>
+                      <span className={styles.fieldIcon}>
+                        <Lock size={18} />
+                      </span>
+                      <input
+                        id="password"
+                        type={showPassword ? 'text' : 'password'}
+                        autoComplete="current-password"
+                        required
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="••••••••"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className={styles.passwordToggle}
+                        aria-label={showPassword ? 'Hide password' : 'Show password'}
+                        tabIndex={-1}
+                      >
+                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </button>
+                    </div>
+                  </div>
+                </StaggerItem>
+
+                {/* Error message */}
+                {errorMessage && (
+                  <StaggerItem>
+                    <div className={styles.error} role="alert">
+                      <AlertCircle size={18} className={styles.errorIcon} />
+                      <span>{errorMessage}</span>
+                    </div>
+                  </StaggerItem>
+                )}
+
+                {/* Submit button */}
+                <StaggerItem>
+                  <button
+                    className={styles.submit}
+                    type="submit"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? (
+                      <>
+                        <span className={styles.btnSpinner} />
+                        <span>Signing in…</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>Sign in</span>
+                        <ArrowRight size={18} className={styles.submitArrow} />
+                      </>
+                    )}
+                  </button>
+                </StaggerItem>
+
+                {/* Divider + Demo student button */}
+                <StaggerItem>
+                  <div className={styles.divider}>
+                    <span>Quick Access Demo</span>
+                  </div>
                   <button
                     id="btn-demo-student-login"
                     type="button"
@@ -230,13 +348,22 @@ export default function LoginPage({ isSuperAdminMode = false }) {
                     }}
                     className={styles.demoBtn}
                   >
-                    🎓 Quick Demo Student Login
+                    <GraduationCap size={18} />
+                    <span>Demo Student Login (Alex Rivera)</span>
+                    <ChevronRight size={16} className={styles.demoBtnArrow} />
                   </button>
-                </div>
-              </StaggerItem>
-            </StaggerList>
-          </form>
+                </StaggerItem>
+
+              </StaggerList>
+            </form>
+
+            <div className={styles.footerNote}>
+              <ShieldCheck size={14} className={styles.securityIcon} />
+              <span>Enterprise-grade encryption & security · © {new Date().getFullYear()} CollegeERP</span>
+            </div>
+          </div>
         </div>
+
       </div>
     </PageTransition>
   );
