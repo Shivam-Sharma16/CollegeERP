@@ -85,10 +85,13 @@ function registerProxies(app) {
     '/superadmin/institutions', '/api/superadmin/institutions'
   ], (req, res) => forward(env.INSTITUTION_SERVICE_URL, req, res));
 
-  // 3. User Service (Users, Departments, Audit, Reports, Settings)
+  // 3. User Service (Users, Departments, Roles, Custom Roles, Grievances, Audit, Reports, Settings)
   app.use([
     '/api/users', '/users', 
     '/api/departments', '/departments',
+    '/api/roles', '/roles',
+    '/api/custom-roles', '/custom-roles',
+    '/api/grievances', '/grievances',
     '/api/audit', '/audit',
     '/api/reports', '/reports',
     '/api/settings', '/settings'

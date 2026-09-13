@@ -12,6 +12,7 @@ const auditRoute = require('./routes/audit.route');
 const reportsRoute = require('./routes/reports.route');
 const settingsRoute = require('./routes/settings.route');
 const institutionRoute = require('./routes/institution.route');
+const roleRoute = require('./routes/role.route');
 
 const app = express();
 
@@ -26,6 +27,9 @@ app.use('/', healthRoute);
 app.use('/institutions', institutionRoute);
 app.use('/departments', departmentRoute);
 app.use('/users', userRoute);
+app.use('/roles', roleRoute);
+app.use('/custom-roles', roleRoute);
+app.use('/grievances', roleRoute);
 app.use('/audit', auditRoute);
 app.use('/reports', reportsRoute);
 app.use('/settings', settingsRoute);
@@ -33,6 +37,9 @@ app.use('/settings', settingsRoute);
 app.use('/api/institutions', institutionRoute);
 app.use('/api/departments', departmentRoute);
 app.use('/api/users', userRoute);
+app.use('/api/roles', roleRoute);
+app.use('/api/custom-roles', roleRoute);
+app.use('/api/grievances', roleRoute);
 app.use('/api/audit', auditRoute);
 app.use('/api/reports', reportsRoute);
 app.use('/api/settings', settingsRoute);

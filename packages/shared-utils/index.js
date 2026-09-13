@@ -1,4 +1,4 @@
-const { requirePermission } = require('./rbac');
+const { requirePermission, getEffectivePermissions, resolveEffectivePermissions } = require('./rbac');
 const { setupSecurity } = require('./security');
 const { logAudit } = require('./audit');
 const { authenticate } = require('./auth');
@@ -24,6 +24,8 @@ module.exports = {
   success,
   fail,
   requirePermission,
+  getEffectivePermissions,
+  resolveEffectivePermissions,
   setupSecurity,
   logAudit,
   authenticate,

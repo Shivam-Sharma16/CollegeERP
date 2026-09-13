@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { getEffectivePermissions } = require('@college-erp/shared-utils');
 
 /**
  * resolveScope middleware
@@ -9,6 +10,7 @@ const mongoose = require('mongoose');
  *     role: 'ADMIN' | 'SUPERADMIN' | 'HOD' | 'CC' | 'FACULTY' | 'STUDENT',
  *     departmentIds: [ObjectId, ...],
  *     sectionIds:    [ObjectId, ...],
+ *     permissions:   ['notice.create.department', ...]
  *   }
  *
  * Controllers use req.callerScope to *rebuild* targeting from scratch,
@@ -58,11 +60,25 @@ const resolveScope = async (req, res, next) => {
       }
     }
 
+    let permissions = [];
+    try {
+      permissions = await getEffectivePermissions(
+        req.user.userId,
+        req.user.roles,
+        tenantId,
+        req.user.roles && req.user.roles.includes('SUPERADMIN')
+      );
+    } catch (permErr) {
+      console.error('[resolveScope] Error getting effective permissions:', permErr.message);
+    }
+
     req.callerScope = {
       role: dominantRole,
       departmentIds: Array.from(departmentIds).map(id => new mongoose.Types.ObjectId(id)),
       sectionIds:    Array.from(sectionIds).map(id => new mongoose.Types.ObjectId(id)),
+      permissions,
     };
+    req.effectivePermissions = permissions;
 
     next();
   } catch (err) {

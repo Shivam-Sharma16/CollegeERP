@@ -29,9 +29,9 @@ const getImageKitClient = () => {
  *  STUDENT            : blocked upstream; included here for safety → empty targeting
  */
 const clampTargeting = (rawTargeting = {}, callerScope) => {
-  const { role, departmentIds, sectionIds } = callerScope;
+  const { role, departmentIds = [], sectionIds = [], permissions = [] } = callerScope;
 
-  if (role === 'SUPERADMIN' || role === 'ADMIN') {
+  if (role === 'SUPERADMIN' || role === 'ADMIN' || permissions.includes('notice.create.institution')) {
     // Full trust — return as-is (sanitised to arrays)
     return {
       departments: toObjectIdArray(rawTargeting.departments),
@@ -41,10 +41,14 @@ const clampTargeting = (rawTargeting = {}, callerScope) => {
     };
   }
 
-  if (role === 'HOD') {
-    // Clamp departments to own department(s); allow years/sections/roles from payload
+  if (role === 'HOD' || permissions.includes('notice.create.department')) {
+    // Clamp departments to own department(s) if specified, otherwise allow requested departments
+    const depts = (departmentIds && departmentIds.length > 0)
+      ? departmentIds
+      : toObjectIdArray(rawTargeting.departments);
+
     return {
-      departments: departmentIds,
+      departments: depts,
       years:       toNumberArray(rawTargeting.years),
       sections:    toObjectIdArray(rawTargeting.sections),
       roles:       toStringArray(rawTargeting.roles),
@@ -181,11 +185,15 @@ const getNoticesForUser = async (userId, searchQuery = '', tenantId = null) => {
  */
 exports.createNotice = async (req, res) => {
   try {
-    const callerScope = req.callerScope;
+    const callerScope = req.callerScope || {};
+    const permissions = callerScope.permissions || [];
 
-    // Students cannot post notices
-    if (callerScope.role === 'STUDENT') {
-      return res.status(403).json({ success: false, error: 'Students cannot post notices' });
+    const canCreateDeptNotice = permissions.includes('notice.create.department') || ['SUPERADMIN', 'ADMIN', 'HOD'].includes(callerScope.role);
+    const canCreateAnyNotice = permissions.includes('notice.create.institution') || ['SUPERADMIN', 'ADMIN'].includes(callerScope.role);
+    const isStaffPoster = ['CC', 'FACULTY'].includes(callerScope.role);
+
+    if (!canCreateDeptNotice && !canCreateAnyNotice && !isStaffPoster) {
+      return res.status(403).json({ success: false, error: 'Forbidden: Insufficient permissions to post notices' });
     }
 
     const { title, body, attachments = [] } = req.body;

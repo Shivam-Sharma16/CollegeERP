@@ -1,10 +1,97 @@
 const mongoose = require('mongoose');
+const { PERMISSION_CATALOG, FIXED_ROLE_PERMISSIONS } = require('@college-erp/shared-config');
 
 // Utility to create consistent fail envelope
 const fail = (message) => ({
   success: false,
   error: message
 });
+
+/**
+ * Resolves all effective granular permissions for a user within a tenant.
+ * Unions fixed-role-implied permissions + custom role permissions from active assignments.
+ */
+const resolveEffectivePermissions = async (userIdStr, userRoles = [], currentTenantId = null, isSuperAdmin = false) => {
+  const permissionsSet = new Set();
+
+  // 1. SUPERADMIN has all catalog permissions globally
+  if (isSuperAdmin || (Array.isArray(userRoles) && userRoles.includes('SUPERADMIN'))) {
+    PERMISSION_CATALOG.forEach(p => permissionsSet.add(p));
+    return Array.from(permissionsSet);
+  }
+
+  // 2. Fixed-role-implied permissions from JWT user roles
+  if (Array.isArray(userRoles)) {
+    userRoles.forEach(r => {
+      const implied = FIXED_ROLE_PERMISSIONS[r] || [];
+      implied.forEach(p => permissionsSet.add(p));
+    });
+  }
+
+  // 3. Query DB for RoleAssignments and CustomRoles
+  if (mongoose.connection && mongoose.connection.db) {
+    try {
+      const roleQuery = { userId: new mongoose.Types.ObjectId(userIdStr) };
+      if (currentTenantId && mongoose.Types.ObjectId.isValid(currentTenantId)) {
+        roleQuery.institutionId = new mongoose.Types.ObjectId(currentTenantId);
+      }
+
+      const assignments = await mongoose.connection.db
+        .collection('roleassignments')
+        .find(roleQuery)
+        .toArray();
+
+      const now = new Date();
+      const customRoleIds = [];
+
+      assignments.forEach(a => {
+        // Implied permissions from standard roles in assignments
+        if (a.role) {
+          const implied = FIXED_ROLE_PERMISSIONS[a.role] || [];
+          implied.forEach(p => permissionsSet.add(p));
+        }
+
+        // Active custom role assignments
+        if (a.customRoleId) {
+          if (a.validFrom && a.validFrom > now) return;
+          if (a.validTo && a.validTo < now) return;
+          customRoleIds.push(a.customRoleId);
+        }
+      });
+
+      if (customRoleIds.length > 0) {
+        const objectIds = customRoleIds
+          .map(id => {
+            try { return new mongoose.Types.ObjectId(id); } catch { return null; }
+          })
+          .filter(Boolean);
+
+        const customRoleQuery = {
+          _id: { $in: objectIds },
+          isActive: true
+        };
+        if (currentTenantId && mongoose.Types.ObjectId.isValid(currentTenantId)) {
+          customRoleQuery.institutionId = new mongoose.Types.ObjectId(currentTenantId);
+        }
+
+        const customRoles = await mongoose.connection.db
+          .collection('customroles')
+          .find(customRoleQuery)
+          .toArray();
+
+        customRoles.forEach(cr => {
+          if (Array.isArray(cr.permissions)) {
+            cr.permissions.forEach(p => permissionsSet.add(p));
+          }
+        });
+      }
+    } catch (dbErr) {
+      console.error('[resolveEffectivePermissions] Error querying DB:', dbErr.message);
+    }
+  }
+
+  return Array.from(permissionsSet);
+};
 
 /**
  * Parses the request to find the scoping identifiers.
@@ -19,7 +106,6 @@ const extractContextIds = (req) => {
     if (source.sectionId) return { type: 'sectionId', value: source.sectionId.toString() };
     if (source.studentId) return { type: 'studentId', value: source.studentId.toString() };
     if (source.userId) return { type: 'studentId', value: source.userId.toString() };
-    // Generic id fallback (could be a studentId or sectionId, risky to assume, but used in some APIs)
     if (source.id && !source.departmentId && !source.sectionId && !source.studentId) {
       return { type: 'genericId', value: source.id.toString() };
     }
@@ -28,11 +114,11 @@ const extractContextIds = (req) => {
 };
 
 /**
- * A central RBAC middleware.
- * @param {string} action - e.g. 'read', 'write' (currently unused structurally, but semantically useful for future expansion)
- * @param {string} resourceType - e.g. 'AttendanceRecord', 'Payment'
+ * A central RBAC middleware supporting dual-mode check:
+ * 1. Granular Permission Mode: requirePermission('fees.manage')
+ * 2. Role & Scope Mode:        requirePermission('read', 'FeeStructure')
  */
-const requirePermission = (action, resourceType) => {
+const requirePermission = (actionOrPermission, resourceType) => {
   return async (req, res, next) => {
     try {
       if (!req.user || !req.user.userId) {
@@ -46,21 +132,47 @@ const requirePermission = (action, resourceType) => {
       }
 
       // Outermost check: Institution Match (Phase 68)
-      // A caller's department/section scope check is meaningless if their institution does not match.
       const isSuperAdmin = req.user.roles && req.user.roles.includes('SUPERADMIN');
+      const isAdmin = req.user.roles && req.user.roles.includes('ADMIN');
+
       if (currentTenantId && !isSuperAdmin) {
         const userTenantId = req.user.institutionId ? req.user.institutionId.toString() : null;
         if (!userTenantId || userTenantId !== currentTenantId.toString()) {
           return res.status(403).json(fail('Access Denied: Tenant mismatch'));
         }
 
-        // If resource is preloaded on req, verify its institutionId matches
         if (req.resource && req.resource.institutionId) {
           if (req.resource.institutionId.toString() !== currentTenantId.toString()) {
             return res.status(403).json(fail('Access Denied: Resource belongs to a different institution'));
           }
         }
       }
+
+      // ── MODE 1: Granular Permission Check ────────────────────────────────────
+      // Single string provided (e.g. requirePermission('fees.manage'), requirePermission('notice.create.department'))
+      if (resourceType === undefined) {
+        const requiredPermissionKey = actionOrPermission;
+
+        if (!req.effectivePermissions) {
+          req.effectivePermissions = await resolveEffectivePermissions(
+            userIdStr,
+            req.user.roles,
+            currentTenantId,
+            isSuperAdmin
+          );
+        }
+
+        // SUPERADMIN has all permissions globally
+        // ADMIN has all permissions within their own institution
+        if (isSuperAdmin || isAdmin || req.effectivePermissions.includes(requiredPermissionKey)) {
+          return next();
+        }
+
+        return res.status(403).json(fail(`Access Denied: Missing required permission: ${requiredPermissionKey}`));
+      }
+
+      // ── MODE 2: Role & Scope Check (Legacy Phase 10 / 68) ────────────────────
+      const action = actionOrPermission;
 
       // 1. Resolve Effective Roles (Cached per request, strictly scoped by current tenant)
       if (!req.effectiveRoles) {
@@ -80,18 +192,39 @@ const requirePermission = (action, resourceType) => {
 
         req.effectiveRoles = roleAssignments.map(ra => ({
           role: ra.role,
+          customRoleId: ra.customRoleId?.toString(),
           departmentId: ra.departmentId?.toString(),
           sectionId: ra.sectionId?.toString(),
           institutionId: ra.institutionId?.toString()
         }));
 
-        // Include JWT token roles (like SUPERADMIN) which might not have scoped RoleAssignments
         if (req.user.roles && Array.isArray(req.user.roles)) {
           req.user.roles.forEach(r => {
             if (!req.effectiveRoles.find(er => er.role === r)) {
               req.effectiveRoles.push({ role: r });
             }
           });
+        }
+      }
+
+      // Also resolve effectivePermissions for custom role additive access
+      if (!req.effectivePermissions) {
+        req.effectivePermissions = await resolveEffectivePermissions(
+          userIdStr,
+          req.user.roles,
+          currentTenantId,
+          isSuperAdmin
+        );
+      }
+
+      // Custom permission mapping shortcut for Mode 2:
+      // If user has fees.manage / fees.view_reports, they can read/write FeeStructure
+      if (resourceType === 'FeeStructure') {
+        if (req.effectivePermissions.includes('fees.manage')) {
+          return next();
+        }
+        if (action === 'read' && req.effectivePermissions.includes('fees.view_reports')) {
+          return next();
         }
       }
 
@@ -102,17 +235,11 @@ const requirePermission = (action, resourceType) => {
       let isAuthorized = false;
 
       for (const scope of req.effectiveRoles) {
-        // SUPERADMIN / ADMIN: Institution scope -> always pass
         if (scope.role === 'SUPERADMIN' || scope.role === 'ADMIN') {
           isAuthorized = true;
           break;
         }
 
-        // HOD: two cases:
-        // (a) target context has a departmentId that matches the HOD's own -> authorized
-        // (b) resourceType is 'Department' (HOD creating sub-staff) -> authorized as long as HOD has
-        //     any department assignment. The controller enforces the actual scope — it IGNORES body.departmentId
-        //     and hard-codes req.effectiveRoles departmentId. So we trust the controller here.
         if (scope.role === 'HOD') {
           if (targetContext.type === 'departmentId' && targetContext.value === scope.departmentId) {
             isAuthorized = true;
@@ -124,7 +251,6 @@ const requirePermission = (action, resourceType) => {
           }
         }
 
-        // CC / FACULTY: pass only if target's sectionId === their assignment scopeId
         if (scope.role === 'CC' || scope.role === 'FACULTY') {
           if (targetContext.type === 'sectionId' && targetContext.value === scope.sectionId) {
             isAuthorized = true;
@@ -132,7 +258,6 @@ const requirePermission = (action, resourceType) => {
           }
         }
 
-        // STUDENT: pass only if resource belongs directly to the user
         if (scope.role === 'STUDENT') {
           if (
             (targetContext.type === 'studentId' && targetContext.value === userIdStr) ||
@@ -144,7 +269,6 @@ const requirePermission = (action, resourceType) => {
         }
       }
 
-      // 4. On Fail: respond 403 (No partial data leakage)
       if (!isAuthorized) {
         return res.status(403).json(fail('Access Denied'));
       }
@@ -158,5 +282,7 @@ const requirePermission = (action, resourceType) => {
 };
 
 module.exports = {
-  requirePermission
+  requirePermission,
+  getEffectivePermissions: resolveEffectivePermissions,
+  resolveEffectivePermissions
 };
