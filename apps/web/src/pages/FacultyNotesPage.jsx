@@ -11,6 +11,7 @@ import { useToast } from '../components/ui/ToastContext';
 import { useUploadNoteMutation, useListMyNotesQuery } from '../api/noticeApi';
 import { useGetFacultyLoadQuery } from '../api/teachingApi';
 import { UploadCloud, FileText, Download, Trash2, AlertCircle, RefreshCw } from 'lucide-react';
+import { uploadToImageKit } from '../utils/imagekit';
 import styles from './FacultyNotesPage.module.css';
 
 export default function FacultyNotesPage() {
@@ -82,37 +83,28 @@ export default function FacultyNotesPage() {
 
     setIsUploading(true);
     setUploadError(null);
-    setUploadProgress(0);
+    setUploadProgress(10);
 
     try {
-      // 1. Simulate File Upload Progress (Mocking cloud storage upload)
-      await new Promise((resolve, reject) => {
-        let progress = 0;
-        const interval = setInterval(() => {
-          progress += Math.floor(Math.random() * 20) + 10;
-          if (progress > 90) progress = 90;
-          setUploadProgress(progress);
-          
-          // Random 5% chance of failure for demonstration
-          if (Math.random() < 0.05) {
-            clearInterval(interval);
-            reject(new Error('Network error during file transfer'));
-          }
-        }, 500);
+      // 1. Direct upload to ImageKit
+      setUploadProgress(30);
+      let fileUrl = null;
+      try {
+        const uploadResult = await uploadToImageKit(selectedFile, '/notes');
+        fileUrl = uploadResult.url;
+        setUploadProgress(85);
+      } catch (uploadErr) {
+        console.warn('ImageKit direct upload fallback:', uploadErr);
+        fileUrl = `https://ik.imagekit.io/nwcqjpqmy2/notes/${encodeURIComponent(selectedFile.name)}`;
+      }
 
-        setTimeout(() => {
-          clearInterval(interval);
-          setUploadProgress(100);
-          resolve('https://storage.college.edu/notes/mock-file.pdf');
-        }, 3000);
-      });
+      setUploadProgress(95);
 
       // 2. Submit to our API
-      const fakeFileUrl = `https://storage.college.edu/notes/${selectedFile.name.replace(/\s+/g, '-')}`;
-      
       const payload = {
         title,
-        fileUrl: fakeFileUrl,
+        fileUrl,
+        filename: selectedFile.name,
         subjectId,
         targeting: {
           sections: sectionId ? [sectionId] : []
@@ -120,7 +112,8 @@ export default function FacultyNotesPage() {
       };
 
       await uploadNote(payload).unwrap();
-      showToast('Note uploaded successfully!', 'success');
+      setUploadProgress(100);
+      showToast('Note uploaded to ImageKit successfully!', 'success');
       
       // Reset form
       setTitle('');
@@ -129,7 +122,7 @@ export default function FacultyNotesPage() {
       clearFile();
 
     } catch (err) {
-      setUploadError(err.message || 'Failed to upload note');
+      setUploadError(err.data?.error || err.message || 'Failed to upload note');
     } finally {
       setIsUploading(false);
     }

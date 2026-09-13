@@ -25,4 +25,8 @@ router.get('/notes', authenticate, ctrl.listNotes);
 // GET /notes/:id — retrieve note by ID scoped to tenant
 router.get('/notes/:id', authenticate, ctrl.getNoteById);
 
+// GET /upload-auth — ImageKit client upload authentication parameters
+router.get('/upload-auth', authenticate, ctrl.getImageKitAuth);
+router.get('/imagekit-auth', authenticate, ctrl.getImageKitAuth);
+
 module.exports = router;

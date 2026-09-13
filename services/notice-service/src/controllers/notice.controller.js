@@ -1,7 +1,16 @@
 const mongoose = require('mongoose');
-const { v2: cloudinary } = require('cloudinary');
+const ImageKit = require('imagekit');
 const Notice = require('../models/Notice.model');
 const Note   = require('../models/Note.model');
+
+// Lazy / safe ImageKit client initialization
+const getImageKitClient = () => {
+  return new ImageKit({
+    publicKey: process.env.IMAGEKIT_PUBLIC_KEY || 'dummy_public_key',
+    privateKey: process.env.IMAGEKIT_PRIVATE_KEY || 'dummy_private_key',
+    urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT || 'https://ik.imagekit.io/dummy',
+  });
+};
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -241,17 +250,46 @@ exports.searchNotices = async (req, res) => {
 };
 
 /**
+ * GET /upload-auth
+ * Generates signed authentication parameters for client-side ImageKit uploads.
+ */
+exports.getImageKitAuth = async (req, res) => {
+  try {
+    const hasImageKit =
+      process.env.IMAGEKIT_PUBLIC_KEY &&
+      process.env.IMAGEKIT_PRIVATE_KEY &&
+      process.env.IMAGEKIT_URL_ENDPOINT;
+
+    if (!hasImageKit) {
+      return res.status(500).json({
+        success: false,
+        error: 'ImageKit credentials not configured',
+      });
+    }
+
+    const authParams = getImageKitClient().getAuthenticationParameters();
+    return res.status(200).json({
+      success: true,
+      data: {
+        ...authParams,
+        publicKey: process.env.IMAGEKIT_PUBLIC_KEY,
+        urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT,
+      },
+    });
+  } catch (err) {
+    console.error('[getImageKitAuth]', err);
+    return res.status(500).json({ success: false, error: err.message });
+  }
+};
+
+/**
  * POST /notes
  * Auth required. resolveScope must run first.
  *
  * Flow:
- *  1. Generate a Cloudinary signed upload URL (or mock params if creds absent).
- *  2. Return { uploadUrl, publicId, signature, ... } to the client.
- *  3. Client uploads directly; client then POSTs the final fileUrl back, OR
- *     we persist the Note record here with an expected URL pattern.
- *
- * The note's sectionId / departmentLevel are CLAMPED from callerScope —
- * a Faculty can only target their own section, not the whole department.
+ *  1. Accepts client-provided fileUrl (uploaded directly to ImageKit), OR
+ *  2. Generates ImageKit signed upload parameters for the client.
+ *  3. Persists the Note record scoped to the caller's section/department.
  */
 exports.createNote = async (req, res) => {
   try {
@@ -262,7 +300,7 @@ exports.createNote = async (req, res) => {
       return res.status(403).json({ success: false, error: 'Students cannot upload notes' });
     }
 
-    const { subjectId, filename } = req.body;
+    const { subjectId, filename, fileUrl } = req.body;
     if (!subjectId) {
       return res.status(400).json({ success: false, error: 'subjectId is required' });
     }
@@ -274,70 +312,54 @@ exports.createNote = async (req, res) => {
     let clampedDepartmentLevel = null;
 
     if (callerScope.role === 'CC' || callerScope.role === 'FACULTY') {
-      // Use first (and typically only) section assignment
       clampedSectionId = callerScope.sectionIds[0] || null;
       clampedDepartmentLevel = null;
     } else if (callerScope.role === 'HOD') {
       clampedSectionId       = null;
       clampedDepartmentLevel = callerScope.departmentIds[0] || null;
     } else {
-      // ADMIN / SUPERADMIN: trust client-supplied scope, fall back to caller's dept
       clampedDepartmentLevel = callerScope.departmentIds[0] || null;
     }
 
-    // --- Cloudinary signed URL ---
-    const publicId = `notes/${req.user.userId}/${Date.now()}_${filename || 'upload'}`;
-    let uploadParams;
+    // --- ImageKit upload params & final fileUrl ---
+    let finalFileUrl = fileUrl || null;
+    let uploadParams = null;
 
-    const hasCloudinaryCreds =
-      process.env.CLOUDINARY_CLOUD_NAME &&
-      process.env.CLOUDINARY_API_KEY    &&
-      process.env.CLOUDINARY_API_SECRET;
+    const hasImageKit =
+      process.env.IMAGEKIT_PUBLIC_KEY &&
+      process.env.IMAGEKIT_PRIVATE_KEY &&
+      process.env.IMAGEKIT_URL_ENDPOINT;
 
-    if (hasCloudinaryCreds) {
-      cloudinary.config({
-        cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-        api_key:    process.env.CLOUDINARY_API_KEY,
-        api_secret: process.env.CLOUDINARY_API_SECRET,
-      });
-
-      const timestamp = Math.round(Date.now() / 1000);
-      const signature = cloudinary.utils.api_sign_request(
-        { public_id: publicId, timestamp },
-        process.env.CLOUDINARY_API_SECRET
-      );
-
-      uploadParams = {
-        uploadUrl:  `https://api.cloudinary.com/v1_1/${process.env.CLOUDINARY_CLOUD_NAME}/raw/upload`,
-        publicId,
-        timestamp,
-        signature,
-        apiKey: process.env.CLOUDINARY_API_KEY,
-        // Derived URL the client should POST back after upload completes
-        expectedFileUrl: `https://res.cloudinary.com/${process.env.CLOUDINARY_CLOUD_NAME}/raw/upload/${publicId}`,
-      };
-    } else {
-      // Local dev / no creds — return mock params
-      uploadParams = {
-        uploadUrl: null,
-        publicId,
-        note: 'Cloudinary credentials not configured; set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET',
-        expectedFileUrl: `https://res.cloudinary.com/demo/raw/upload/${publicId}`,
-      };
+    if (!finalFileUrl) {
+      if (hasImageKit) {
+        const auth = getImageKitClient().getAuthenticationParameters();
+        uploadParams = {
+          ...auth,
+          publicKey: process.env.IMAGEKIT_PUBLIC_KEY,
+          urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT,
+          folder: '/notes',
+          uploadUrl: 'https://upload.imagekit.io/api/v1/files/upload',
+        };
+        finalFileUrl = `${process.env.IMAGEKIT_URL_ENDPOINT}/notes/${req.user.userId}_${Date.now()}_${filename || 'upload'}`;
+      } else {
+        finalFileUrl = `https://ik.imagekit.io/demo/notes/${req.user.userId}_${Date.now()}_${filename || 'upload'}`;
+        uploadParams = {
+          note: 'ImageKit credentials not configured; set IMAGEKIT_PUBLIC_KEY, IMAGEKIT_PRIVATE_KEY, IMAGEKIT_URL_ENDPOINT',
+          expectedFileUrl: finalFileUrl,
+        };
+      }
     }
 
     const rawInstitutionId = req.tenantId || req.headers['x-tenant-id'] || req.user?.institutionId || callerScope?.institutionId;
     const institutionId = rawInstitutionId ? new mongoose.Types.ObjectId(rawInstitutionId) : null;
 
-    // Persist the Note record with the expected URL
-    // (In production the client would confirm upload; here we pre-create the record)
     const note = await Note.create({
       institutionId,
       subjectId:       new mongoose.Types.ObjectId(subjectId),
       sectionId:       clampedSectionId,
       yearLevel:       null,
       departmentLevel: clampedDepartmentLevel,
-      fileUrl:         uploadParams.expectedFileUrl,
+      fileUrl:         finalFileUrl,
       uploadedBy:      new mongoose.Types.ObjectId(req.user.userId),
     });
 

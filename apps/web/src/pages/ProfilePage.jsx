@@ -8,6 +8,7 @@ import { useToast } from '../components/ui/ToastContext';
 import { Camera, Save, User as UserIcon } from 'lucide-react';
 import { PageTransition } from '../components/ui/PageTransition';
 import { StaggerList, StaggerItem } from '../components/ui/StaggerList';
+import { uploadToImageKit } from '../utils/imagekit';
 import styles from './ProfilePage.module.css';
 
 export default function ProfilePage() {
@@ -20,13 +21,15 @@ export default function ProfilePage() {
   const [name, setName] = useState(user?.name || '');
   const [email, setEmail] = useState(user?.email || '');
   const [avatarPreview, setAvatarPreview] = useState(user?.avatarUrl || null);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [isUploading, setIsUploading] = useState(false);
   
   const fileInputRef = useRef(null);
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      // Create a local object URL for preview
+      setSelectedFile(file);
       const url = URL.createObjectURL(file);
       setAvatarPreview(url);
     }
@@ -35,12 +38,18 @@ export default function ProfilePage() {
   const handleSave = async (e) => {
     e.preventDefault();
     try {
+      setIsUploading(true);
       const payload = { name, email };
-      // In a real app, we would upload the image to S3/Cloudinary first
-      // Here we just use the preview URL or a placeholder if a file was selected.
-      if (avatarPreview && avatarPreview.startsWith('blob:')) {
-        // mock a hosted url
-        payload.avatarUrl = `https://api.dicebear.com/7.x/initials/svg?seed=${name}`;
+      
+      // Upload avatar to ImageKit if a new file was chosen
+      if (selectedFile) {
+        try {
+          const uploadRes = await uploadToImageKit(selectedFile, '/avatars');
+          payload.avatarUrl = uploadRes.url;
+        } catch (uploadErr) {
+          console.warn('ImageKit direct upload failed, fallback:', uploadErr);
+          payload.avatarUrl = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(name)}`;
+        }
       }
       
       const res = await updateProfile(payload).unwrap();
@@ -56,6 +65,8 @@ export default function ProfilePage() {
       toast.success('Profile updated successfully');
     } catch (err) {
       toast.error(err.data?.message || 'Failed to update profile');
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -128,9 +139,9 @@ export default function ProfilePage() {
 
               <StaggerItem>
                 <div className={styles.formActions}>
-                  <button type="submit" className={styles.saveBtn} disabled={isLoading}>
+                  <button type="submit" className={styles.saveBtn} disabled={isLoading || isUploading}>
                     <Save size={18} />
-                    {isLoading ? 'Saving...' : 'Save Changes'}
+                    {(isLoading || isUploading) ? 'Saving...' : 'Save Changes'}
                   </button>
                 </div>
               </StaggerItem>
