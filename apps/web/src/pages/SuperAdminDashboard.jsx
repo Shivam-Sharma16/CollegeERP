@@ -28,6 +28,9 @@ import {
   UserCheck,
   Layers,
   GraduationCap,
+  Sparkles,
+  ArrowUpRight,
+  Filter,
 } from 'lucide-react';
 import styles from './SuperAdminDashboard.module.css';
 
@@ -36,6 +39,7 @@ export default function SuperAdminDashboard() {
   const { showToast } = useToast();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('ALL'); // 'ALL' | 'ACTIVE' | 'SUSPENDED'
 
   const { data: rawInstitutions, isLoading: isLoadingInst } = useListInstitutionsQuery();
   const { data: statsData, isLoading: isLoadingStats } = useGetDashboardStatsQuery();
@@ -73,11 +77,19 @@ export default function SuperAdminDashboard() {
     }).length;
   }, [institutions]);
 
-  // ── Search filtering ─────────────────────────────────────────────────────
+  // ── Search & Filter ──────────────────────────────────────────────────────
   const filteredInstitutions = useMemo(() => {
-    if (!searchQuery.trim()) return institutions;
+    let result = institutions;
+
+    if (statusFilter === 'ACTIVE') {
+      result = result.filter((inst) => (inst.isActive ?? inst.status === 'ACTIVE'));
+    } else if (statusFilter === 'SUSPENDED') {
+      result = result.filter((inst) => !(inst.isActive ?? inst.status === 'ACTIVE'));
+    }
+
+    if (!searchQuery.trim()) return result;
     const q = searchQuery.toLowerCase().trim();
-    return institutions.filter((inst) => {
+    return result.filter((inst) => {
       const nameMatch = inst.name?.toLowerCase().includes(q);
       const codeMatch = inst.code?.toLowerCase().includes(q);
       const subdomainMatch =
@@ -87,7 +99,7 @@ export default function SuperAdminDashboard() {
         inst.adminUserId?.email?.toLowerCase().includes(q);
       return nameMatch || codeMatch || subdomainMatch || adminMatch;
     });
-  }, [institutions, searchQuery]);
+  }, [institutions, statusFilter, searchQuery]);
 
   // ── Status toggle handler ────────────────────────────────────────────────
   const handleToggleStatus = async (inst) => {
@@ -110,8 +122,8 @@ export default function SuperAdminDashboard() {
 
   return (
     <DashboardShell
-      title="Platform SuperAdmin"
-      subtitle="Central multi-tenant institution orchestration & infrastructure control"
+      title="SuperAdmin Platform"
+      subtitle="Central multi-tenant institution orchestration & infrastructure telemetry"
       icon="🛡️"
     >
       <PageTransition>
@@ -119,18 +131,38 @@ export default function SuperAdminDashboard() {
           {/* ── Top Bar ───────────────────────────────────────────────────── */}
           <div className={styles.topBar}>
             <div className={styles.topBarInfo}>
-              <h1 className={styles.title}>System Overview</h1>
+              <h1 className={styles.title}>System Fleet Telemetry</h1>
               <p className={styles.subtitle}>
-                Real-time multi-tenant telemetry and college campus management
+                Real-time multi-tenant monitoring, dedicated portals, and campus orchestration
               </p>
             </div>
-            <Button
-              variant="primary"
-              onClick={() => setIsCreateModalOpen(true)}
-              style={{ flexShrink: 0 }}
-            >
-              <Plus size={16} style={{ marginRight: '6px' }} /> Create Institution
-            </Button>
+            <div className={styles.topActionsGroup}>
+              <button
+                type="button"
+                className={styles.secondaryHeaderBtn}
+                onClick={() => navigate('/superadmin/institutions')}
+                title="Open Complete Multi-Tenant Fleet Management"
+              >
+                <Layers size={15} />
+                <span>Fleet Management</span>
+              </button>
+              <button
+                type="button"
+                className={styles.secondaryHeaderBtn}
+                onClick={() => navigate('/superadmin/settings')}
+                title="Configure Platform Whitelabel & Global Settings"
+              >
+                <Settings size={15} />
+                <span>Platform Settings</span>
+              </button>
+              <Button
+                variant="primary"
+                onClick={() => setIsCreateModalOpen(true)}
+                style={{ flexShrink: 0 }}
+              >
+                <Plus size={16} style={{ marginRight: '6px' }} /> Create Institution
+              </Button>
+            </div>
           </div>
 
           {/* ── 4 Platform Stat Cards ─────────────────────────────────────── */}
@@ -169,16 +201,42 @@ export default function SuperAdminDashboard() {
             </StaggerItem>
           </StaggerList>
 
-          {/* ── Section Header with Search & Counter ──────────────────────── */}
+          {/* ── Section Header with Search & Filter Tabs ─────────────────── */}
           <div className={styles.sectionHeader}>
             <div className={styles.sectionTitleRow}>
-              <h2 className={styles.sectionHeading}>College Institutions</h2>
+              <h2 className={styles.sectionHeading}>College Campuses</h2>
               <span className={styles.countBadge}>
-                {institutions.length} {institutions.length === 1 ? 'Campus' : 'Campuses'}
+                {filteredInstitutions.length} of {institutions.length} {institutions.length === 1 ? 'Campus' : 'Campuses'}
               </span>
             </div>
 
             <div className={styles.controlsRow}>
+              {/* Status Filter Pills */}
+              <div className={styles.filterPills}>
+                <button
+                  type="button"
+                  className={`${styles.filterPill} ${statusFilter === 'ALL' ? styles.filterPillActive : ''}`}
+                  onClick={() => setStatusFilter('ALL')}
+                >
+                  All ({institutions.length})
+                </button>
+                <button
+                  type="button"
+                  className={`${styles.filterPill} ${statusFilter === 'ACTIVE' ? styles.filterPillActive : ''}`}
+                  onClick={() => setStatusFilter('ACTIVE')}
+                >
+                  Active ({institutions.filter(i => (i.isActive ?? i.status === 'ACTIVE')).length})
+                </button>
+                <button
+                  type="button"
+                  className={`${styles.filterPill} ${statusFilter === 'SUSPENDED' ? styles.filterPillActive : ''}`}
+                  onClick={() => setStatusFilter('SUSPENDED')}
+                >
+                  Suspended ({institutions.filter(i => !(i.isActive ?? i.status === 'ACTIVE')).length})
+                </button>
+              </div>
+
+              {/* Search Bar */}
               <div className={styles.searchWrap}>
                 <Search size={15} className={styles.searchIcon} />
                 <input
@@ -207,7 +265,7 @@ export default function SuperAdminDashboard() {
             <div className={styles.cardsGrid}>
               {[1, 2, 3, 4].map((n) => (
                 <div key={n} className={styles.instCard}>
-                  <Skeleton height="40px" width="100%" />
+                  <Skeleton height="44px" width="100%" />
                   <Skeleton height="60px" width="100%" />
                   <Skeleton height="36px" width="100%" />
                 </div>
@@ -225,7 +283,7 @@ export default function SuperAdminDashboard() {
             <EmptyState
               icon={<Search size={40} />}
               title="No matching institutions"
-              description={`No campuses match your search filter "${searchQuery}".`}
+              description={`No campuses match your filter or query "${searchQuery}".`}
             />
           ) : (
             <div className={styles.cardsGrid}>
@@ -238,6 +296,12 @@ export default function SuperAdminDashboard() {
 
                 return (
                   <div key={inst._id || effectiveSubdomain} className={styles.instCard}>
+                    {/* Top color accent stripe */}
+                    <div
+                      className={styles.cardAccentStripe}
+                      style={{ background: primaryColor }}
+                    />
+
                     {/* Card Header: Identity & Status Toggle */}
                     <div className={styles.cardHeader}>
                       <div className={styles.cardIdentity}>
@@ -268,7 +332,7 @@ export default function SuperAdminDashboard() {
                           title={`Click to ${isActive ? 'suspend' : 'activate'} this institution`}
                         >
                           <span className={styles.toggleDot} />
-                          {isActive ? 'Active' : 'Inactive'}
+                          {isActive ? 'Active' : 'Suspended'}
                         </button>
                       </div>
                     </div>
@@ -286,7 +350,7 @@ export default function SuperAdminDashboard() {
                         <span className={styles.subdomainText}>
                           /inst/{effectiveSubdomain}/login
                         </span>
-                        <ExternalLink size={12} style={{ flexShrink: 0 }} />
+                        <ArrowUpRight size={13} style={{ flexShrink: 0 }} />
                       </a>
                     </div>
 
@@ -298,7 +362,7 @@ export default function SuperAdminDashboard() {
                           {inst.adminUserId?.name || 'Designated Administrator'}
                         </div>
                         <div className={styles.adminEmail}>
-                          {inst.adminUserId?.email || 'N/A'}
+                          {inst.adminUserId?.email || 'Admin account pending assignment'}
                         </div>
                       </div>
                     </div>
@@ -321,15 +385,26 @@ export default function SuperAdminDashboard() {
 
                     {/* Card Footer Actions */}
                     <div className={styles.cardFooter}>
-                      <button
-                        type="button"
-                        className={styles.settingsBtn}
-                        onClick={() => navigate(`/superadmin/institutions/${inst._id}`)}
-                        title="Configure Institution Settings"
-                      >
-                        <Settings size={13} />
-                        <span>Settings</span>
-                      </button>
+                      <div className={styles.cardActionBtns}>
+                        <button
+                          type="button"
+                          className={styles.settingsBtn}
+                          onClick={() => navigate(`/superadmin/institutions/${inst._id}`)}
+                          title="Configure Whitelabel Brand & Theme"
+                        >
+                          <Settings size={13} />
+                          <span>Settings</span>
+                        </button>
+                        <button
+                          type="button"
+                          className={styles.settingsBtn}
+                          onClick={() => navigate('/superadmin/institutions')}
+                          title="Manage Campus Fleet, Departments & Admins"
+                        >
+                          <Layers size={13} />
+                          <span>Manage</span>
+                        </button>
+                      </div>
 
                       <a
                         href={portalUrl}
@@ -338,7 +413,7 @@ export default function SuperAdminDashboard() {
                         className={styles.launchBtn}
                         title="Launch Whitelabel Portal"
                       >
-                        <span>Launch Portal</span>
+                        <span>Portal</span>
                         <ExternalLink size={12} />
                       </a>
                     </div>

@@ -28,8 +28,16 @@ export const usersApi = createApi({
     /** PATCH /api/users/me */
     updateOwnProfile: builder.mutation({
       query: (body) => ({ url: '/api/users/me', method: 'PATCH', body }),
-      // we invalidate auth/user locally if needed, but since we don't have a 
-      // specific tag for 'self', we might not invalidate a list.
+    }),
+
+    /** PATCH /api/users/:id — Hierarchy-governed user credential update */
+    updateUser: builder.mutation({
+      query: ({ id, ...body }) => ({
+        url: `/api/users/${id}`,
+        method: 'PATCH',
+        body,
+      }),
+      invalidatesTags: ['Admin', 'Hod', 'Faculty', 'Cc', 'Student'],
     }),
 
     /** POST /api/users/admins  — SUPERADMIN only */
@@ -135,6 +143,7 @@ export const usersApi = createApi({
 
 export const {
   useUpdateOwnProfileMutation,
+  useUpdateUserMutation,
   useCreateAdminMutation,
   useCreateHodMutation,
   useCreateFacultyMutation,

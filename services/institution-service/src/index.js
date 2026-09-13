@@ -27,6 +27,8 @@ app.use('/superadmin/institutions', institutionRoute);
 app.use('/api/superadmin/institutions', institutionRoute);
 
 connectDB();
+require('./models/Institution.model');
+require('./models/User.model');
 
 app.listen(env.PORT, () => {
   console.log(`[${env.PORT}] institution-service started`);

@@ -47,24 +47,65 @@ const tenantResolver = async (req, res, next) => {
         return resolveSubdomain(pathParamMatch[1].toLowerCase().trim(), req, res, next);
       }
 
-      // If path starts with /superadmin or /api/superadmin, or is a global institution or superadmin route -> proceed as global/no-tenant request
+      // Check for JWT token in Authorization header to resolve tenant or superadmin context
+      let token = null;
+      if (req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
+        token = req.headers.authorization.split(' ')[1];
+      }
+
+      if (token) {
+        try {
+          const payloadBase64 = token.split('.')[1];
+          if (payloadBase64) {
+            const decoded = JSON.parse(Buffer.from(payloadBase64, 'base64').toString('utf8'));
+            if (decoded?.roles?.includes('SUPERADMIN') || decoded?.roles?.includes('superadmin')) {
+              req.tenantId = null;
+              req.isSuperAdminRoute = true;
+              return next();
+            }
+            if (decoded?.institutionId) {
+              req.tenantId = decoded.institutionId;
+              return next();
+            }
+          }
+        } catch (e) {
+          // Ignore decode error and fall through
+        }
+      }
+
+      // If path starts with /superadmin or is a platform API route -> proceed through to microservices
       if (
         path.startsWith('/superadmin') ||
         path.startsWith('/api/superadmin') ||
         path.includes('superadmin') ||
         path.startsWith('/api/institutions') ||
         path.startsWith('/institutions') ||
-        path === '/api/auth/login' ||
-        path === '/auth/login' ||
-        path === '/api/auth/refresh' ||
-        path === '/api/auth/logout'
+        path.startsWith('/api/notifications') ||
+        path.startsWith('/notifications') ||
+        path.startsWith('/api/reports') ||
+        path.startsWith('/reports') ||
+        path.startsWith('/api/settings') ||
+        path.startsWith('/settings') ||
+        path.startsWith('/api/users') ||
+        path.startsWith('/users') ||
+        path.startsWith('/api/notices') ||
+        path.startsWith('/api/notice') ||
+        path.startsWith('/notices') ||
+        path.startsWith('/api/fees') ||
+        path.startsWith('/fees') ||
+        path.startsWith('/api/attendance') ||
+        path.startsWith('/api/academics') ||
+        path.startsWith('/api/results') ||
+        path.startsWith('/api/agents') ||
+        path.startsWith('/api/auth') ||
+        path.startsWith('/auth')
       ) {
         req.tenantId = null;
         req.isSuperAdminRoute = true;
         return next();
       }
 
-      // If on root domain without subdomain and not accessing /superadmin, no tenant can be inferred
+      // If on root domain without subdomain and not accessing any platform service or API route:
       return res.status(404).json({
         success: false,
         error: 'Institution not found'

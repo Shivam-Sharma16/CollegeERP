@@ -1,6 +1,7 @@
 const bcrypt = require('bcrypt');
 const mongoose = require('mongoose');
 const Institution = require('../models/Institution.model');
+const User = require('../models/User.model');
 const { success, fail, logAudit } = require('@college-erp/shared-utils');
 const { invalidateTenantCache } = require('../config/redis');
 

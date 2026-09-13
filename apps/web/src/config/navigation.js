@@ -2,7 +2,7 @@ export const NAV_ITEMS = [
   // SuperAdmin
   { key: "superadmin-dashboard", label: "Dashboard",           icon: "Home",       path: "/superadmin/dashboard",    roles: ["superadmin"] },
   { key: "management",           label: "Management",          icon: "Building",   path: "/superadmin/institutions", roles: ["superadmin"] },
-  { key: "settings",             label: "Institution Settings",icon: "Settings",   path: "/superadmin/institutions", roles: ["superadmin"] },
+  { key: "settings",             label: "Institution Settings",icon: "Settings",   path: "/superadmin/settings",     roles: ["superadmin"] },
 
   // Admin
   { key: "admin-dashboard",      label: "Dashboard",           icon: "Home",       path: "/admin/dashboard",         roles: ["admin"] },

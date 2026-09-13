@@ -239,20 +239,42 @@ const listStudents = async (req, res) => {
 const updateOwnProfile = async (req, res) => {
   try {
     const userId = req.user.userId || req.user.id;
+    const callerRoles = req.user.roles || [];
+    const isSuperAdmin = callerRoles.includes('SUPERADMIN');
     const { name, email, avatarUrl } = req.body;
     
-    // Explicitly ignore roles, department, etc. Only allow basic fields.
-    const updateData = {};
-    if (name) updateData.name = name;
-    if (email) updateData.email = email;
-    if (avatarUrl !== undefined) updateData.avatarUrl = avatarUrl; // allow clearing
-
-    const updatedUser = await User.findByIdAndUpdate(userId, updateData, { new: true }).select('-passwordHash');
-    
-    if (!updatedUser) {
+    const currentUser = await User.findById(userId);
+    if (!currentUser) {
       return res.status(404).json(fail('User not found'));
     }
 
+    // Role-based credential validation:
+    // Only SuperAdmin can modify their own institutional identity (name and email) directly.
+    // Non-SuperAdmin accounts (Admin, HOD, Faculty, Student) have credentials locked to institutional records.
+    if (!isSuperAdmin) {
+      const isNameChanged = name !== undefined && name.trim() !== currentUser.name;
+      const isEmailChanged = email !== undefined && email.trim().toLowerCase() !== currentUser.email.toLowerCase();
+      if (isNameChanged || isEmailChanged) {
+        return res.status(403).json(fail('Institutional credentials (name and email) cannot be changed directly. They are managed by your administrative authority or HOD.'));
+      }
+    }
+
+    const updateData = {};
+    if (isSuperAdmin && name) updateData.name = name.trim();
+    if (isSuperAdmin && email) {
+      const normalizedEmail = email.trim().toLowerCase();
+      if (normalizedEmail !== currentUser.email) {
+        const existing = await User.findOne({ email: normalizedEmail, _id: { $ne: userId } });
+        if (existing) {
+          return res.status(409).json(fail('Email already in use by another account'));
+        }
+        updateData.email = normalizedEmail;
+      }
+    }
+    if (avatarUrl !== undefined) updateData.avatarUrl = avatarUrl; // allow updating or clearing avatar
+
+    const updatedUser = await User.findByIdAndUpdate(userId, updateData, { new: true }).select('-passwordHash');
+    
     res.status(200).json(success(updatedUser));
   } catch (err) {
     console.error('[UserController] Failed to update profile:', err);
@@ -523,20 +545,88 @@ const getUserById = async (req, res) => {
 
 const updateUser = async (req, res) => {
   try {
-    const tenantId = req.tenantId || req.headers['x-tenant-id'] || req.user?.institutionId;
-    const filter = { _id: req.params.id };
-    if (tenantId && !req.user?.roles?.includes('SUPERADMIN')) {
-      filter.institutionId = tenantId;
+    const callerId = req.user?.userId || req.user?.id;
+    const callerRoles = req.user?.roles || [];
+    const callerTenantId = req.tenantId || req.headers['x-tenant-id'] || req.user?.institutionId;
+    const isSuperAdmin = callerRoles.includes('SUPERADMIN');
+    const isAdmin = callerRoles.includes('ADMIN');
+    const isHod = callerRoles.includes('HOD');
+
+    if (!isSuperAdmin && !isAdmin && !isHod) {
+      return res.status(403).json(fail('Access Denied: You do not have permission to modify user credentials'));
     }
+
+    const targetUser = await User.findById(req.params.id);
+    if (!targetUser) {
+      return res.status(404).json(fail('User not found'));
+    }
+
+    // Determine target user's role assignments
+    const targetAssignments = await RoleAssignment.find({
+      userId: targetUser._id,
+      $or: [{ validTo: null }, { validTo: { $gt: new Date() } }]
+    });
+    const targetRoles = targetAssignments.map(a => a.role);
+
+    // Enforce downward hierarchy:
+    // 1. SuperAdmin: can edit anyone (SuperAdmin, Admin, HOD, etc.)
+    // 2. Admin: can edit HOD, Faculty, CC, Student within own institution (cannot edit SuperAdmin or Admin)
+    // 3. HOD: can edit Faculty, CC, Student within own department (cannot edit SuperAdmin, Admin, HOD)
+    if (isSuperAdmin) {
+      // SuperAdmin is at top of hierarchy
+    } else if (isAdmin) {
+      const targetInstId = targetUser.institutionId?.toString() || targetAssignments[0]?.institutionId?.toString();
+      if (!targetInstId || targetInstId !== callerTenantId?.toString()) {
+        return res.status(403).json(fail('Access Denied: User belongs to a different institution'));
+      }
+      if (targetRoles.includes('SUPERADMIN') || targetRoles.includes('ADMIN')) {
+        return res.status(403).json(fail('Access Denied: Admin cannot modify credentials of SuperAdmin or other Admins'));
+      }
+    } else if (isHod) {
+      const targetInstId = targetUser.institutionId?.toString() || targetAssignments[0]?.institutionId?.toString();
+      if (!targetInstId || targetInstId !== callerTenantId?.toString()) {
+        return res.status(403).json(fail('Access Denied: User belongs to a different institution'));
+      }
+      if (targetRoles.includes('SUPERADMIN') || targetRoles.includes('ADMIN') || targetRoles.includes('HOD')) {
+        return res.status(403).json(fail('Access Denied: HOD can only modify credentials of staff/students in their department'));
+      }
+
+      // Check caller's active HOD department
+      const callerHod = await RoleAssignment.findOne({
+        userId: callerId,
+        role: 'HOD',
+        $or: [{ validTo: null }, { validTo: { $gt: new Date() } }]
+      });
+      const callerDeptId = callerHod?.departmentId?.toString();
+      if (!callerDeptId) {
+        return res.status(403).json(fail('Access Denied: HOD has no active department assignment'));
+      }
+
+      const isSameDept = targetAssignments.some(a => a.departmentId?.toString() === callerDeptId);
+      if (!isSameDept) {
+        return res.status(403).json(fail('Access Denied: User does not belong to your department'));
+      }
+    }
+
     const updateData = {};
     if (req.body.name) updateData.name = req.body.name.trim();
+    if (req.body.email) {
+      const newEmail = req.body.email.trim().toLowerCase();
+      if (newEmail !== targetUser.email) {
+        const existing = await User.findOne({ email: newEmail, _id: { $ne: targetUser._id } });
+        if (existing) {
+          return res.status(409).json(fail('Email already in use by another user'));
+        }
+        updateData.email = newEmail;
+      }
+    }
     if (req.body.avatarUrl !== undefined) updateData.avatarUrl = req.body.avatarUrl;
     if (req.body.isActive !== undefined) updateData.isActive = req.body.isActive;
 
-    const updatedUser = await User.findOneAndUpdate(filter, updateData, { new: true }).select('-passwordHash').lean();
-    if (!updatedUser) {
-      return res.status(404).json(fail('User not found'));
-    }
+    const updatedUser = await User.findByIdAndUpdate(targetUser._id, updateData, { new: true })
+      .select('-passwordHash')
+      .lean();
+
     res.status(200).json(success(updatedUser));
   } catch (err) {
     console.error('[UserController] Failed to update user:', err);

@@ -71,7 +71,7 @@ export default function App() {
 
   return (
     <ToastProvider>
-      <BrowserRouter>
+      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <GlobalSearch />
         <Suspense fallback={<AppLoadingFallback />}>
           <Routes>
@@ -104,6 +104,14 @@ export default function App() {
                 />
                 <Route
                   path="/superadmin/institutions/:id"
+                  element={
+                    <ProtectedRoute allowedRoles={['SUPERADMIN']}>
+                      <InstitutionSettings />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/superadmin/settings"
                   element={
                     <ProtectedRoute allowedRoles={['SUPERADMIN']}>
                       <InstitutionSettings />

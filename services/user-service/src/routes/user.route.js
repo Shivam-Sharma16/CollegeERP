@@ -30,7 +30,7 @@ router.get('/students', requirePermission('read', 'Section'), userController.lis
 
 router.get('/', userController.listUsers);
 router.get('/:id', userController.getUserById);
-router.patch('/:id', requirePermission('write', 'Institution'), userController.updateUser);
+router.patch('/:id', userController.updateUser);
 router.delete('/:id', requirePermission('write', 'Institution'), userController.deleteUser);
 
 module.exports = router;

@@ -130,28 +130,39 @@ export function DashboardShell({ title, subtitle, icon, children }) {
 
   return (
     <div className={styles.layout}>
+      {/* ── Mobile Dimmed Backdrop Scrim ─────────────────────────────────── */}
+      {mobileMenuOpen && (
+        <div 
+          className={styles.mobileBackdrop} 
+          onClick={() => setMobileMenuOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+
       {/* ── Sidebar ─────────────────────────────────────────────────────── */}
       <aside 
         className={`${styles.sidebar} ${mobileMenuOpen ? styles.sidebarOpen : ''}`} 
-        style={{ width: collapsed ? '72px' : '240px' }}
+        style={{ '--sidebar-width': collapsed ? '72px' : '260px' }}
       >
         <div className={styles.sidebarHeader} style={{ justifyContent: collapsed ? 'center' : 'flex-start' }}>
-          <button 
-            className={styles.menuBtn} 
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            aria-label="Toggle menu"
-          >
-            <LucideIcons.Menu size={20} />
-          </button>
           {!collapsed && <span className={styles.sidebarIcon}>{icon}</span>}
           {!collapsed && <span className={styles.sidebarTitle}>{title}</span>}
           
           <button 
+            className={styles.collapseToggleBtn}
             onClick={() => dispatch(toggleSidebar())} 
-            style={{ marginLeft: collapsed ? '0' : 'auto', background: 'transparent', color: 'var(--color-text-muted)', border: 'none', cursor: 'pointer' }}
             title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
             {collapsed ? <LucideIcons.ChevronRight size={18} /> : <LucideIcons.ChevronLeft size={18} />}
+          </button>
+
+          {/* Close button inside sidebar on mobile */}
+          <button
+            className={styles.mobileCloseBtn}
+            onClick={() => setMobileMenuOpen(false)}
+            aria-label="Close sidebar menu"
+          >
+            <LucideIcons.X size={20} />
           </button>
         </div>
 
@@ -200,9 +211,18 @@ export function DashboardShell({ title, subtitle, icon, children }) {
       {/* ── Main content area ────────────────────────────────────────────── */}
       <main className={styles.main}>
         <header className={styles.header}>
-          <div className={styles.headerInfo}>
-            <h1 className={styles.pageTitle}>{title}</h1>
-            {subtitle && <p className={styles.pageSubtitle}>{subtitle}</p>}
+          <div className={styles.headerLeft}>
+            <button 
+              className={styles.mobileHamburgerBtn}
+              onClick={() => setMobileMenuOpen(true)}
+              aria-label="Open sidebar menu"
+            >
+              <LucideIcons.Menu size={22} />
+            </button>
+            <div className={styles.headerInfo}>
+              <h1 className={styles.pageTitle}>{title}</h1>
+              {subtitle && <p className={styles.pageSubtitle}>{subtitle}</p>}
+            </div>
           </div>
           <div className={styles.headerRight}>
             <NotificationDropdown />
