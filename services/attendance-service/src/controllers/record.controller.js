@@ -221,8 +221,62 @@ const getAttendanceTrend = async (req, res) => {
     if (tenantId && !req.user?.roles?.includes('SUPERADMIN') && mongoose.Types.ObjectId.isValid(tenantId)) {
       filter.institutionId = new mongoose.Types.ObjectId(tenantId);
     }
-    res.json(success([]));
+
+    if (req.query.teachingAssignmentIds) {
+      const rawIds = Array.isArray(req.query.teachingAssignmentIds)
+        ? req.query.teachingAssignmentIds
+        : req.query.teachingAssignmentIds.split(',');
+      const tIds = rawIds
+        .map(id => id.trim())
+        .filter(id => mongoose.Types.ObjectId.isValid(id))
+        .map(id => new mongoose.Types.ObjectId(id));
+
+      if (tIds.length === 0) {
+        return res.json(success({ trend: [] }));
+      }
+
+      const sessions = await LectureSession.find({
+        ...(filter.institutionId ? { institutionId: filter.institutionId } : {}),
+        teachingAssignmentId: { $in: tIds }
+      }).select('_id');
+
+      const sessionIds = sessions.map(s => s._id);
+      if (sessionIds.length === 0) {
+        return res.json(success({ trend: [] }));
+      }
+      filter.lectureSessionId = { $in: sessionIds };
+    }
+
+    const trendAgg = await AttendanceRecord.aggregate([
+      { $match: filter },
+      {
+        $group: {
+          _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+          totalRecords: { $sum: 1 },
+          presentRecords: { $sum: { $cond: [{ $eq: ["$status", "present"] }, 1, 0] } }
+        }
+      },
+      { $sort: { _id: 1 } },
+      {
+        $project: {
+          _id: 0,
+          date: "$_id",
+          totalRecords: 1,
+          presentRecords: 1,
+          percentage: {
+            $cond: [
+              { $gt: ["$totalRecords", 0] },
+              { $round: [{ $multiply: [{ $divide: ["$presentRecords", "$totalRecords"] }, 100] }, 1] },
+              0
+            ]
+          }
+        }
+      }
+    ]);
+
+    res.json(success({ trend: trendAgg || [] }));
   } catch (err) {
+    console.error('Failed to get attendance trend:', err);
     res.status(500).json(fail('Internal server error'));
   }
 };

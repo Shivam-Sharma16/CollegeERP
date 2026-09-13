@@ -1,11 +1,19 @@
 const express = require('express');
 const router = express.Router();
 const { authenticate } = require('@college-erp/shared-utils');
-const { enterMarks, enterMarksBulk, getMarksRecordById, listMarks, getReportsDistribution } = require('../controllers/marks.controller');
+const { 
+  enterMarks, 
+  enterMarksBulk, 
+  getMarksRecordById, 
+  listMarks, 
+  getReportsDistribution,
+  getAcademicPerformance
+} = require('../controllers/marks.controller');
 
 router.use(authenticate);
 
 // Reports endpoints
+router.get('/reports/academic-performance', getAcademicPerformance);
 router.get('/reports/distribution', getReportsDistribution);
 router.get('/reports/grade-distribution', getReportsDistribution);
 router.get('/reports/subject-averages', getReportsDistribution);

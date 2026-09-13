@@ -78,6 +78,11 @@ services:
       - "4002:4002"
     env_file:
       - ./services/user-service/.env
+    environment:
+      - ACADEMIC_SERVICE_URL=http://academic-service:4003
+      - ATTENDANCE_SERVICE_URL=http://attendance-service:4004
+      - RESULTS_SERVICE_URL=http://results-service:4005
+      - INTERNAL_SERVICE_KEY=/^FdEq-yhAvZ|c!g*O9dF:!on:9qZ1*1+G&*5_(v@p=
     depends_on:
       - mongo
 

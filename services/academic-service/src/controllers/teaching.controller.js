@@ -1,6 +1,7 @@
 const TeachingAssignment = require('../models/TeachingAssignment.model');
 const Section = require('../models/Section.model');
 const Semester = require('../models/Semester.model');
+const Subject = require('../models/Subject.model');
 const { success, fail, logAudit } = require('@college-erp/shared-utils');
 const { assertHODOwns } = require('../utils/assertOwnership');
 
@@ -68,13 +69,22 @@ const createTeachingAssignment = async (req, res) => {
 const listTeachingAssignments = async (req, res) => {
   try {
     const tenantId = req.tenantId || req.headers['x-tenant-id'] || req.user?.institutionId;
-    const { sectionId, facultyId, academicYearLabel } = req.query;
+    const { sectionId, facultyId, academicYearLabel, departmentId, subjectId } = req.query;
     const filter = {};
     if (sectionId) filter.sectionId = sectionId;
     if (facultyId) filter.facultyId = facultyId;
     if (academicYearLabel) filter.academicYearLabel = academicYearLabel;
+    if (subjectId) filter.subjectId = subjectId;
     if (tenantId && !req.user?.roles?.includes('SUPERADMIN')) {
       filter.institutionId = tenantId;
+    }
+
+    if (departmentId) {
+      const subjectFilter = { departmentId };
+      if (filter.institutionId) subjectFilter.institutionId = filter.institutionId;
+      const subjects = await Subject.find(subjectFilter).select('_id');
+      const sIds = subjects.map(s => s._id);
+      filter.subjectId = { $in: sIds };
     }
 
     const assignments = await TeachingAssignment.find(filter);

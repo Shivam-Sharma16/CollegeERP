@@ -205,4 +205,90 @@ const getReportsDistribution = async (req, res) => {
   }
 };
 
-module.exports = { enterMarks, enterMarksBulk, getMarksRecordById, listMarks, getReportsDistribution };
+const getAcademicPerformance = async (req, res) => {
+  try {
+    const tenantId = req.tenantId || req.headers['x-tenant-id'] || req.user?.institutionId;
+    const filter = {};
+    if (tenantId && !req.user?.roles?.includes('SUPERADMIN') && mongoose.Types.ObjectId.isValid(tenantId)) {
+      filter.institutionId = new mongoose.Types.ObjectId(tenantId);
+    }
+
+    if (req.query.subjectIds) {
+      const rawIds = Array.isArray(req.query.subjectIds)
+        ? req.query.subjectIds
+        : req.query.subjectIds.split(',');
+      const sIds = rawIds
+        .map(id => id.trim())
+        .filter(id => mongoose.Types.ObjectId.isValid(id))
+        .map(id => new mongoose.Types.ObjectId(id));
+
+      if (sIds.length === 0) {
+        return res.json(success({ trend: [] }));
+      }
+
+      const examTypes = await ExamType.find({
+        ...(filter.institutionId ? { institutionId: filter.institutionId } : {}),
+        subjectId: { $in: sIds }
+      }).select('_id');
+
+      const examTypeIds = examTypes.map(e => e._id);
+      if (examTypeIds.length === 0) {
+        return res.json(success({ trend: [] }));
+      }
+      filter.examTypeId = { $in: examTypeIds };
+    }
+
+    const trend = await MarksRecord.aggregate([
+      { $match: filter },
+      {
+        $lookup: {
+          from: 'examtypes',
+          localField: 'examTypeId',
+          foreignField: '_id',
+          as: 'exam'
+        }
+      },
+      { $unwind: '$exam' },
+      {
+        $group: {
+          _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+          totalEvaluations: { $sum: 1 },
+          avgMarks: { $avg: '$marksObtained' },
+          avgPercentage: {
+            $avg: {
+              $cond: [
+                { $gt: ['$exam.maxMarks', 0] },
+                { $multiply: [{ $divide: ['$marksObtained', '$exam.maxMarks'] }, 100] },
+                0
+              ]
+            }
+          }
+        }
+      },
+      { $sort: { _id: 1 } },
+      {
+        $project: {
+          _id: 0,
+          date: '$_id',
+          totalEvaluations: 1,
+          avgMarks: { $round: ['$avgMarks', 2] },
+          avgPercentage: { $round: ['$avgPercentage', 2] }
+        }
+      }
+    ]);
+
+    res.json(success({ trend: trend || [] }));
+  } catch (err) {
+    console.error('Failed to get academic performance:', err);
+    res.status(500).json(fail('Internal server error'));
+  }
+};
+
+module.exports = {
+  enterMarks,
+  enterMarksBulk,
+  getMarksRecordById,
+  listMarks,
+  getReportsDistribution,
+  getAcademicPerformance
+};
