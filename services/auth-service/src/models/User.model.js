@@ -15,7 +15,9 @@ const userSchema = new mongoose.Schema({
     default: null,
     index: true
   },
-  isActive: { type: Boolean, default: true }
+  isActive: { type: Boolean, default: true },
+  avatarUrl: { type: String, default: null },
+  phone: { type: String }
 }, {
   timestamps: true
 });

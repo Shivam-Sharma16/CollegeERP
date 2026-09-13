@@ -24,8 +24,8 @@ export default defineConfig({
     allowedHosts: true,
     proxy: {
       '/api': {
-        target: 'http://localhost:4000',
-        changeOrigin: false,
+        target: process.env.VITE_API_PROXY_TARGET || 'http://localhost:4000',
+        changeOrigin: true,
         configure: (proxy) => {
           proxy.on('proxyReq', (proxyReq, req) => {
             if (req.headers.host) {

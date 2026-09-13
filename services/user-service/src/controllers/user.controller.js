@@ -236,6 +236,20 @@ const listStudents = async (req, res) => {
   }
 };
 
+const getOwnProfile = async (req, res) => {
+  try {
+    const userId = req.user.userId || req.user.id;
+    const user = await User.findById(userId).select('-passwordHash').lean();
+    if (!user) {
+      return res.status(404).json(fail('User not found'));
+    }
+    res.status(200).json(success(user));
+  } catch (err) {
+    console.error('[UserController] Failed to get own profile:', err);
+    res.status(500).json(fail('Internal server error'));
+  }
+};
+
 const updateOwnProfile = async (req, res) => {
   try {
     const userId = req.user.userId || req.user.id;
@@ -709,6 +723,7 @@ module.exports = {
   listFaculty,
   listCC,
   listUsers,
+  getOwnProfile,
   updateOwnProfile,
   searchUsers,
   getUserById,

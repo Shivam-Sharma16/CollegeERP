@@ -26,4 +26,10 @@ router.get('/defaulters', authenticate, requirePermission('read', 'FeeStructure'
 // GET /payments/:id/receipt
 router.get('/payments/:id/receipt', authenticate, ctrl.getReceipt);
 
+// GET /collection-summary (Admin dashboard metrics)
+router.get('/collection-summary', authenticate, ctrl.getCollectionSummary);
+
+// GET /reports/collection-trend (Admin reports)
+router.get('/reports/collection-trend', authenticate, ctrl.getCollectionTrend);
+
 module.exports = router;

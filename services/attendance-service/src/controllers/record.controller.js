@@ -151,5 +151,88 @@ const overrideRecord = async (req, res) => {
   }
 };
 
-module.exports = { overrideRecord, listOwnRecords, getRecordById, getOwnSummary };
+/**
+ * GET /institution-summary
+ * Admin-facing institution-wide attendance summary & trend.
+ */
+const getInstitutionSummary = async (req, res) => {
+  try {
+    const tenantId = req.tenantId || req.headers['x-tenant-id'] || req.user?.institutionId;
+    const filter = {};
+    if (tenantId && !req.user?.roles?.includes('SUPERADMIN') && mongoose.Types.ObjectId.isValid(tenantId)) {
+      filter.institutionId = new mongoose.Types.ObjectId(tenantId);
+    }
+
+    const totalRecords = await AttendanceRecord.countDocuments(filter);
+    const presentRecords = await AttendanceRecord.countDocuments({
+      ...filter,
+      status: 'present'
+    });
+
+    const percentage = totalRecords > 0 ? Math.round((presentRecords / totalRecords) * 100) : 0;
+
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    const trendAgg = await AttendanceRecord.aggregate([
+      { $match: { ...filter, createdAt: { $gte: sevenDaysAgo } } },
+      {
+        $group: {
+          _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+          total: { $sum: 1 },
+          present: { $sum: { $cond: [{ $eq: ["$status", "present"] }, 1, 0] } }
+        }
+      },
+      { $sort: { _id: 1 } },
+      {
+        $project: {
+          _id: 0,
+          date: "$_id",
+          value: {
+            $cond: [
+              { $gt: ["$total", 0] },
+              { $round: [{ $multiply: [{ $divide: ["$present", "$total"] }, 100] }, 0] },
+              0
+            ]
+          }
+        }
+      }
+    ]);
+
+    res.json(success({
+      percentage,
+      totalRecords,
+      presentRecords,
+      trend: trendAgg || []
+    }));
+  } catch (err) {
+    console.error('Failed to get institution summary:', err);
+    res.status(500).json(fail('Internal server error'));
+  }
+};
+
+/**
+ * GET /reports/trend
+ */
+const getAttendanceTrend = async (req, res) => {
+  try {
+    const tenantId = req.tenantId || req.headers['x-tenant-id'] || req.user?.institutionId;
+    const filter = {};
+    if (tenantId && !req.user?.roles?.includes('SUPERADMIN') && mongoose.Types.ObjectId.isValid(tenantId)) {
+      filter.institutionId = new mongoose.Types.ObjectId(tenantId);
+    }
+    res.json(success([]));
+  } catch (err) {
+    res.status(500).json(fail('Internal server error'));
+  }
+};
+
+module.exports = { 
+  overrideRecord, 
+  listOwnRecords, 
+  getRecordById, 
+  getOwnSummary,
+  getInstitutionSummary,
+  getAttendanceTrend
+};
 

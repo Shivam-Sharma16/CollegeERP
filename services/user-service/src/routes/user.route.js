@@ -11,6 +11,7 @@ router.use(authenticate);
 // The controllers will enforce the strict downward hierarchy.
 // Search and Profile
 router.get('/search', userController.searchUsers);
+router.get('/me', userController.getOwnProfile);
 router.patch('/me', userController.updateOwnProfile);
 
 router.post('/admins', requirePermission('write', 'Institution'), userController.createAdmin);

@@ -227,7 +227,8 @@ export const loadTheme = createAsyncThunk('theme/load', async (targetSubdomain) 
 
   if (subdomain) {
     try {
-      const res = await fetch(`/api/institutions/branding?subdomain=${encodeURIComponent(subdomain)}`, {
+      const baseUrl = import.meta.env.VITE_API_URL ?? 'http://localhost:4000';
+      const res = await fetch(`${baseUrl}/api/institutions/branding?subdomain=${encodeURIComponent(subdomain)}`, {
         headers: {
           'x-tenant-subdomain': subdomain,
         },

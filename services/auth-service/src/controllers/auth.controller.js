@@ -176,6 +176,7 @@ const login = async (req, res) => {
           email: superAdmin.email,
           roles: superAdmin.roles,
           institutionId: null,
+          avatarUrl: superAdmin.avatarUrl || null,
         };
 
         return res.status(200).json({
@@ -249,7 +250,8 @@ const login = async (req, res) => {
       name: user.name,
       email: user.email,
       roles: user.roles,
-      institutionId: resolvedInstId
+      institutionId: resolvedInstId,
+      avatarUrl: user.avatarUrl || null,
     };
 
     res.status(200).json({
@@ -326,7 +328,8 @@ const superadminLogin = async (req, res) => {
       name: user.name,
       email: user.email,
       roles: user.roles,
-      institutionId: null
+      institutionId: null,
+      avatarUrl: user.avatarUrl || null,
     };
 
     res.status(200).json({
@@ -379,7 +382,8 @@ const refresh = async (req, res) => {
       name: user.name,
       email: user.email,
       roles: user.roles,
-      institutionId
+      institutionId,
+      avatarUrl: user.avatarUrl || null,
     };
 
     res.status(200).json({

@@ -425,3 +425,76 @@ exports.initiatePayment = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+// GET /collection-summary
+exports.getCollectionSummary = async (req, res) => {
+  try {
+    const tenantId = req.tenantId || req.headers['x-tenant-id'] || req.user?.institutionId;
+    const filter = { status: 'paid' };
+    if (tenantId && !req.user?.roles?.includes('SUPERADMIN') && mongoose.Types.ObjectId.isValid(tenantId)) {
+      filter.institutionId = new mongoose.Types.ObjectId(tenantId);
+    }
+
+    const totalAgg = await Payment.aggregate([
+      { $match: filter },
+      { $group: { _id: null, total: { $sum: '$amount' }, count: { $sum: 1 } } }
+    ]);
+
+    const totalAmount = totalAgg[0]?.total || 0;
+
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    const trend = await Payment.aggregate([
+      { $match: { ...filter, paidAt: { $gte: thirtyDaysAgo } } },
+      {
+        $group: {
+          _id: { $dateToString: { format: "%Y-%m-%d", date: "$paidAt" } },
+          value: { $sum: "$amount" },
+          count: { $sum: 1 }
+        }
+      },
+      { $sort: { _id: 1 } },
+      { $project: { _id: 0, date: "$_id", value: 1, count: 1 } }
+    ]);
+
+    res.status(200).json({
+      success: true,
+      data: {
+        total: totalAmount,
+        trend: trend || []
+      }
+    });
+  } catch (error) {
+    console.error('Failed to get collection summary:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// GET /reports/collection-trend
+exports.getCollectionTrend = async (req, res) => {
+  try {
+    const tenantId = req.tenantId || req.headers['x-tenant-id'] || req.user?.institutionId;
+    const filter = { status: 'paid' };
+    if (tenantId && !req.user?.roles?.includes('SUPERADMIN') && mongoose.Types.ObjectId.isValid(tenantId)) {
+      filter.institutionId = new mongoose.Types.ObjectId(tenantId);
+    }
+
+    const trend = await Payment.aggregate([
+      { $match: filter },
+      {
+        $group: {
+          _id: { $dateToString: { format: "%Y-%m-%d", date: "$paidAt" } },
+          value: { $sum: "$amount" },
+          count: { $sum: 1 }
+        }
+      },
+      { $sort: { _id: 1 } },
+      { $project: { _id: 0, date: "$_id", value: 1, count: 1 } }
+    ]);
+
+    res.status(200).json({ success: true, data: trend || [] });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};

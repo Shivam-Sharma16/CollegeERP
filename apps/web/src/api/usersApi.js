@@ -18,16 +18,24 @@ import { baseQuery } from './baseQuery';
 export const usersApi = createApi({
   reducerPath: 'usersApi',
   baseQuery,
-  tagTypes: ['Admin', 'Hod', 'Faculty', 'Cc', 'Student'],
+  tagTypes: ['Profile', 'Admin', 'Hod', 'Faculty', 'Cc', 'Student'],
   keepUnusedDataFor: 300,
 
   endpoints: (builder) => ({
 
     // ── CREATE / UPDATE ───────────────────────────────────────────────────────
 
+    /** GET /api/users/me */
+    getOwnProfile: builder.query({
+      query: () => '/api/users/me',
+      providesTags: ['Profile'],
+      transformResponse: (response) => response?.data ?? response,
+    }),
+
     /** PATCH /api/users/me */
     updateOwnProfile: builder.mutation({
       query: (body) => ({ url: '/api/users/me', method: 'PATCH', body }),
+      invalidatesTags: ['Profile'],
     }),
 
     /** PATCH /api/users/:id — Hierarchy-governed user credential update */
@@ -151,6 +159,7 @@ export const usersApi = createApi({
 });
 
 export const {
+  useGetOwnProfileQuery,
   useUpdateOwnProfileMutation,
   useUpdateUserMutation,
   useDeleteUserMutation,

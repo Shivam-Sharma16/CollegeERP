@@ -192,4 +192,17 @@ const listMarks = async (req, res) => {
   }
 };
 
-module.exports = { enterMarks, enterMarksBulk, getMarksRecordById, listMarks };
+const getReportsDistribution = async (req, res) => {
+  try {
+    const tenantId = req.tenantId || req.headers['x-tenant-id'] || req.user?.institutionId;
+    const filter = {};
+    if (tenantId && !req.user?.roles?.includes('SUPERADMIN') && mongoose.Types.ObjectId.isValid(tenantId)) {
+      filter.institutionId = new mongoose.Types.ObjectId(tenantId);
+    }
+    res.json(success([]));
+  } catch (err) {
+    res.status(500).json(fail('Internal server error'));
+  }
+};
+
+module.exports = { enterMarks, enterMarksBulk, getMarksRecordById, listMarks, getReportsDistribution };

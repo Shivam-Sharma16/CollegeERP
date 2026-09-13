@@ -1,10 +1,12 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
 import * as LucideIcons from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useLogoutMutation } from '../api/authApi';
+import { useGetOwnProfileQuery } from '../api/usersApi';
+import { setCredentials } from '../features/ui/authSlice';
 import { selectSidebarCollapsed, toggleSidebar } from '../features/ui/sidebarSlice';
 import { NAV_ITEMS } from '../config/navigation';
 import styles from './DashboardShell.module.css';
@@ -26,7 +28,7 @@ function Icon({ name }) {
 }
 
 export function DashboardShell({ title, subtitle, icon, children }) {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useDispatch();
@@ -34,6 +36,23 @@ export function DashboardShell({ title, subtitle, icon, children }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
   const collapsed = useSelector(selectSidebarCollapsed);
+
+  // Fetch freshest profile info including avatarUrl from user-service
+  const { data: profileRes } = useGetOwnProfileQuery(undefined, { skip: !user });
+  const profileData = profileRes?.data || profileRes;
+  const effectiveAvatar = profileData?.avatarUrl || user?.avatarUrl || null;
+
+  // Keep authSlice synced with freshest avatar if available
+  useEffect(() => {
+    if (profileData?.avatarUrl && profileData.avatarUrl !== user?.avatarUrl) {
+      dispatch(
+        setCredentials({
+          user: { ...user, avatarUrl: profileData.avatarUrl },
+          token,
+        })
+      );
+    }
+  }, [profileData?.avatarUrl, user, token, dispatch]);
   
   // UI Demo state
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -84,7 +103,7 @@ export function DashboardShell({ title, subtitle, icon, children }) {
     return (
       <button
         key={item.key}
-        className={`${styles.navItem} ${isActive ? styles.navItemActive : ''}`}
+        className={`${styles.navItem} ${isActive ? styles.navItemActive : ''} ${collapsed ? styles.navItemCollapsed : ''}`}
         onClick={() => {
           setMobileMenuOpen(false);
           navigate(targetPath);
@@ -129,7 +148,10 @@ export function DashboardShell({ title, subtitle, icon, children }) {
   };
 
   return (
-    <div className={styles.layout}>
+    <div 
+      className={styles.layout}
+      style={{ '--sidebar-width': collapsed ? '72px' : '260px' }}
+    >
       {/* ── Mobile Dimmed Backdrop Scrim ─────────────────────────────────── */}
       {mobileMenuOpen && (
         <div 
@@ -141,15 +163,20 @@ export function DashboardShell({ title, subtitle, icon, children }) {
 
       {/* ── Sidebar ─────────────────────────────────────────────────────── */}
       <aside 
-        className={`${styles.sidebar} ${mobileMenuOpen ? styles.sidebarOpen : ''}`} 
-        style={{ '--sidebar-width': collapsed ? '72px' : '260px' }}
+        className={`${styles.sidebar} ${mobileMenuOpen ? styles.sidebarOpen : ''} ${collapsed ? styles.sidebarCollapsed : ''}`}
       >
-        <div className={styles.sidebarHeader} style={{ justifyContent: collapsed ? 'center' : 'flex-start' }}>
+        <div 
+          className={styles.sidebarHeader} 
+          style={{ 
+            justifyContent: collapsed ? 'center' : 'flex-start',
+            padding: collapsed ? 'var(--spacing-4) 0' : undefined 
+          }}
+        >
           {!collapsed && <span className={styles.sidebarIcon}>{icon}</span>}
           {!collapsed && <span className={styles.sidebarTitle}>{title}</span>}
           
           <button 
-            className={styles.collapseToggleBtn}
+            className={`${styles.collapseToggleBtn} ${collapsed ? styles.collapseToggleBtnCollapsed : ''}`}
             onClick={() => dispatch(toggleSidebar())} 
             title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
@@ -185,11 +212,21 @@ export function DashboardShell({ title, subtitle, icon, children }) {
           </AnimatePresence>
         </nav>
 
-        <div className={styles.sidebarFooter} style={{ padding: collapsed ? 'var(--spacing-4) 0' : 'var(--spacing-4)', alignItems: collapsed ? 'center' : 'stretch' }}>
+        <div 
+          className={styles.sidebarFooter} 
+          style={{ 
+            padding: collapsed ? 'var(--spacing-4) var(--spacing-2)' : 'var(--spacing-4)', 
+            alignItems: collapsed ? 'center' : 'stretch' 
+          }}
+        >
           {!collapsed && (
             <div className={styles.userInfo}>
               <div className={styles.avatar}>
-                {(user?.name ?? 'U')[0].toUpperCase()}
+                {effectiveAvatar ? (
+                  <img src={effectiveAvatar} alt={user?.name ?? 'User'} className={styles.avatarImg} />
+                ) : (
+                  (user?.name ?? 'U')[0].toUpperCase()
+                )}
               </div>
               <div>
                 <div className={styles.userName}>{user?.name ?? 'User'}</div>
@@ -198,11 +235,23 @@ export function DashboardShell({ title, subtitle, icon, children }) {
             </div>
           )}
           {collapsed && (
-            <div className={styles.avatar} style={{ marginBottom: '16px' }} title={user?.name ?? 'User'}>
-              {(user?.name ?? 'U')[0].toUpperCase()}
+            <div 
+              className={styles.avatar} 
+              style={{ margin: '0 auto 12px' }} 
+              title={user?.name ?? 'User'}
+            >
+              {effectiveAvatar ? (
+                <img src={effectiveAvatar} alt={user?.name ?? 'User'} className={styles.avatarImg} />
+              ) : (
+                (user?.name ?? 'U')[0].toUpperCase()
+              )}
             </div>
           )}
-          <button className={styles.logoutBtn} onClick={handleLogout} title={collapsed ? "Sign out" : undefined}>
+          <button 
+            className={`${styles.logoutBtn} ${collapsed ? styles.logoutBtnCollapsed : ''}`} 
+            onClick={handleLogout} 
+            title={collapsed ? "Sign out" : undefined}
+          >
             {collapsed ? <LucideIcons.LogOut size={16} style={{ margin: '0 auto' }} /> : 'Sign out'}
           </button>
         </div>
@@ -229,6 +278,20 @@ export function DashboardShell({ title, subtitle, icon, children }) {
             <div className={styles.roleBadge}>
               {user?.roles?.join(', ') ?? ''}
             </div>
+            <button 
+              className={styles.headerProfileBtn} 
+              onClick={() => navigate(slug ? `/inst/${slug}/profile` : '/profile')}
+              title="View Profile"
+              aria-label="View Profile"
+            >
+              <div className={styles.headerAvatar}>
+                {effectiveAvatar ? (
+                  <img src={effectiveAvatar} alt={user?.name ?? 'User'} className={styles.avatarImg} />
+                ) : (
+                  (user?.name ?? 'U')[0].toUpperCase()
+                )}
+              </div>
+            </button>
           </div>
         </header>
 

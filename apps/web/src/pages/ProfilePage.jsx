@@ -1,9 +1,9 @@
-import { useState, useRef, useMemo } from 'react';
+import { useState, useRef, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { useAuth } from '../hooks/useAuth';
 import { DashboardShell } from '../components/DashboardShell';
-import { useUpdateOwnProfileMutation } from '../api/usersApi';
+import { useUpdateOwnProfileMutation, useGetOwnProfileQuery } from '../api/usersApi';
 import { setCredentials } from '../features/ui/authSlice';
 import { useToast } from '../components/ui/ToastContext';
 import { PageTransition } from '../components/ui/PageTransition';
@@ -35,6 +35,8 @@ export default function ProfilePage() {
   const { showToast } = useToast();
 
   const [updateProfile, { isLoading: isUpdating }] = useUpdateOwnProfileMutation();
+  const { data: profileRes } = useGetOwnProfileQuery(undefined, { skip: !user });
+  const profileData = profileRes?.data || profileRes;
 
   const userRoles = useMemo(() => {
     if (Array.isArray(user?.roles) && user.roles.length > 0) return user.roles;
@@ -57,6 +59,17 @@ export default function ProfilePage() {
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
 
   const fileInputRef = useRef(null);
+
+  // Sync state if profileData or user changes and user has not typed in form
+  useEffect(() => {
+    const freshName = profileData?.name || user?.name;
+    const freshEmail = profileData?.email || user?.email;
+    const freshAvatar = profileData?.avatarUrl || user?.avatarUrl;
+
+    if (freshName && !selectedFile && !name) setName(freshName);
+    if (freshEmail && !selectedFile && !email) setEmail(freshEmail);
+    if (freshAvatar && !selectedFile) setAvatarPreview(freshAvatar);
+  }, [profileData, user, selectedFile]);
 
   // Compute if form has modified fields
   const isDirty = useMemo(() => {
@@ -119,17 +132,19 @@ export default function ProfilePage() {
 
       const updatedUser = res?.data || res;
       if (updatedUser) {
+        const freshAvatar = updatedUser.avatarUrl || payload.avatarUrl || avatarPreview;
         dispatch(
           setCredentials({
             user: {
               ...user,
               name: updatedUser.name || user?.name,
               email: updatedUser.email || user?.email,
-              avatarUrl: updatedUser.avatarUrl || avatarPreview,
+              avatarUrl: freshAvatar,
             },
             token,
           })
         );
+        setAvatarPreview(freshAvatar);
       }
 
       setSelectedFile(null);
