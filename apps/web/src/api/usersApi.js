@@ -175,6 +175,17 @@ export const usersApi = createApi({
       }),
       transformResponse: (response) => response?.data ?? response ?? [],
     }),
+
+    /** POST /api/users/bulk-import — bulk import users via CSV */
+    bulkImport: builder.mutation({
+      query: (body) => ({
+        url: '/api/users/bulk-import',
+        method: 'POST',
+        body: typeof body === 'string' ? { csv: body } : body,
+      }),
+      invalidatesTags: ['Admin', 'Hod', 'Faculty', 'Cc', 'Student'],
+      transformResponse: (response) => response?.data ?? response,
+    }),
   }),
 });
 
@@ -195,4 +206,5 @@ export const {
   useListSectionStudentsQuery,
   useAssignCustomRoleMutation,
   useSearchUsersQuery,
+  useBulkImportMutation,
 } = usersApi;

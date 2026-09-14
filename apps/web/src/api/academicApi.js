@@ -128,6 +128,17 @@ export const academicApi = createApi({
       query: () => '/api/academic/sections/my-section',
       providesTags: ['Section'],
     }),
+
+    // ── ROLLOVER ───────────────────────────────────────────────────────────────
+    rollover: builder.mutation({
+      query: (body) => ({
+        url: '/api/academic/rollover',
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: ['Year', 'Semester', 'Section'],
+      transformResponse: (response) => response?.data ?? response,
+    }),
   }),
 });
 
@@ -154,4 +165,6 @@ export const {
   useDeleteSubjectMutation,
   // CC
   useGetMySectionQuery,
+  // Rollover
+  useRolloverMutation,
 } = academicApi;

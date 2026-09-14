@@ -10,6 +10,7 @@ export const NAV_ITEMS = [
   { key: "roles",                label: "Roles & Permissions", icon: "Shield",     path: "/admin/roles",             roles: ["admin", "superadmin"] },
   { key: "admin-reports",        label: "Reports",             icon: "BarChart",   path: "/admin/reports",           roles: ["admin"] },
   { key: "fee-policy",           label: "Fee Policy",          icon: "Wallet",     path: "/admin/fee-policy",        roles: ["admin"] },
+  { key: "operations",           label: "Operations & People", icon: "UserCheck",   path: "/admin/operations",        roles: ["admin", "superadmin"] },
   { key: "inst-notices",         label: "Institution Notices",  icon: "Megaphone",  path: "/admin/notices",           roles: ["admin"] },
 
   // HOD
