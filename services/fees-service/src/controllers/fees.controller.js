@@ -8,13 +8,14 @@ const feesService = require('../services/fees.service');
 // POST /fee-structures
 exports.createFeeStructure = async (req, res) => {
   try {
-    const { departmentId, year, studentGroup, totalAmount, installments } = req.body;
+    const { departmentId, year, semester, studentGroup, feeGroup, totalAmount, installments } = req.body;
     const tenantId = req.tenantId || req.headers['x-tenant-id'] || req.user?.institutionId || req.body.institutionId;
 
     const feeStructure = new FeeStructure({
       departmentId,
       year,
-      studentGroup: (studentGroup || 'general').trim().toLowerCase(),
+      semester: semester ? Number(semester) : null,
+      studentGroup: (studentGroup || feeGroup || 'general').trim().toLowerCase(),
       totalAmount,
       installments,
       ...(tenantId ? { institutionId: tenantId } : {})

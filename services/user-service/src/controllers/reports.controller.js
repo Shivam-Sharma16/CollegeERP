@@ -189,14 +189,20 @@ const getAcademicPerformance = async (req, res) => {
 const getFacultyWorkload = async (req, res) => {
   try {
     const tenantId = req.tenantId || req.headers['x-tenant-id'] || req.user?.institutionId;
+    const { departmentId } = req.query;
     const token = req.headers.authorization;
     const filter = (tenantId && !req.user?.roles?.includes('SUPERADMIN'))
       ? { institutionId: new mongoose.Types.ObjectId(tenantId) }
       : {};
 
+    if (departmentId && mongoose.Types.ObjectId.isValid(departmentId)) {
+      filter.departmentId = new mongoose.Types.ObjectId(departmentId);
+    }
+
     // 1. Fetch teaching assignments across all faculty from academic-service
     const assignments = await externalReporting.fetchTeachingAssignments({
       tenantId,
+      departmentId,
       token
     });
 

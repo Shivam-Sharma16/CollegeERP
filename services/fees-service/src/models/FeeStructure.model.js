@@ -9,6 +9,7 @@ const feeStructureSchema = new mongoose.Schema({
   },
   departmentId: { type: mongoose.Schema.Types.ObjectId, required: true },
   year: { type: Number, required: true },
+  semester: { type: Number, default: null },
   studentGroup: { 
     type: String, 
     default: 'general', 

@@ -2,6 +2,57 @@
   display: flex;
   flex-direction: column;
   gap: var(--spacing-6);
+  padding-bottom: var(--spacing-8);
+}
+
+.overviewStats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--spacing-4);
+}
+
+.statCard {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-4) var(--spacing-5);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-4);
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--transition);
+}
+
+.statCard:hover {
+  transform: translateY(-2px);
+}
+
+.statIcon {
+  width: 42px;
+  height: 42px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(99, 102, 241, 0.12);
+  color: var(--color-primary-light);
+}
+
+.statContent {
+  display: flex;
+  flex-direction: column;
+}
+
+.statValue {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--color-text);
+  line-height: 1.2;
+}
+
+.statLabel {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
 }
 
 .chartsGrid {
@@ -10,14 +61,8 @@
   gap: var(--spacing-6);
 }
 
-@media (min-width: 1024px) {
+@media (min-width: 900px) {
   .chartsGrid {
-    /* Top chart spans full width, bottom two split evenly */
-    grid-template-columns: 1fr 1fr;
-  }
-  
-  .chartsGrid > :first-child {
-    grid-column: 1 / -1;
-    height: 400px; /* Make the trend chart a bit taller */
+    grid-template-columns: repeat(2, 1fr);
   }
 }

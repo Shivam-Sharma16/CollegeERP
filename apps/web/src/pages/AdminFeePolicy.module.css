@@ -1,8 +1,45 @@
 .container {
-  max-width: 800px;
-  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-6);
+  padding-bottom: var(--spacing-8);
 }
 
+/* ── Top Tabs ─────────────────────────────────────────────────────────────── */
+.tabNav {
+  display: flex;
+  gap: var(--spacing-3);
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: var(--spacing-2);
+}
+
+.tabBtn {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  padding: var(--spacing-2) var(--spacing-4);
+  border-radius: var(--radius-sm);
+  background: none;
+  border: none;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.tabBtn:hover {
+  color: var(--color-text);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.tabBtnActive {
+  color: var(--color-primary-light);
+  background: rgba(99, 102, 241, 0.12);
+  font-weight: 600;
+}
+
+/* ── Card & Toolbar ───────────────────────────────────────────────────────── */
 .card {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
@@ -14,47 +51,31 @@
   gap: var(--spacing-5);
 }
 
-.header {
-  margin-bottom: var(--spacing-2);
-}
-
-.title {
-  font-size: var(--text-xl);
-  font-weight: 600;
-  color: var(--color-text);
-}
-
-.subtitle {
-  font-size: var(--text-sm);
-  color: var(--color-text-muted);
-  margin-top: var(--spacing-1);
-}
-
-.grid2 {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--spacing-4);
-}
-
-.field {
+.toolbar {
   display: flex;
-  flex-direction: column;
-  gap: var(--spacing-2);
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--spacing-3);
 }
 
-.field label {
-  font-size: var(--text-sm);
-  font-weight: 500;
-  color: var(--color-text-muted);
+.searchBox {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  width: 300px;
+  max-width: 100%;
 }
 
 .input {
+  width: 100%;
   padding: var(--spacing-2) var(--spacing-3);
-  border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
   background: var(--color-bg);
   color: var(--color-text);
-  font-size: var(--text-base);
+  font-size: 0.875rem;
+  font-family: inherit;
 }
 
 .input:focus {
@@ -62,136 +83,193 @@
   border-color: var(--color-primary);
 }
 
-.divider {
-  height: 1px;
-  background: var(--color-border);
-  margin: var(--spacing-2) 0;
+/* ── Badges ───────────────────────────────────────────────────────────────── */
+.groupBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
 }
 
-.installmentsSection {
+.badgeGeneral {
+  background: rgba(99, 102, 241, 0.15);
+  color: var(--color-primary-light);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+}
+
+.badgeTfws {
+  background: rgba(34, 197, 94, 0.15);
+  color: #4ade80;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.badgeManagement {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.badgeScst {
+  background: rgba(168, 85, 247, 0.15);
+  color: #c084fc;
+  border: 1px solid rgba(168, 85, 247, 0.3);
+}
+
+.badgeObc {
+  background: rgba(236, 72, 153, 0.15);
+  color: #f472b6;
+  border: 1px solid rgba(236, 72, 153, 0.3);
+}
+
+/* ── Defaulters Comparison Cards ─────────────────────────────────────────── */
+.comparisonStrip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--spacing-3);
+  margin-bottom: var(--spacing-2);
+}
+
+.comparisonCard {
+  background: var(--color-surface-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-3) var(--spacing-4);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  transition: transform var(--transition), border-color var(--transition);
+}
+
+.comparisonCard:hover {
+  transform: translateY(-2px);
+  border-color: var(--color-primary-light);
+}
+
+.comparisonCount {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-text);
+  line-height: 1.2;
+}
+
+.comparisonLabel {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  font-weight: 500;
+}
+
+/* ── Group Toggle Filter ─────────────────────────────────────────────────── */
+.groupToggleBar {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  flex-wrap: wrap;
+  padding: var(--spacing-2) 0;
+}
+
+.toggleLabel {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  margin-right: var(--spacing-2);
+  font-weight: 600;
+}
+
+.togglePill {
+  padding: 5px 12px;
+  border-radius: 9999px;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg);
+  color: var(--color-text-muted);
+  font-size: 0.825rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.togglePill:hover {
+  color: var(--color-text);
+  border-color: var(--color-primary-light);
+}
+
+.togglePillActive {
+  background: var(--color-primary);
+  color: #fff;
+  border-color: var(--color-primary);
+  font-weight: 600;
+}
+
+/* ── Modal & Installments Form ───────────────────────────────────────────── */
+.modalForm {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-4);
 }
 
-.installmentsHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.grid2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-3);
 }
 
-.sectionTitle {
-  font-size: var(--text-lg);
-  font-weight: 600;
-  color: var(--color-text);
+.grid3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: var(--spacing-3);
 }
 
-.validationBar {
-  padding: var(--spacing-3);
-  border-radius: var(--radius-sm);
+@media (max-width: 600px) {
+  .grid2, .grid3 {
+    grid-template-columns: 1fr;
+  }
+}
+
+.field {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-2);
-  font-size: var(--text-sm);
+  gap: var(--spacing-1);
 }
 
-.validBar {
-  background: color-mix(in srgb, var(--color-success) 10%, var(--color-bg));
-  border: 1px solid color-mix(in srgb, var(--color-success) 30%, transparent);
-  color: color-mix(in srgb, var(--color-success) 80%, black);
-}
-
-.invalidBar {
-  background: color-mix(in srgb, var(--color-danger) 10%, var(--color-bg));
-  border: 1px solid color-mix(in srgb, var(--color-danger) 30%, transparent);
-  color: var(--color-danger);
-}
-
-.validationText {
-  display: flex;
-  align-items: center;
-}
-
-.spacer {
-  margin: 0 var(--spacing-3);
-  opacity: 0.3;
-}
-
-.validationError {
+.label {
+  font-size: 0.825rem;
   font-weight: 600;
+  color: var(--color-text);
 }
 
 .installmentList {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-4);
+  gap: var(--spacing-2);
+  max-height: 220px;
+  overflow-y: auto;
+  padding-right: 4px;
 }
 
 .installmentRow {
   display: flex;
-  gap: var(--spacing-4);
-  align-items: flex-end;
-  background: var(--color-bg);
-  padding: var(--spacing-4);
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--color-border);
-}
-
-.instField {
-  display: flex;
-  flex-direction: column;
   gap: var(--spacing-2);
-  flex: 1;
-}
-
-.instField label {
-  font-size: var(--text-xs);
-  font-weight: 500;
-  color: var(--color-text-muted);
-}
-
-.checkboxField {
-  flex: 0 0 auto;
-  justify-content: center;
-  padding-bottom: var(--spacing-2);
-}
-
-.checkboxField label {
-  display: flex;
   align-items: center;
-  gap: var(--spacing-2);
-  cursor: pointer;
-  font-size: var(--text-sm);
 }
 
-.instAction {
-  padding-bottom: var(--spacing-1);
-}
-
-.removeBtn {
-  background: none;
-  border: none;
-  color: var(--color-text-muted);
-  cursor: pointer;
-  padding: var(--spacing-2);
+.statusBanner {
+  padding: var(--spacing-2) var(--spacing-3);
   border-radius: var(--radius-sm);
+  font-size: 0.825rem;
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  justify-content: center;
 }
 
-.removeBtn:hover:not(:disabled) {
-  color: var(--color-danger);
-  background: color-mix(in srgb, var(--color-danger) 10%, transparent);
+.statusMismatch {
+  background: rgba(239, 68, 68, 0.12);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.3);
 }
 
-.removeBtn:disabled {
-  opacity: 0.3;
-  cursor: not-allowed;
-}
-
-.actions {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: var(--spacing-4);
+.statusBalanced {
+  background: rgba(34, 197, 94, 0.12);
+  color: #4ade80;
+  border: 1px solid rgba(34, 197, 94, 0.3);
 }

@@ -2,9 +2,18 @@ import React from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 export function AttendanceTrendChart({ data }) {
+  const chartData = React.useMemo(() => {
+    if (!data) return [];
+    const list = Array.isArray(data) ? data : data.trend || [];
+    return list.map(item => ({
+      date: item.date || item.label || '',
+      percentage: Number(item.attendancePercentage ?? item.percentage ?? 0),
+    }));
+  }, [data]);
+
   return (
-    <ResponsiveContainer width="100%" height="100%">
-      <LineChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+    <ResponsiveContainer width="100%" height={260}>
+      <LineChart data={chartData} margin={{ top: 15, right: 15, left: -20, bottom: 5 }}>
         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border)" />
         <XAxis 
           dataKey="date" 
@@ -26,7 +35,7 @@ export function AttendanceTrendChart({ data }) {
             borderRadius: 'var(--radius-sm)',
             color: 'var(--color-text)'
           }}
-          itemStyle={{ color: 'var(--color-text)' }}
+          formatter={(val) => [`${val}%`, 'Attendance']}
         />
         <Line 
           type="monotone" 
