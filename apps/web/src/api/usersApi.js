@@ -155,6 +155,26 @@ export const usersApi = createApi({
       }),
       invalidatesTags: ['Admin', 'Hod', 'Faculty', 'Cc', 'Student'],
     }),
+
+    /** POST /api/users/:id/assign-custom-role — assign a custom role to user */
+    assignCustomRole: builder.mutation({
+      query: ({ userId, customRoleId, departmentId, sectionId, validFrom, validTo }) => ({
+        url: `/api/users/${userId}/assign-custom-role`,
+        method: 'POST',
+        body: { customRoleId, departmentId, sectionId, validFrom, validTo },
+      }),
+      invalidatesTags: ['Admin', 'Hod', 'Faculty', 'Cc', 'Student', { type: 'CustomRole', id: 'LIST' }],
+      transformResponse: (response) => response?.data ?? response,
+    }),
+
+    /** GET /api/users/search?q=:q — search users by query */
+    searchUsers: builder.query({
+      query: (q) => ({
+        url: '/api/users/search',
+        params: { q },
+      }),
+      transformResponse: (response) => response?.data ?? response ?? [],
+    }),
   }),
 });
 
@@ -173,4 +193,6 @@ export const {
   useListFacultyQuery,
   useListCcQuery,
   useListSectionStudentsQuery,
+  useAssignCustomRoleMutation,
+  useSearchUsersQuery,
 } = usersApi;

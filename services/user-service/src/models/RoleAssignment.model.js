@@ -8,6 +8,7 @@ const roleAssignmentSchema = new mongoose.Schema({
   institutionId: { type: mongoose.Schema.Types.ObjectId, ref: 'Institution' },
   departmentId: { type: mongoose.Schema.Types.ObjectId, ref: 'Department' },
   sectionId: { type: mongoose.Schema.Types.ObjectId },
+  semesterId: { type: mongoose.Schema.Types.ObjectId, default: null },
   validFrom: { type: Date, required: true, default: Date.now },
   validTo: { type: Date, default: null } // null = current/ongoing
 }, {

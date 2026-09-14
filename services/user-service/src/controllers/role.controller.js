@@ -96,9 +96,33 @@ const listCustomRoles = async (req, res) => {
 
     const roles = await CustomRole.find(filter)
       .populate('createdBy', 'name email')
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
 
-    return res.json(success(roles));
+    const roleIds = roles.map(r => r._id);
+    const now = new Date();
+    const activeAssignments = await RoleAssignment.find({
+      customRoleId: { $in: roleIds },
+      $or: [
+        { validTo: null },
+        { validTo: { $gt: now } }
+      ]
+    }).lean();
+
+    const countMap = {};
+    activeAssignments.forEach(a => {
+      const rId = a.customRoleId.toString();
+      if (!countMap[rId]) countMap[rId] = new Set();
+      countMap[rId].add(a.userId.toString());
+    });
+
+    const rolesWithCounts = roles.map(r => ({
+      ...r,
+      assignedUserCount: countMap[r._id.toString()] ? countMap[r._id.toString()].size : 0,
+      assignedUsersCount: countMap[r._id.toString()] ? countMap[r._id.toString()].size : 0
+    }));
+
+    return res.json(success(rolesWithCounts));
   } catch (err) {
     console.error('[listCustomRoles] Error:', err);
     return res.status(500).json(fail('Internal server error'));

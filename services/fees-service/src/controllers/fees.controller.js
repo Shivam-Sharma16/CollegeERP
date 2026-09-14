@@ -3,16 +3,18 @@ const crypto = require('crypto');
 const PDFDocument = require('pdfkit');
 const FeeStructure = require('../models/FeeStructure.model');
 const Payment = require('../models/Payment.model');
+const feesService = require('../services/fees.service');
 
 // POST /fee-structures
 exports.createFeeStructure = async (req, res) => {
   try {
-    const { departmentId, year, totalAmount, installments } = req.body;
+    const { departmentId, year, studentGroup, totalAmount, installments } = req.body;
     const tenantId = req.tenantId || req.headers['x-tenant-id'] || req.user?.institutionId || req.body.institutionId;
 
     const feeStructure = new FeeStructure({
       departmentId,
       year,
+      studentGroup: (studentGroup || 'general').trim().toLowerCase(),
       totalAmount,
       installments,
       ...(tenantId ? { institutionId: tenantId } : {})
@@ -27,10 +29,12 @@ exports.createFeeStructure = async (req, res) => {
 exports.listFeeStructures = async (req, res) => {
   try {
     const tenantId = req.tenantId || req.headers['x-tenant-id'] || req.user?.institutionId;
-    const { departmentId, year } = req.query;
+    const { departmentId, year, studentGroup, feeGroup } = req.query;
     const filter = {};
     if (departmentId) filter.departmentId = departmentId;
     if (year) filter.year = year;
+    const group = studentGroup || feeGroup;
+    if (group) filter.studentGroup = group.trim().toLowerCase();
     if (tenantId && !req.user?.roles?.includes('SUPERADMIN')) {
       filter.institutionId = tenantId;
     }
@@ -114,111 +118,11 @@ exports.paymentWebhook = async (req, res) => {
 exports.getDefaulters = async (req, res) => {
   try {
     const tenantId = req.tenantId || req.headers['x-tenant-id'] || req.user?.institutionId;
-    const { departmentId, year } = req.query;
-    
-    const roleMatch = { role: 'STUDENT' };
-    if (tenantId && !req.user?.roles?.includes('SUPERADMIN') && mongoose.Types.ObjectId.isValid(tenantId)) {
-      roleMatch.institutionId = new mongoose.Types.ObjectId(tenantId);
-    }
+    const { departmentId, year, feeGroup, studentGroup } = req.query;
+    const targetGroup = feeGroup || studentGroup;
 
-    const feeMatchExpr = [
-      { $eq: ['$departmentId', '$$deptId'] },
-      { $eq: ['$year', '$$yearNum'] }
-    ];
-    if (tenantId && !req.user?.roles?.includes('SUPERADMIN') && mongoose.Types.ObjectId.isValid(tenantId)) {
-      feeMatchExpr.push({ $eq: ['$institutionId', new mongoose.Types.ObjectId(tenantId)] });
-    }
-
-    const pipeline = [
-      { $match: roleMatch },
-      
-      { $lookup: {
-          from: 'sections',
-          localField: 'sectionId',
-          foreignField: '_id',
-          as: 'section'
-      }},
-      { $unwind: '$section' },
-      
-      { $lookup: {
-          from: 'semesters',
-          localField: 'section.semesterId',
-          foreignField: '_id',
-          as: 'semester'
-      }},
-      { $unwind: '$semester' },
-      
-      { $lookup: {
-          from: 'years',
-          localField: 'semester.yearId',
-          foreignField: '_id',
-          as: 'yearDoc'
-      }},
-      { $unwind: '$yearDoc' },
-
-      { $match: {
-        ...(departmentId ? { departmentId: new mongoose.Types.ObjectId(departmentId) } : {}),
-        ...(year ? { 'yearDoc.yearNumber': Number(year) } : {})
-      }},
-
-      { $lookup: {
-          from: 'feestructures',
-          let: { deptId: '$departmentId', yearNum: '$yearDoc.yearNumber' },
-          pipeline: [
-            { $match: {
-                $expr: {
-                  $and: feeMatchExpr
-                }
-            }}
-          ],
-          as: 'feeStructure'
-      }},
-      { $unwind: '$feeStructure' },
-      
-      { $unwind: { path: '$feeStructure.installments', includeArrayIndex: 'installmentIndex' } },
-      
-      { $match: { 'feeStructure.installments.dueDate': { $lt: new Date() } } },
-      
-      { $lookup: {
-          from: 'payments',
-          let: { 
-            studentId: '$userId', 
-            feeStructId: '$feeStructure._id', 
-            instIndex: '$installmentIndex' 
-          },
-          pipeline: [
-            { $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ['$studentId', '$$studentId'] },
-                    { $eq: ['$feeStructureId', '$$feeStructId'] },
-                    { $eq: ['$installmentIndex', '$$instIndex'] },
-                    { $eq: ['$status', 'paid'] }
-                  ]
-                }
-            }}
-          ],
-          as: 'paidPayments'
-      }},
-      
-      { $match: { paidPayments: { $size: 0 } } },
-      
-      { $group: {
-          _id: '$userId',
-          departmentId: { $first: '$departmentId' },
-          yearNumber: { $first: '$yearDoc.yearNumber' },
-          overdueInstallments: {
-            $push: {
-              feeStructureId: '$feeStructure._id',
-              installmentIndex: '$installmentIndex',
-              amount: '$feeStructure.installments.amount',
-              dueDate: '$feeStructure.installments.dueDate'
-            }
-          }
-      }}
-    ];
-
-    const defaulters = await mongoose.connection.collection('roleassignments').aggregate(pipeline).toArray();
+    const scopedTenantId = (!req.user?.roles?.includes('SUPERADMIN')) ? tenantId : null;
+    const defaulters = await feesService.getDefaulters(departmentId, year, targetGroup, scopedTenantId);
     res.status(200).json({ success: true, data: defaulters });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -312,22 +216,33 @@ exports.getOwnFeeStatus = async (req, res) => {
     const yearDoc = await mongoose.connection.collection('years').findOne(yrQuery);
     if (!yearDoc) return res.status(404).json({ success: false, message: 'Year not found' });
 
+    const studentUserId = req.user.id || req.user.userId;
+    const userDoc = await mongoose.connection.collection('users').findOne({
+      _id: new mongoose.Types.ObjectId(studentUserId)
+    });
+    const studentFeeGroup = (userDoc?.feeGroup || req.user?.feeGroup || 'general').trim().toLowerCase();
+
     const feeQuery = {
       departmentId: roleAssignment.departmentId,
-      year: yearDoc.yearNumber
+      year: yearDoc.yearNumber,
+      studentGroup: studentFeeGroup
     };
     if (tenantId && !req.user?.roles?.includes('SUPERADMIN')) {
       feeQuery.institutionId = tenantId;
     }
 
-    const feeStructure = await FeeStructure.findOne(feeQuery);
+    let feeStructure = await FeeStructure.findOne(feeQuery);
+    if (!feeStructure && studentFeeGroup !== 'general') {
+      feeQuery.studentGroup = 'general';
+      feeStructure = await FeeStructure.findOne(feeQuery);
+    }
 
     if (!feeStructure) {
       return res.json({ success: true, data: { pendingAmount: 0, installments: [] } });
     }
 
     const payQuery = {
-      studentId: req.user.id,
+      studentId: new mongoose.Types.ObjectId(studentUserId),
       feeStructureId: feeStructure._id
     };
     if (tenantId && !req.user?.roles?.includes('SUPERADMIN')) {
@@ -458,10 +373,98 @@ exports.getCollectionSummary = async (req, res) => {
       { $project: { _id: 0, date: "$_id", value: 1, count: 1 } }
     ]);
 
+    // Segmented Collection by studentGroup
+    const collectionByGroupAgg = await Payment.aggregate([
+      { $match: filter },
+      {
+        $lookup: {
+          from: 'feestructures',
+          localField: 'feeStructureId',
+          foreignField: '_id',
+          as: 'feeStruct'
+        }
+      },
+      { $unwind: { path: '$feeStruct', preserveNullAndEmptyArrays: true } },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'studentId',
+          foreignField: '_id',
+          as: 'studentDoc'
+        }
+      },
+      { $unwind: { path: '$studentDoc', preserveNullAndEmptyArrays: true } },
+      {
+        $addFields: {
+          group: {
+            $toLower: {
+              $ifNull: ['$feeStruct.studentGroup', { $ifNull: ['$studentDoc.feeGroup', 'general'] }]
+            }
+          }
+        }
+      },
+      {
+        $group: {
+          _id: '$group',
+          collectedAmount: { $sum: '$amount' },
+          transactionsCount: { $sum: 1 }
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          studentGroup: '$_id',
+          collectedAmount: 1,
+          transactionsCount: 1
+        }
+      }
+    ]);
+
+    // Segmented Defaulters by studentGroup
+    const scopedTenantId = (!req.user?.roles?.includes('SUPERADMIN')) ? tenantId : null;
+    const allDefaulters = await feesService.getDefaulters(null, null, null, scopedTenantId);
+    const defaultersByGroupMap = new Map();
+    allDefaulters.forEach(d => {
+      const grp = (d.feeGroup || 'general').toLowerCase();
+      if (!defaultersByGroupMap.has(grp)) {
+        defaultersByGroupMap.set(grp, { studentGroup: grp, defaultersCount: 0, overdueAmount: 0 });
+      }
+      const entry = defaultersByGroupMap.get(grp);
+      entry.defaultersCount++;
+      const overdue = (d.overdueInstallments || []).reduce((sum, i) => sum + (i.amount || 0), 0);
+      entry.overdueAmount += overdue;
+    });
+
+    const defaultersByGroup = Array.from(defaultersByGroupMap.values());
+
+    // Side-by-side merged segmentation by group
+    const allGroups = new Set([
+      ...collectionByGroupAgg.map(c => c.studentGroup),
+      ...defaultersByGroup.map(d => d.studentGroup)
+    ]);
+    if (allGroups.size === 0) allGroups.add('general');
+
+    const byGroup = Array.from(allGroups).map(grp => {
+      const col = collectionByGroupAgg.find(c => c.studentGroup === grp);
+      const def = defaultersByGroup.find(d => d.studentGroup === grp);
+      return {
+        studentGroup: grp,
+        collectedAmount: col ? col.collectedAmount : 0,
+        transactionsCount: col ? col.transactionsCount : 0,
+        defaultersCount: def ? def.defaultersCount : 0,
+        overdueAmount: def ? def.overdueAmount : 0
+      };
+    });
+
     res.status(200).json({
       success: true,
       data: {
         total: totalAmount,
+        byGroup,
+        collectionByGroup: collectionByGroupAgg,
+        defaultersByGroup,
+        totalDefaulters: allDefaulters.length,
+        totalOverdueAmount: defaultersByGroup.reduce((sum, d) => sum + d.overdueAmount, 0),
         trend: trend || []
       }
     });

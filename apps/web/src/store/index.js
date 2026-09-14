@@ -45,6 +45,8 @@ import { auditApi }        from '../api/auditApi';
 import { settingsApi }     from '../api/settingsApi';
 import { searchApi }       from '../api/searchApi';
 import { institutionsApi } from '../api/institutionsApi';
+import { rolesApi }        from '../api/rolesApi';
+import { permissionsApi }  from '../api/permissionsApi';
 
 // ── Store ──────────────────────────────────────────────────────────────────────
 export const store = configureStore({
@@ -72,6 +74,8 @@ export const store = configureStore({
     [auditApi.reducerPath]:        auditApi.reducer,
     [settingsApi.reducerPath]:     settingsApi.reducer,
     [searchApi.reducerPath]:       searchApi.reducer,
+    [rolesApi.reducerPath]:        rolesApi.reducer,
+    [permissionsApi.reducerPath]:  permissionsApi.reducer,
   },
 
   middleware: (getDefaultMiddleware) =>
@@ -92,6 +96,8 @@ export const store = configureStore({
       auditApi.middleware,
       settingsApi.middleware,
       searchApi.middleware,
+      rolesApi.middleware,
+      permissionsApi.middleware,
     ),
 });
 

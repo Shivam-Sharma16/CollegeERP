@@ -30,6 +30,9 @@ router.get('/cc', userController.listCC);
 router.post('/students', requirePermission('write', 'Section'), userController.onboardStudent);
 router.get('/students', requirePermission('read', 'Section'), userController.listStudents);
 
+router.post('/bulk-import', userController.bulkImportUsers);
+router.post('/rollover-enrolled', userController.rolloverEnrolledStudents);
+
 router.get('/', userController.listUsers);
 router.post('/:id/assign-custom-role', requirePermission('role.manage'), roleController.assignCustomRole);
 router.get('/:id', userController.getUserById);

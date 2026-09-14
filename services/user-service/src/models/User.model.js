@@ -21,6 +21,13 @@ const userSchema = new mongoose.Schema({
   },
   phone: { type: String },
   avatarUrl: { type: String },
+  feeGroup: { 
+    type: String, 
+    default: 'general', 
+    trim: true, 
+    lowercase: true 
+  },
+  activeSemesterId: { type: mongoose.Schema.Types.ObjectId, default: null },
   isActive: { type: Boolean, default: true }
 }, {
   timestamps: true

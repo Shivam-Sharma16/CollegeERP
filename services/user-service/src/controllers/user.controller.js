@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const User = require('../models/User.model');
 const RoleAssignment = require('../models/RoleAssignment.model');
@@ -146,7 +147,7 @@ const createCC = (req, res) => {
 
 const onboardStudent = async (req, res) => {
   try {
-    const { name, email, password, rollNumber } = req.body;
+    const { name, email, password, rollNumber, feeGroup } = req.body;
     if (!name || !email || !password || !rollNumber) {
       return res.status(400).json(fail('Name, email, roll number, and password are required'));
     }
@@ -178,6 +179,7 @@ const onboardStudent = async (req, res) => {
       email: email.toLowerCase().trim(),
       rollNumber: rollNumber.trim(),
       passwordHash,
+      feeGroup: (feeGroup || 'general').trim().toLowerCase(),
       roles: [], // Managed by RoleAssignment
       institutionId
     });
@@ -698,6 +700,297 @@ const deleteUser = async (req, res) => {
   }
 };
 
+const bulkImportUsers = async (req, res) => {
+  try {
+    const tenantId = req.tenantId || req.headers['x-tenant-id'] || req.user?.institutionId || req.body.institutionId;
+    const callerRoles = req.user?.roles || [];
+    const isAdmin = callerRoles.includes('ADMIN') || callerRoles.includes('SUPERADMIN');
+
+    if (!isAdmin) {
+      return res.status(403).json(fail('Access Denied: Only Admin can perform bulk import'));
+    }
+
+    if (!tenantId && !callerRoles.includes('SUPERADMIN')) {
+      return res.status(400).json(fail('Institution context is required for bulk import'));
+    }
+
+    let rawData = req.body.csv || req.body;
+    let parsedRows = [];
+
+    if (Array.isArray(req.body.rows)) {
+      parsedRows = req.body.rows.map((r, idx) => ({ rowIndex: idx + 2, data: r }));
+    } else if (typeof rawData === 'string') {
+      // CSV string parser
+      const lines = rawData.split(/\r\n|\n/).filter(line => line.trim().length > 0);
+      if (lines.length <= 1) {
+        return res.status(400).json(fail('CSV is empty or missing data rows'));
+      }
+
+      const parseLine = (line) => {
+        const values = [];
+        let current = '';
+        let inQuotes = false;
+        for (let i = 0; i < line.length; i++) {
+          const char = line[i];
+          if (char === '"') {
+            if (inQuotes && line[i + 1] === '"') {
+              current += '"';
+              i++;
+            } else {
+              inQuotes = !inQuotes;
+            }
+          } else if (char === ',' && !inQuotes) {
+            values.push(current.trim());
+            current = '';
+          } else {
+            current += char;
+          }
+        }
+        values.push(current.trim());
+        return values;
+      };
+
+      const headers = parseLine(lines[0]).map(h => h.toLowerCase().replace(/[^a-z0-9]/g, ''));
+      for (let i = 1; i < lines.length; i++) {
+        const rawValues = parseLine(lines[i]);
+        const rowObj = {};
+        headers.forEach((h, idx) => {
+          rowObj[h] = rawValues[idx] !== undefined ? rawValues[idx] : '';
+        });
+        parsedRows.push({ rowIndex: i + 1, data: rowObj });
+      }
+    } else {
+      return res.status(400).json(fail('No CSV data or rows provided'));
+    }
+
+    const successful = [];
+    const failed = [];
+    const seenEmails = new Set();
+    const seenRollNumbers = new Set();
+
+    for (const item of parsedRows) {
+      const { rowIndex, data } = item;
+      const name = (data.name || data.fullname || data.studentname || '').trim();
+      const email = (data.email || data.emailaddress || '').toLowerCase().trim();
+      const rawRole = (data.role || 'STUDENT').toUpperCase().trim();
+      const rollNumber = (data.rollnumber || data.rollno || data.roll || '').trim();
+      const rawDept = (data.departmentid || data.department || data.deptid || data.dept || '').trim();
+      const feeGroup = (data.feegroup || data.studentgroup || 'general').toLowerCase().trim();
+      const password = (data.password || 'Welcome@123').trim();
+
+      // Rule 1: Validate Name
+      if (!name) {
+        failed.push({ row: rowIndex, email: email || null, error: 'Name is required' });
+        continue;
+      }
+
+      // Rule 2: Validate Email
+      if (!email) {
+        failed.push({ row: rowIndex, email: null, error: 'Email is required' });
+        continue;
+      }
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        failed.push({ row: rowIndex, email, error: 'Invalid email format' });
+        continue;
+      }
+
+      // Check email uniqueness within batch
+      if (seenEmails.has(email)) {
+        failed.push({ row: rowIndex, email, error: `Duplicate email "${email}" in bulk batch` });
+        continue;
+      }
+
+      // Check email uniqueness in DB
+      const existingUser = await User.findOne({ email, institutionId: tenantId });
+      if (existingUser) {
+        failed.push({ row: rowIndex, email, error: `User with email "${email}" already exists in this institution` });
+        continue;
+      }
+
+      // Rule 3: Validate Role & Hierarchy
+      const validRoles = ['STUDENT', 'FACULTY', 'HOD', 'CC', 'STAFF', 'ADMIN'];
+      if (!validRoles.includes(rawRole)) {
+        failed.push({ row: rowIndex, email, error: `Invalid role "${rawRole}". Allowed roles: ${validRoles.join(', ')}` });
+        continue;
+      }
+      if (rawRole === 'SUPERADMIN') {
+        failed.push({ row: rowIndex, email, error: 'Cannot create SUPERADMIN via bulk import' });
+        continue;
+      }
+
+      // Department resolution if provided or required
+      let resolvedDeptId = null;
+      if (rawDept) {
+        let deptDoc = null;
+        if (mongoose.Types.ObjectId.isValid(rawDept)) {
+          deptDoc = await Department.findOne({ _id: rawDept, institutionId: tenantId });
+        }
+        if (!deptDoc) {
+          deptDoc = await Department.findOne({
+            institutionId: tenantId,
+            $or: [
+              { code: rawDept.toUpperCase() },
+              { name: new RegExp('^' + rawDept + '$', 'i') }
+            ]
+          });
+        }
+        if (!deptDoc) {
+          failed.push({ row: rowIndex, email, error: `Department "${rawDept}" not found in this institution` });
+          continue;
+        }
+        resolvedDeptId = deptDoc._id;
+      }
+
+      // Rule 4: HOD Hierarchy check (HOD must have department, and department must not have active HOD)
+      if (rawRole === 'HOD') {
+        if (!resolvedDeptId) {
+          failed.push({ row: rowIndex, email, error: 'HOD requires a valid departmentId or department code' });
+          continue;
+        }
+        const existingHod = await RoleAssignment.findOne({
+          departmentId: resolvedDeptId,
+          role: 'HOD',
+          $or: [{ validTo: null }, { validTo: { $gt: new Date() } }]
+        });
+        if (existingHod) {
+          failed.push({ row: rowIndex, email, error: `Department already has an active HOD` });
+          continue;
+        }
+      }
+
+      // Rule 5: Student Roll Number check
+      if (rawRole === 'STUDENT') {
+        if (!rollNumber) {
+          failed.push({ row: rowIndex, email, error: 'rollNumber is required for students' });
+          continue;
+        }
+        if (seenRollNumbers.has(rollNumber)) {
+          failed.push({ row: rowIndex, email, error: `Duplicate rollNumber "${rollNumber}" in bulk batch` });
+          continue;
+        }
+        const existingRoll = await User.findOne({ rollNumber, institutionId: tenantId });
+        if (existingRoll) {
+          failed.push({ row: rowIndex, email, error: `rollNumber "${rollNumber}" already exists in this institution` });
+          continue;
+        }
+      }
+
+      // All validations passed for this row -> create user and role assignment
+      try {
+        const passwordHash = await bcrypt.hash(password, BCRYPT_COST);
+        const newUser = await User.create({
+          name,
+          email,
+          rollNumber: rollNumber || undefined,
+          passwordHash,
+          feeGroup,
+          roles: [],
+          institutionId: tenantId
+        });
+
+        await RoleAssignment.create({
+          userId: newUser._id,
+          role: rawRole,
+          departmentId: resolvedDeptId,
+          sectionId: null,
+          institutionId: tenantId,
+          validFrom: new Date()
+        });
+
+        seenEmails.add(email);
+        if (rollNumber) seenRollNumbers.add(rollNumber);
+
+        successful.push({
+          row: rowIndex,
+          userId: newUser._id,
+          email: newUser.email,
+          name: newUser.name,
+          role: rawRole
+        });
+      } catch (insertErr) {
+        failed.push({ row: rowIndex, email, error: insertErr.message });
+      }
+    }
+
+    await logAudit(req, 'USERS_BULK_IMPORTED', tenantId?.toString() || 'INSTITUTION', 'User', {
+      totalRows: parsedRows.length,
+      importedCount: successful.length,
+      failedCount: failed.length
+    });
+
+    res.status(200).json(success({
+      totalRows: parsedRows.length,
+      importedCount: successful.length,
+      failedCount: failed.length,
+      successful,
+      failed
+    }));
+  } catch (err) {
+    console.error('[UserController] Bulk import failed:', err);
+    res.status(500).json(fail('Bulk import failed: ' + err.message));
+  }
+};
+
+/**
+ * Internal / Admin: Advance students' section/semester references on rollover
+ * POST /users/rollover-enrolled
+ */
+const rolloverEnrolledStudents = async (req, res) => {
+  try {
+    const tenantId = req.tenantId || req.headers['x-tenant-id'] || req.user?.institutionId || req.body.institutionId;
+    const { sectionMap, nextSemesterId } = req.body;
+
+    if (!sectionMap || typeof sectionMap !== 'object') {
+      return res.status(400).json(fail('sectionMap is required'));
+    }
+
+    const oldSectionIds = Object.keys(sectionMap);
+    if (oldSectionIds.length === 0) {
+      return res.status(200).json(success({ updatedCount: 0 }));
+    }
+
+    let updatedCount = 0;
+    for (const oldSecId of oldSectionIds) {
+      const newSecId = sectionMap[oldSecId];
+      if (!newSecId) continue;
+
+      // Find active student role assignments in old section
+      const activeAssignments = await RoleAssignment.find({
+        sectionId: oldSecId,
+        role: 'STUDENT',
+        $or: [{ validTo: null }, { validTo: { $gt: new Date() } }]
+      });
+
+      for (const assignment of activeAssignments) {
+        assignment.validTo = new Date();
+        await assignment.save();
+
+        await RoleAssignment.create({
+          userId: assignment.userId,
+          role: 'STUDENT',
+          departmentId: assignment.departmentId,
+          sectionId: newSecId,
+          semesterId: nextSemesterId || null,
+          institutionId: assignment.institutionId || tenantId,
+          validFrom: new Date()
+        });
+
+        if (nextSemesterId) {
+          await User.findByIdAndUpdate(assignment.userId, { activeSemesterId: nextSemesterId });
+        }
+
+        updatedCount++;
+      }
+    }
+
+    res.status(200).json(success({ updatedCount }));
+  } catch (err) {
+    console.error('[UserController] Failed to rollover enrolled students:', err);
+    res.status(500).json(fail('Failed to rollover enrolled students: ' + err.message));
+  }
+};
+
 const listUsers = async (req, res) => {
   try {
     const tenantId = req.tenantId || req.headers['x-tenant-id'] || req.user?.institutionId;
@@ -717,6 +1010,8 @@ module.exports = {
   createFaculty,
   createCC,
   onboardStudent,
+  bulkImportUsers,
+  rolloverEnrolledStudents,
   listStudents,
   listHods,
   listAdmins,
@@ -730,3 +1025,4 @@ module.exports = {
   updateUser,
   deleteUser
 };
+

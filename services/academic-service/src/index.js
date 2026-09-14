@@ -14,6 +14,7 @@ const sectionRoute = require('./routes/section.route');
 const subjectRoute           = require('./routes/subject.route');
 const teachingRoute          = require('./routes/teaching.route');
 const sectionAssignmentRoute = require('./routes/sectionAssignment.route');
+const rolloverRoute          = require('./routes/rollover.route');
 
 const app = express();
 
@@ -29,6 +30,8 @@ app.use('/sections', sectionRoute);
 app.use('/subjects',           subjectRoute);
 app.use('/teaching-assignments', teachingRoute);
 app.use('/section-assignments',  sectionAssignmentRoute);
+app.use('/academic', rolloverRoute);
+app.use('/rollover', rolloverRoute);
 
 app.use('/api/years', yearRoute);
 app.use('/api/semesters', semesterRoute);
@@ -36,12 +39,15 @@ app.use('/api/sections', sectionRoute);
 app.use('/api/subjects', subjectRoute);
 app.use('/api/teaching-assignments', teachingRoute);
 app.use('/api/section-assignments', sectionAssignmentRoute);
+app.use('/api/academic', rolloverRoute);
+app.use('/api/rollover', rolloverRoute);
 app.use('/api/academics/years', yearRoute);
 app.use('/api/academics/semesters', semesterRoute);
 app.use('/api/academics/sections', sectionRoute);
 app.use('/api/academics/subjects', subjectRoute);
 app.use('/api/academics/teaching-assignments', teachingRoute);
 app.use('/api/academics/section-assignments', sectionAssignmentRoute);
+app.use('/api/academics/rollover', rolloverRoute);
 
 connectDB();
 

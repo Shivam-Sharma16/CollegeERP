@@ -9,6 +9,13 @@ const feeStructureSchema = new mongoose.Schema({
   },
   departmentId: { type: mongoose.Schema.Types.ObjectId, required: true },
   year: { type: Number, required: true },
+  studentGroup: { 
+    type: String, 
+    default: 'general', 
+    trim: true, 
+    lowercase: true, 
+    required: true 
+  },
   totalAmount: { type: Number, required: true },
   installments: [{
     label: { type: String, required: true },
@@ -19,6 +26,6 @@ const feeStructureSchema = new mongoose.Schema({
   timestamps: true
 });
 
-feeStructureSchema.index({ institutionId: 1, departmentId: 1, year: 1 }, { unique: true });
+feeStructureSchema.index({ institutionId: 1, departmentId: 1, year: 1, studentGroup: 1 }, { unique: true });
 
 module.exports = mongoose.model('FeeStructure', feeStructureSchema);
