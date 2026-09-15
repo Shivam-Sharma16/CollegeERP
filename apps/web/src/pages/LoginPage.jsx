@@ -20,7 +20,11 @@ import {
 import { useLoginMutation } from '../api/authApi';
 import { useAppSelector, useAppDispatch } from '../store';
 import { setCredentials } from '../features/ui/authSlice';
-import { selectInstitutionName, selectInstitutionLogo } from '../features/ui/themeSlice';
+import {
+  selectInstitutionName,
+  selectInstitutionLogo,
+  selectInstitutionCoverImage,
+} from '../features/ui/themeSlice';
 import { useTenant } from '../context/TenantContext';
 import usePageMeta from '../hooks/usePageMeta';
 import { PageTransition } from '../components/ui/PageTransition';
@@ -53,6 +57,7 @@ export default function LoginPage({ isSuperAdminMode = false }) {
   // Fallback institution data from config/themeSlice
   const defaultInstitutionName = useAppSelector(selectInstitutionName);
   const defaultInstitutionLogo = useAppSelector(selectInstitutionLogo);
+  const defaultInstitutionCover = useAppSelector(selectInstitutionCoverImage);
 
   const institutionName = isTenantPortal
     ? (tenant?.name || defaultInstitutionName || 'Institution Portal')
@@ -60,6 +65,9 @@ export default function LoginPage({ isSuperAdminMode = false }) {
   const institutionLogo = isTenantPortal
     ? (tenant?.logoUrl || tenant?.branding?.logoUrl || defaultInstitutionLogo || null)
     : defaultInstitutionLogo;
+  const collegeImage = isTenantPortal
+    ? (tenant?.branding?.coverImageUrl || tenant?.coverImageUrl || defaultInstitutionCover || '/college_campus.jpg')
+    : (defaultInstitutionCover || '/college_campus.jpg');
 
   const [login, { isLoading, error }] = useLoginMutation();
 
@@ -171,11 +179,14 @@ export default function LoginPage({ isSuperAdminMode = false }) {
 
         {/* ── Left: College campus hero panel ── */}
         <div className={styles.imagePanelWrap}>
-          <div className={styles.imagePanel} />
+          <div
+            className={styles.imagePanel}
+            style={collegeImage ? { backgroundImage: `url("${collegeImage}")` } : undefined}
+          />
           <div className={styles.imagePanelOverlay}>
             <div className={styles.imageHeaderBadge}>
               <Sparkles size={16} className={styles.badgeIcon} />
-              <span>Next-Generation Academic ERP</span>
+              <span>{isTenantPortal ? institutionName : 'Next-Generation Academic ERP'}</span>
             </div>
 
             <div className={styles.imageContent}>

@@ -23,10 +23,15 @@ const institutionSchema = new mongoose.Schema({
     type: String,
     default: ''
   },
+  coverImageUrl: {
+    type: String,
+    default: ''
+  },
   themeConfig: {
     primaryColor: { type: String, default: '#4f46e5' },
     secondaryColor: { type: String, default: '#06b6d4' },
-    faviconUrl: { type: String, default: '' }
+    faviconUrl: { type: String, default: '' },
+    coverImageUrl: { type: String, default: '' }
   },
   isActive: {
     type: Boolean,
@@ -63,6 +68,7 @@ const institutionSchema = new mongoose.Schema({
   branding: {
     logoUrl: { type: String, default: '' },
     faviconUrl: { type: String, default: '' },
+    coverImageUrl: { type: String, default: '' },
     primaryColor: { type: String, default: '#4f46e5' },
     secondaryColor: { type: String, default: '#06b6d4' }
   }
@@ -86,12 +92,13 @@ institutionSchema.pre('save', function (next) {
   if (this.customDomain && !this.domain) {
     this.domain = this.customDomain;
   }
-  if (this.themeConfig) {
+  if (this.themeConfig || this.coverImageUrl) {
     this.branding = {
-      logoUrl: this.logoUrl || this.themeConfig.faviconUrl || '',
-      faviconUrl: this.themeConfig.faviconUrl || '',
-      primaryColor: this.themeConfig.primaryColor || '#4f46e5',
-      secondaryColor: this.themeConfig.secondaryColor || '#06b6d4'
+      logoUrl: this.logoUrl || this.themeConfig?.faviconUrl || '',
+      faviconUrl: this.themeConfig?.faviconUrl || '',
+      coverImageUrl: this.coverImageUrl || this.themeConfig?.coverImageUrl || (this.branding && this.branding.coverImageUrl) || '',
+      primaryColor: this.themeConfig?.primaryColor || '#4f46e5',
+      secondaryColor: this.themeConfig?.secondaryColor || '#06b6d4'
     };
   }
   if (this.isActive !== undefined) {

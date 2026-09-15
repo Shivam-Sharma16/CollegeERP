@@ -40,6 +40,7 @@ export function CreateInstitutionModal({ isOpen, onClose }) {
   const [primaryColor, setPrimaryColor] = useState('#4f46e5');
   const [secondaryColor, setSecondaryColor] = useState('#06b6d4');
   const [logoUrl, setLogoUrl] = useState('');
+  const [coverImageUrl, setCoverImageUrl] = useState('');
   const [showBranding, setShowBranding] = useState(false);
 
   // Subdomain live check status
@@ -82,6 +83,7 @@ export function CreateInstitutionModal({ isOpen, onClose }) {
       setPrimaryColor('#4f46e5');
       setSecondaryColor('#06b6d4');
       setLogoUrl('');
+      setCoverImageUrl('');
       setShowBranding(false);
       setSubdomainStatus({ state: 'idle', message: '' });
       setFieldErrors({});
@@ -208,6 +210,7 @@ export function CreateInstitutionModal({ isOpen, onClose }) {
         customDomain: domain.trim() ? domain.trim().toLowerCase() : undefined,
         branding: {
           logoUrl: logoUrl.trim() || undefined,
+          coverImageUrl: coverImageUrl.trim() || undefined,
           primaryColor: primaryColor || '#4f46e5',
           secondaryColor: secondaryColor || '#06b6d4',
         },
@@ -522,6 +525,21 @@ export function CreateInstitutionModal({ isOpen, onClose }) {
                   onChange={(e) => setLogoUrl(e.target.value)}
                   disabled={isCreating}
                   placeholder="https://example.com/logo.png"
+                />
+              </div>
+
+              <div className={styles.field}>
+                <label htmlFor="instCoverImageUrl" className={styles.label}>
+                  College / Campus Hero Image URL (Optional)
+                </label>
+                <input
+                  id="instCoverImageUrl"
+                  className={styles.input}
+                  type="url"
+                  value={coverImageUrl}
+                  onChange={(e) => setCoverImageUrl(e.target.value)}
+                  disabled={isCreating}
+                  placeholder="https://example.com/campus.jpg (Shown on left side of login portal)"
                 />
               </div>
 

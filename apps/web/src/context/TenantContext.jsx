@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useResolveInstitutionBySlugQuery } from '../api/institutionsApi';
 import { useAppDispatch } from '../store';
-import { patchTheme, loadTheme } from '../features/ui/themeSlice';
+import { patchTheme, loadTheme, adjustColorBrightness } from '../features/ui/themeSlice';
 
 const TenantContext = createContext({
   tenant: null,
@@ -36,10 +36,12 @@ export function TenantProvider({ children }) {
       const branding = tenant.branding || {};
       const primaryColor = branding.primaryColor || '#4f46e5';
       const secondaryColor = branding.secondaryColor || '#06b6d4';
+      const primaryLight = adjustColorBrightness(primaryColor, 25);
 
       dispatch(
         patchTheme({
           '--color-primary': primaryColor,
+          '--color-primary-light': primaryLight,
           '--color-secondary': secondaryColor,
         })
       );

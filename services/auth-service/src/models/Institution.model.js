@@ -23,10 +23,15 @@ const institutionSchema = new mongoose.Schema({
     type: String,
     default: ''
   },
+  coverImageUrl: {
+    type: String,
+    default: ''
+  },
   themeConfig: {
     primaryColor: { type: String, default: '#4f46e5' },
     secondaryColor: { type: String, default: '#06b6d4' },
-    faviconUrl: { type: String, default: '' }
+    faviconUrl: { type: String, default: '' },
+    coverImageUrl: { type: String, default: '' }
   },
   isActive: {
     type: Boolean,
@@ -62,6 +67,7 @@ const institutionSchema = new mongoose.Schema({
   branding: {
     logoUrl: { type: String, default: '' },
     faviconUrl: { type: String, default: '' },
+    coverImageUrl: { type: String, default: '' },
     primaryColor: { type: String, default: '#4f46e5' },
     secondaryColor: { type: String, default: '#06b6d4' }
   }

@@ -107,9 +107,11 @@ const createInstitution = async (req, res) => {
     const resolvedTheme = {
       primaryColor: themeConfig?.primaryColor || branding?.primaryColor || '#4f46e5',
       secondaryColor: themeConfig?.secondaryColor || branding?.secondaryColor || '#06b6d4',
-      faviconUrl: themeConfig?.faviconUrl || branding?.faviconUrl || ''
+      faviconUrl: themeConfig?.faviconUrl || branding?.faviconUrl || '',
+      coverImageUrl: req.body.coverImageUrl || themeConfig?.coverImageUrl || branding?.coverImageUrl || ''
     };
     const resolvedLogo = logoUrl || branding?.logoUrl || '';
+    const resolvedCoverImage = req.body.coverImageUrl || themeConfig?.coverImageUrl || branding?.coverImageUrl || '';
     const resolvedCustomDomain = (customDomain || domain) ? (customDomain || domain).trim().toLowerCase() : undefined;
 
     const institution = await Institution.create({
@@ -120,10 +122,12 @@ const createInstitution = async (req, res) => {
       customDomain: resolvedCustomDomain,
       domain: resolvedCustomDomain,
       logoUrl: resolvedLogo,
+      coverImageUrl: resolvedCoverImage,
       themeConfig: resolvedTheme,
       branding: {
         ...resolvedTheme,
-        logoUrl: resolvedLogo
+        logoUrl: resolvedLogo,
+        coverImageUrl: resolvedCoverImage
       },
       isActive: true,
       status: 'ACTIVE',
@@ -296,7 +300,7 @@ const resolveInstitutionBySlug = async (req, res) => {
         { customDomain: target },
         { domain: target }
       ]
-    }).select('name code subdomain slug domain customDomain branding themeConfig logoUrl isActive status').lean();
+    }).select('name code subdomain slug domain customDomain branding themeConfig logoUrl coverImageUrl isActive status').lean();
 
     if (!institution) {
       return res.status(404).json(fail('Institution not found'));
@@ -354,7 +358,7 @@ const updateInstitution = async (req, res) => {
       return res.status(403).json(fail('Access denied'));
     }
 
-    const { name, code, subdomain, slug, themeConfig, branding, customDomain, domain, logoUrl, isActive, status } = req.body;
+    const { name, code, subdomain, slug, themeConfig, branding, customDomain, domain, logoUrl, coverImageUrl, isActive, status } = req.body;
     const updateData = {};
 
     if (name) updateData.name = name.trim();
@@ -377,16 +381,22 @@ const updateInstitution = async (req, res) => {
       updateData.logoUrl = logoUrl;
     }
 
+    if (coverImageUrl !== undefined) {
+      updateData.coverImageUrl = coverImageUrl;
+    }
+
     if (themeConfig || branding) {
       const theme = themeConfig || branding;
       updateData.themeConfig = {
         primaryColor: theme.primaryColor || '#4f46e5',
         secondaryColor: theme.secondaryColor || '#06b6d4',
-        faviconUrl: theme.faviconUrl || ''
+        faviconUrl: theme.faviconUrl || '',
+        coverImageUrl: updateData.coverImageUrl !== undefined ? updateData.coverImageUrl : (theme.coverImageUrl || '')
       };
       updateData.branding = {
-        logoUrl: updateData.logoUrl || theme.logoUrl || '',
+        logoUrl: updateData.logoUrl !== undefined ? updateData.logoUrl : (theme.logoUrl || ''),
         faviconUrl: updateData.themeConfig.faviconUrl,
+        coverImageUrl: updateData.themeConfig.coverImageUrl,
         primaryColor: updateData.themeConfig.primaryColor,
         secondaryColor: updateData.themeConfig.secondaryColor
       };

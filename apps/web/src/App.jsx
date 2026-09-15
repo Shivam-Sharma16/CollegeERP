@@ -59,10 +59,10 @@ function TenantRootRedirect() {
 
 function AppLoadingFallback() {
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="flex flex-col items-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 dark:border-indigo-400"></div>
-        <p className="mt-4 text-gray-600 dark:text-gray-400 font-medium">Loading component...</p>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: 'var(--color-bg)' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        <div style={{ width: '48px', height: '48px', borderRadius: '50%', border: '3px solid var(--color-border)', borderTopColor: 'var(--color-primary)', animation: 'spin 0.8s linear infinite' }} />
+        <p style={{ marginTop: '1rem', color: 'var(--color-text-muted)', fontWeight: 500 }}>Loading component...</p>
       </div>
     </div>
   );

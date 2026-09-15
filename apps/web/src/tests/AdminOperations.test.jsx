@@ -12,6 +12,17 @@ vi.mock('react-redux', () => ({
   Provider: ({ children }) => <>{children}</>,
 }));
 
+// ── Mock DashboardShell ───────────────────────────────────────────────────
+vi.mock('../components/DashboardShell', () => ({
+  DashboardShell: ({ title, subtitle, children }) => (
+    <div data-testid="dashboard-shell">
+      <h1>{title}</h1>
+      <p>{subtitle}</p>
+      {children}
+    </div>
+  ),
+}));
+
 // ── Mock ToastContext ─────────────────────────────────────────────────────────
 const mockShowToast = vi.fn();
 vi.mock('../components/ui/ToastContext', () => ({

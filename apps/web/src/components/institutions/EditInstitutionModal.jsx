@@ -23,6 +23,7 @@ export function EditInstitutionModal({ isOpen, onClose, institution }) {
   const [primaryColor, setPrimaryColor] = useState('#4f46e5');
   const [secondaryColor, setSecondaryColor] = useState('#06b6d4');
   const [logoUrl, setLogoUrl] = useState('');
+  const [coverImageUrl, setCoverImageUrl] = useState('');
   const [showBranding, setShowBranding] = useState(true);
 
   const { showToast } = useToast();
@@ -37,6 +38,7 @@ export function EditInstitutionModal({ isOpen, onClose, institution }) {
       setPrimaryColor(institution.branding?.primaryColor || '#4f46e5');
       setSecondaryColor(institution.branding?.secondaryColor || '#06b6d4');
       setLogoUrl(institution.branding?.logoUrl || institution.logoUrl || '');
+      setCoverImageUrl(institution.branding?.coverImageUrl || institution.coverImageUrl || '');
     }
   }, [isOpen, institution]);
 
@@ -62,6 +64,7 @@ export function EditInstitutionModal({ isOpen, onClose, institution }) {
           primaryColor,
           secondaryColor,
           logoUrl: logoUrl.trim() || undefined,
+          coverImageUrl: coverImageUrl.trim() || undefined,
         },
       }).unwrap();
 
@@ -251,6 +254,24 @@ export function EditInstitutionModal({ isOpen, onClose, institution }) {
               value={logoUrl}
               onChange={(e) => setLogoUrl(e.target.value)}
               placeholder="https://ik.imagekit.io/..."
+              disabled={isLoading}
+            />
+          </div>
+        </div>
+
+        <div className={styles.field}>
+          <label className={styles.label} htmlFor="edit-inst-cover">
+            College / Campus Hero Image URL (Optional)
+          </label>
+          <div className={styles.inputWithIcon}>
+            <ImageIcon size={15} className={styles.inputIcon} />
+            <input
+              id="edit-inst-cover"
+              type="url"
+              className={`${styles.input} ${styles.hasIcon}`}
+              value={coverImageUrl}
+              onChange={(e) => setCoverImageUrl(e.target.value)}
+              placeholder="https://example.com/campus.jpg (Shown on left panel of login portal)"
               disabled={isLoading}
             />
           </div>

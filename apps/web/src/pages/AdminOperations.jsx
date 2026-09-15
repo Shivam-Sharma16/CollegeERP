@@ -17,6 +17,7 @@ import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import { Modal } from '../components/ui/Modal';
 import { Table } from '../components/ui/Table';
 import { useToast } from '../components/ui/ToastContext';
+import { DashboardShell } from '../components/DashboardShell';
 
 // API hooks
 import { useBulkImportMutation, useSearchUsersQuery } from '../api/usersApi';
@@ -369,7 +370,12 @@ export default function AdminOperations() {
   );
 
   return (
-    <div className={styles.container}>
+    <DashboardShell
+      title="Operations & People"
+      subtitle="Campus operations, student roll-over, bulk user management, certificates and grievances"
+      icon="UserCheck"
+    >
+      <div className={styles.container}>
       {/* ── Tabs Navigation ── */}
       <nav className={styles.tabNav} aria-label="Admin Operations Tabs">
         <button
@@ -871,6 +877,7 @@ export default function AdminOperations() {
           </Modal>
         </section>
       )}
-    </div>
+      </div>
+    </DashboardShell>
   );
 }

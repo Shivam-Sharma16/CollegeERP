@@ -52,31 +52,31 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 // Exported so consumers (e.g. InstitutionSettings) can reference canonical defaults
 // without duplicating hex literals.
 export const DEFAULT_COLORS = {
-  primary:         '#6366f1',
-  primaryLight:    '#818cf8',
-  secondary:       '#22d3ee',
-  surface:         '#1a1d2e',
-  surfaceElevated: '#232741',
-  bg:              '#0f1117',
-  border:          '#2e3455',
-  text:            '#e2e8f0',
-  textMuted:       '#94a3b8',
-  danger:          '#f43f5e',
+  primary:         '#4f46e5',
+  primaryLight:    '#6366f1',
+  secondary:       '#06b6d4',
+  surface:         '#ffffff',
+  surfaceElevated: '#f8fafc',
+  bg:              '#f1f5f9',
+  border:          '#e2e8f0',
+  text:            '#0f172a',
+  textMuted:       '#64748b',
+  danger:          '#ef4444',
   success:         '#10b981',
   warning:         '#f59e0b',
 };
 
 const CSS_DEFAULTS = {
-  '--color-primary':          '#6366f1',
-  '--color-primary-light':    '#818cf8',
-  '--color-secondary':        '#22d3ee',
-  '--color-surface':          '#1a1d2e',
-  '--color-surface-elevated': '#232741',
-  '--color-bg':               '#0f1117',
-  '--color-border':           '#2e3455',
-  '--color-text':             '#e2e8f0',
-  '--color-text-muted':       '#94a3b8',
-  '--color-danger':           '#f43f5e',
+  '--color-primary':          '#4f46e5',
+  '--color-primary-light':    '#6366f1',
+  '--color-secondary':        '#06b6d4',
+  '--color-surface':          '#ffffff',
+  '--color-surface-elevated': '#f8fafc',
+  '--color-bg':               '#f1f5f9',
+  '--color-border':           '#e2e8f0',
+  '--color-text':             '#0f172a',
+  '--color-text-muted':       '#64748b',
+  '--color-danger':           '#ef4444',
   '--color-success':          '#10b981',
   '--color-warning':          '#f59e0b',
   '--font-heading':           "'Inter', system-ui, sans-serif",
@@ -92,9 +92,9 @@ const CSS_DEFAULTS = {
   '--spacing-6':              '1.5rem',
   '--spacing-7':              '1.75rem',
   '--spacing-8':              '2rem',
-  '--shadow-sm':              '0 1px 3px rgba(0,0,0,.40)',
-  '--shadow-md':              '0 4px 16px rgba(0,0,0,.50)',
-  '--shadow-lg':              '0 8px 32px rgba(0,0,0,.60)',
+  '--shadow-sm':              '0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04)',
+  '--shadow-md':              '0 4px 12px -1px rgba(0,0,0,.08), 0 2px 6px -1px rgba(0,0,0,.04)',
+  '--shadow-lg':              '0 12px 24px -2px rgba(0,0,0,.10), 0 4px 8px -2px rgba(0,0,0,.04)',
   '--transition':             '160ms ease',
 };
 
@@ -172,7 +172,7 @@ function applyInstitutionMeta(json) {
 }
 
 // Helper to derive lighter tint for primary-light
-function adjustColorBrightness(hex, percent) {
+export function adjustColorBrightness(hex, percent) {
   if (!hex || typeof hex !== 'string' || !hex.startsWith('#')) return hex;
   let clean = hex.slice(1);
   if (clean.length === 3) {
@@ -251,8 +251,9 @@ export const loadTheme = createAsyncThunk('theme/load', async (targetSubdomain) 
           const raw = {
             institution: {
               name: data.name,
-              logoUrl: data.logoUrl || null,
-              faviconUrl: data.faviconUrl || null,
+              logoUrl: data.logoUrl || data.branding?.logoUrl || null,
+              faviconUrl: data.faviconUrl || data.branding?.faviconUrl || null,
+              coverImageUrl: data.coverImageUrl || data.branding?.coverImageUrl || null,
             },
             colors: {
               primary,
@@ -325,4 +326,5 @@ export const selectThemeCssVars    = (state) => state.theme.cssVars;
 export const selectInstitution     = (state) => state.theme.institution;
 export const selectInstitutionName = (state) => state.theme.institution?.name ?? 'ERP Portal';
 export const selectInstitutionLogo = (state) => state.theme.institution?.logoUrl ?? null;
+export const selectInstitutionCoverImage = (state) => state.theme.institution?.coverImageUrl ?? null;
 export const selectThemeLoading    = (state) => state.theme.loading;
