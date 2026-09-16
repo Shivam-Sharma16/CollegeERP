@@ -1,6 +1,7 @@
 services:
   mongo:
     image: mongo:7
+    restart: unless-stopped
     ports:
       - "27017:27017"
     volumes:
@@ -8,12 +9,14 @@ services:
 
   redis:
     image: redis:7-alpine
+    restart: unless-stopped
     ports:
       - "6379:6379"
 
   web:
     build:
       context: ./apps/web
+    restart: unless-stopped
     ports:
       - "5173:5173"
     environment:
@@ -31,6 +34,7 @@ services:
       args:
         - SERVICE_NAME=gateway
         - SERVICE_PORT=4000
+    restart: unless-stopped
     ports:
       - "4000:4000"
     environment:
@@ -60,6 +64,7 @@ services:
       args:
         - SERVICE_NAME=auth-service
         - SERVICE_PORT=4001
+    restart: unless-stopped
     ports:
       - "4001:4001"
     env_file:
@@ -74,6 +79,7 @@ services:
       args:
         - SERVICE_NAME=user-service
         - SERVICE_PORT=4002
+    restart: unless-stopped
     ports:
       - "4002:4002"
     env_file:
@@ -93,6 +99,7 @@ services:
       args:
         - SERVICE_NAME=academic-service
         - SERVICE_PORT=4003
+    restart: unless-stopped
     ports:
       - "4003:4003"
     env_file:
@@ -107,6 +114,7 @@ services:
       args:
         - SERVICE_NAME=attendance-service
         - SERVICE_PORT=4004
+    restart: unless-stopped
     ports:
       - "4004:4004"
     env_file:
@@ -121,6 +129,7 @@ services:
       args:
         - SERVICE_NAME=results-service
         - SERVICE_PORT=4005
+    restart: unless-stopped
     ports:
       - "4005:4005"
     env_file:
@@ -135,6 +144,7 @@ services:
       args:
         - SERVICE_NAME=fees-service
         - SERVICE_PORT=4006
+    restart: unless-stopped
     ports:
       - "4006:4006"
     env_file:
@@ -149,6 +159,7 @@ services:
       args:
         - SERVICE_NAME=notice-service
         - SERVICE_PORT=4007
+    restart: unless-stopped
     ports:
       - "4007:4007"
     env_file:
@@ -163,6 +174,7 @@ services:
       args:
         - SERVICE_NAME=notification-service
         - SERVICE_PORT=4008
+    restart: unless-stopped
     ports:
       - "4008:4008"
     env_file:
@@ -177,6 +189,7 @@ services:
       args:
         - SERVICE_NAME=ai-agent-service
         - SERVICE_PORT=4009
+    restart: unless-stopped
     ports:
       - "4009:4009"
     env_file:
@@ -191,6 +204,7 @@ services:
       args:
         - SERVICE_NAME=institution-service
         - SERVICE_PORT=4010
+    restart: unless-stopped
     ports:
       - "4010:4010"
     env_file:

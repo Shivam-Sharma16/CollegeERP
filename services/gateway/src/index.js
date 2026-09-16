@@ -97,4 +97,12 @@ app.listen(env.PORT, () => {
   console.log(`[${env.PORT}] Gateway started with multi-tenant resolution`);
 });
 
+process.on('uncaughtException', (err) => {
+  console.error('[Gateway Uncaught Exception]:', err.message, err.stack);
+});
+
+process.on('unhandledRejection', (reason) => {
+  console.error('[Gateway Unhandled Rejection]:', reason);
+});
+
 module.exports = app;

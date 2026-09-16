@@ -12,7 +12,7 @@ import { clearCredentials } from '../features/ui/authSlice';
 const AUTH_STORAGE_KEY = 'erp_auth';
 
 const rawBaseQuery = fetchBaseQuery({
-  baseUrl: import.meta.env.VITE_API_URL ?? 'http://localhost:4000',
+  baseUrl: import.meta.env.VITE_API_URL || '',
   prepareHeaders: (headers, { getState }) => {
     const token = getState().auth.token;
     if (token) headers.set('Authorization', `Bearer ${token}`);
@@ -38,6 +38,10 @@ export const baseQuery = async (args, api, extraOptions) => {
   if (result.error?.status === 401) {
     api.dispatch(clearCredentials());
     localStorage.removeItem(AUTH_STORAGE_KEY);
+  }
+
+  if (result.error?.status === 'FETCH_ERROR') {
+    console.warn('[baseQuery] Connection error reaching API Gateway. Ensure Gateway (port 4000) is running:', result.error);
   }
 
   return result;

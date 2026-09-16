@@ -1,5 +1,7 @@
 const mongoose = require('mongoose');
 const Department = require('../models/Department.model');
+const RoleAssignment = require('../models/RoleAssignment.model');
+const User = require('../models/User.model');
 const { success, fail, logAudit } = require('@college-erp/shared-utils');
 
 const createDepartment = async (req, res) => {
@@ -9,7 +11,7 @@ const createDepartment = async (req, res) => {
       return res.status(403).json(fail('Access Denied: Only Admin can create departments'));
     }
 
-    const { name, code } = req.body;
+    const { name, code, description, contactEmail, contactPhone, isActive, hodId } = req.body;
 
     if (!name || !code) {
       return res.status(400).json(fail('Name and code are required'));
@@ -31,20 +33,43 @@ const createDepartment = async (req, res) => {
     const department = await Department.create({
       name: name.trim(),
       code: normalizedCode,
-      institutionId
+      description: description ? description.trim() : '',
+      contactEmail: contactEmail ? contactEmail.trim().toLowerCase() : '',
+      contactPhone: contactPhone ? contactPhone.trim() : '',
+      isActive: isActive !== undefined ? Boolean(isActive) : true,
+      institutionId,
+      createdBy: req.user?.userId || req.user?._id
     });
+
+    // Optional: Assign initial HOD if hodId provided
+    if (hodId && mongoose.Types.ObjectId.isValid(hodId)) {
+      const hodUser = await User.findOne({ _id: hodId, institutionId, isActive: true });
+      if (hodUser) {
+        if (!hodUser.roles.includes('HOD')) {
+          hodUser.roles.push('HOD');
+          await hodUser.save();
+        }
+        await RoleAssignment.create({
+          userId: hodUser._id,
+          role: 'HOD',
+          institutionId,
+          departmentId: department._id,
+          validFrom: new Date()
+        });
+      }
+    }
 
     await logAudit(
       req,
       'DEPARTMENT_CREATED',
       department._id.toString(),
       'Department',
-      { name, code: normalizedCode, institutionId }
+      { name: department.name, code: normalizedCode, institutionId }
     );
 
     res.status(201).json(success({ department }));
   } catch (err) {
-    console.error(err);
+    console.error('[DepartmentController] Create error:', err);
     res.status(500).json(fail('Internal server error'));
   }
 };
@@ -59,8 +84,64 @@ const listDepartments = async (req, res) => {
       filter.institutionId = req.query.institutionId;
     }
 
+    if (req.query.status === 'active') {
+      filter.isActive = true;
+    } else if (req.query.status === 'inactive') {
+      filter.isActive = false;
+    }
+
+    if (req.query.search) {
+      const searchRegex = new RegExp(req.query.search.trim(), 'i');
+      filter.$or = [{ name: searchRegex }, { code: searchRegex }];
+    }
+
     const departments = await Department.find(filter).sort({ name: 1 }).lean();
-    res.status(200).json(success(departments));
+    const deptIds = departments.map(d => d._id);
+
+    // Aggregate real-time members from RoleAssignments
+    let assignments = [];
+    if (deptIds.length > 0) {
+      assignments = await RoleAssignment.find({
+        departmentId: { $in: deptIds },
+        $or: [{ validTo: null }, { validTo: { $gt: new Date() } }]
+      })
+        .populate('userId', 'name email avatarUrl isActive')
+        .lean();
+    }
+
+    // Map stats per department
+    const enriched = departments.map(dept => {
+      const deptAssignments = assignments.filter(
+        a => a.departmentId && a.departmentId.toString() === dept._id.toString()
+      );
+
+      const hodAssignments = deptAssignments.filter(
+        a => a.role === 'HOD' && a.userId && a.userId.isActive
+      );
+      const activeHod = hodAssignments[0]?.userId || null;
+
+      const facultyAssignments = deptAssignments.filter(
+        a => a.role === 'FACULTY' && a.userId && a.userId.isActive
+      );
+      const studentAssignments = deptAssignments.filter(
+        a => a.role === 'STUDENT' && a.userId && a.userId.isActive
+      );
+
+      return {
+        ...dept,
+        hod: activeHod ? {
+          _id: activeHod._id,
+          name: activeHod.name,
+          email: activeHod.email,
+          avatarUrl: activeHod.avatarUrl || null
+        } : null,
+        hodCount: hodAssignments.length,
+        facultyCount: facultyAssignments.length,
+        studentCount: studentAssignments.length
+      };
+    });
+
+    res.status(200).json(success(enriched));
   } catch (err) {
     console.error('[DepartmentController] Failed to list departments:', err);
     res.status(500).json(fail('Internal server error'));
@@ -80,7 +161,48 @@ const getDepartmentById = async (req, res) => {
       return res.status(404).json(fail('Department not found'));
     }
 
-    res.status(200).json(success(department));
+    // Fetch members and counts
+    const assignments = await RoleAssignment.find({
+      departmentId: department._id,
+      $or: [{ validTo: null }, { validTo: { $gt: new Date() } }]
+    })
+      .populate('userId', 'name email avatarUrl isActive phone')
+      .lean();
+
+    const hodAssignments = assignments.filter(
+      a => a.role === 'HOD' && a.userId && a.userId.isActive
+    );
+    const activeHod = hodAssignments[0]?.userId || null;
+
+    const facultyCount = assignments.filter(
+      a => a.role === 'FACULTY' && a.userId && a.userId.isActive
+    ).length;
+
+    const studentCount = assignments.filter(
+      a => a.role === 'STUDENT' && a.userId && a.userId.isActive
+    ).length;
+
+    // Optional: academic structure count if years collection exists
+    let yearsCount = 0;
+    if (mongoose.connection.db) {
+      yearsCount = await mongoose.connection.db.collection('years')
+        .countDocuments({ departmentId: department._id });
+    }
+
+    res.status(200).json(success({
+      ...department,
+      hod: activeHod ? {
+        _id: activeHod._id,
+        name: activeHod.name,
+        email: activeHod.email,
+        phone: activeHod.phone || null,
+        avatarUrl: activeHod.avatarUrl || null
+      } : null,
+      hodCount: hodAssignments.length,
+      facultyCount,
+      studentCount,
+      yearsCount
+    }));
   } catch (err) {
     console.error('[DepartmentController] Failed to get department:', err);
     res.status(500).json(fail('Internal server error'));
@@ -95,14 +217,74 @@ const updateDepartment = async (req, res) => {
       filter.institutionId = tenantId;
     }
 
-    const updateData = {};
-    if (req.body.name) updateData.name = req.body.name.trim();
-    if (req.body.code) updateData.code = req.body.code.trim().toUpperCase();
-
-    const department = await Department.findOneAndUpdate(filter, updateData, { new: true }).lean();
-    if (!department) {
+    const existingDept = await Department.findOne(filter);
+    if (!existingDept) {
       return res.status(404).json(fail('Department not found'));
     }
+
+    const updateData = {};
+    if (req.body.name) updateData.name = req.body.name.trim();
+
+    if (req.body.code) {
+      const normalizedCode = req.body.code.trim().toUpperCase();
+      if (normalizedCode !== existingDept.code) {
+        const duplicate = await Department.findOne({
+          code: normalizedCode,
+          institutionId: existingDept.institutionId,
+          _id: { $ne: existingDept._id }
+        });
+        if (duplicate) {
+          return res.status(409).json(fail('Department with this code already exists in this institution'));
+        }
+        updateData.code = normalizedCode;
+      }
+    }
+
+    if (req.body.description !== undefined) updateData.description = req.body.description.trim();
+    if (req.body.isActive !== undefined) updateData.isActive = Boolean(req.body.isActive);
+    if (req.body.contactEmail !== undefined) updateData.contactEmail = req.body.contactEmail.trim().toLowerCase();
+    if (req.body.contactPhone !== undefined) updateData.contactPhone = req.body.contactPhone.trim();
+
+    // HOD Assignment / Reassignment
+    if (req.body.hodId !== undefined) {
+      if (!req.body.hodId) {
+        // Unassign current HOD
+        await RoleAssignment.updateMany(
+          { departmentId: existingDept._id, role: 'HOD', validTo: null },
+          { $set: { validTo: new Date() } }
+        );
+      } else if (mongoose.Types.ObjectId.isValid(req.body.hodId)) {
+        const hodUser = await User.findOne({
+          _id: req.body.hodId,
+          institutionId: existingDept.institutionId,
+          isActive: true
+        });
+
+        if (hodUser) {
+          if (!hodUser.roles.includes('HOD')) {
+            hodUser.roles.push('HOD');
+            await hodUser.save();
+          }
+
+          // Retire previous HOD assignment
+          await RoleAssignment.updateMany(
+            { departmentId: existingDept._id, role: 'HOD', validTo: null },
+            { $set: { validTo: new Date() } }
+          );
+
+          // Create new HOD assignment
+          await RoleAssignment.create({
+            userId: hodUser._id,
+            role: 'HOD',
+            institutionId: existingDept.institutionId,
+            departmentId: existingDept._id,
+            validFrom: new Date()
+          });
+        }
+      }
+    }
+
+    const department = await Department.findOneAndUpdate(filter, updateData, { new: true }).lean();
 
     await logAudit(
       req,
@@ -127,17 +309,38 @@ const deleteDepartment = async (req, res) => {
       filter.institutionId = tenantId;
     }
 
-    const department = await Department.findOneAndDelete(filter).lean();
+    const department = await Department.findOne(filter);
     if (!department) {
       return res.status(404).json(fail('Department not found'));
     }
+
+    // Safety guard: Check for active enrolled students or faculty in this department
+    const activeMembersCount = await RoleAssignment.countDocuments({
+      departmentId: department._id,
+      role: { $in: ['STUDENT', 'FACULTY'] },
+      $or: [{ validTo: null }, { validTo: { $gt: new Date() } }]
+    });
+
+    if (activeMembersCount > 0) {
+      return res.status(400).json(fail(
+        `Cannot delete department with ${activeMembersCount} active students or faculty. Reassign members first or set department status to Inactive.`
+      ));
+    }
+
+    // End any HOD assignment
+    await RoleAssignment.updateMany(
+      { departmentId: department._id, validTo: null },
+      { $set: { validTo: new Date() } }
+    );
+
+    await Department.findOneAndDelete(filter);
 
     await logAudit(
       req,
       'DEPARTMENT_DELETED',
       department._id.toString(),
       'Department',
-      { institutionId: department.institutionId }
+      { name: department.name, code: department.code, institutionId: department.institutionId }
     );
 
     res.status(200).json(success({ message: 'Department deleted successfully' }));

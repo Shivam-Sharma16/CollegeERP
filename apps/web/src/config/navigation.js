@@ -6,6 +6,7 @@ export const NAV_ITEMS = [
 
   // Admin
   { key: "admin-dashboard",      label: "Dashboard",           icon: "Home",       path: "/admin/dashboard",         roles: ["admin"] },
+  { key: "admin-departments",    label: "Departments",         icon: "Layers",     path: "/admin/departments",       roles: ["admin"] },
   { key: "hods",                 label: "HODs",                icon: "UserTie",    path: "/admin/hods",              roles: ["admin"] },
   { key: "roles",                label: "Roles & Permissions", icon: "Shield",     path: "/admin/roles",             roles: ["admin"] },
   { key: "admin-reports",        label: "Reports",             icon: "BarChart",   path: "/admin/reports",           roles: ["admin"] },

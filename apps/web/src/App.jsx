@@ -14,6 +14,7 @@ const SuperAdminDashboard = lazy(() => import('./pages/SuperAdminDashboard'));
 const SuperAdminManagement = lazy(() => import('./pages/SuperAdminManagement'));
 const InstitutionSettings = lazy(() => import('./pages/InstitutionSettings'));
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
+const AdminDepartments = lazy(() => import('./pages/AdminDepartments'));
 const AdminHodManagement = lazy(() => import('./pages/AdminHodManagement'));
 const AdminReports = lazy(() => import('./pages/AdminReports'));
 const AdminFeePolicy = lazy(() => import('./pages/AdminFeePolicy'));
@@ -132,7 +133,7 @@ export default function App() {
             <Route path="/inst/:slug/admin" element={<Navigate to="dashboard" replace />} />
             <Route path="/inst/:slug/admin/dashboard" element={<TenantProvider><ProtectedRoute allowedRoles={['ADMIN', 'SUPERADMIN']}><AdminDashboard /></ProtectedRoute></TenantProvider>} />
             <Route path="/inst/:slug/admin/hods" element={<TenantProvider><ProtectedRoute allowedRoles={['ADMIN', 'SUPERADMIN']}><AdminHodManagement /></ProtectedRoute></TenantProvider>} />
-            <Route path="/inst/:slug/admin/departments" element={<TenantProvider><ProtectedRoute allowedRoles={['ADMIN', 'SUPERADMIN']}><AdminDashboard /></ProtectedRoute></TenantProvider>} />
+            <Route path="/inst/:slug/admin/departments" element={<TenantProvider><ProtectedRoute allowedRoles={['ADMIN', 'SUPERADMIN']}><AdminDepartments /></ProtectedRoute></TenantProvider>} />
             <Route path="/inst/:slug/admin/reports" element={<TenantProvider><ProtectedRoute allowedRoles={['ADMIN', 'SUPERADMIN', 'HOD']}><AdminReports /></ProtectedRoute></TenantProvider>} />
             <Route path="/inst/:slug/admin/fee-policy" element={<TenantProvider><ProtectedRoute allowedRoles={['ADMIN', 'SUPERADMIN']}><AdminFeePolicy /></ProtectedRoute></TenantProvider>} />
             <Route path="/inst/:slug/admin/notices" element={<TenantProvider><ProtectedRoute allowedRoles={['ADMIN', 'SUPERADMIN']}><AdminNotices /></ProtectedRoute></TenantProvider>} />
@@ -182,7 +183,7 @@ export default function App() {
             <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
             <Route path="/admin/dashboard" element={<ProtectedRoute allowedRoles={['ADMIN', 'SUPERADMIN']}><AdminDashboard /></ProtectedRoute>} />
             <Route path="/admin/hods" element={<ProtectedRoute allowedRoles={['ADMIN', 'SUPERADMIN']}><AdminHodManagement /></ProtectedRoute>} />
-            <Route path="/admin/departments" element={<ProtectedRoute allowedRoles={['ADMIN', 'SUPERADMIN']}><AdminDashboard /></ProtectedRoute>} />
+            <Route path="/admin/departments" element={<ProtectedRoute allowedRoles={['ADMIN', 'SUPERADMIN']}><AdminDepartments /></ProtectedRoute>} />
             <Route path="/admin/reports" element={<ProtectedRoute allowedRoles={['ADMIN', 'HOD', 'SUPERADMIN']}><AdminReports /></ProtectedRoute>} />
             <Route path="/admin/fee-policy" element={<ProtectedRoute allowedRoles={['ADMIN', 'SUPERADMIN']}><AdminFeePolicy /></ProtectedRoute>} />
             <Route path="/admin/notices" element={<ProtectedRoute allowedRoles={['ADMIN', 'SUPERADMIN']}><AdminNotices /></ProtectedRoute>} />

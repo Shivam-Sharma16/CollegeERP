@@ -9,6 +9,10 @@ const departmentSchema = new mongoose.Schema({
     required: true, 
     index: true 
   },
+  description: { type: String, trim: true, default: '' },
+  isActive: { type: Boolean, default: true, index: true },
+  contactEmail: { type: String, trim: true, lowercase: true, default: '' },
+  contactPhone: { type: String, trim: true, default: '' },
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
 }, {
   timestamps: true

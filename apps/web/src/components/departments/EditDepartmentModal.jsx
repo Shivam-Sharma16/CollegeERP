@@ -2,22 +2,23 @@ import { useState, useEffect } from 'react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { useToast } from '../ui/ToastContext';
-import { useCreateDepartmentMutation } from '../../api/departmentsApi';
+import { useUpdateDepartmentMutation } from '../../api/departmentsApi';
 import { useListHodsQuery, useListFacultyQuery } from '../../api/usersApi';
 import { Building2, Hash, Layers, Mail, Phone, FileText, UserCheck } from 'lucide-react';
-import styles from './CreateDepartmentModal.module.css';
+import styles from './EditDepartmentModal.module.css';
 
-export function CreateDepartmentModal({ isOpen, onClose }) {
+export function EditDepartmentModal({ isOpen, onClose, department }) {
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
   const [description, setDescription] = useState('');
   const [contactEmail, setContactEmail] = useState('');
   const [contactPhone, setContactPhone] = useState('');
+  const [isActive, setIsActive] = useState(true);
   const [hodId, setHodId] = useState('');
   const [fieldErrors, setFieldErrors] = useState({});
   const { showToast } = useToast();
 
-  const [createDepartment, { isLoading }] = useCreateDepartmentMutation();
+  const [updateDepartment, { isLoading }] = useUpdateDepartmentMutation();
   const { data: hodsData } = useListHodsQuery(undefined, { skip: !isOpen });
   const { data: facultyData } = useListFacultyQuery(undefined, { skip: !isOpen });
 
@@ -27,32 +28,36 @@ export function CreateDepartmentModal({ isOpen, onClose }) {
   ].filter((user, index, self) => index === self.findIndex(u => u._id === user._id));
 
   useEffect(() => {
-    if (isOpen) {
-      setName('');
-      setCode('');
-      setDescription('');
-      setContactEmail('');
-      setContactPhone('');
-      setHodId('');
+    if (department && isOpen) {
+      setName(department.name || '');
+      setCode(department.code || '');
+      setDescription(department.description || '');
+      setContactEmail(department.contactEmail || '');
+      setContactPhone(department.contactPhone || '');
+      setIsActive(department.isActive !== false);
+      setHodId(department.hod?._id || '');
       setFieldErrors({});
     }
-  }, [isOpen]);
+  }, [department, isOpen]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!department) return;
     setFieldErrors({});
 
     try {
-      await createDepartment({
+      await updateDepartment({
+        id: department._id,
         name,
         code,
         description,
         contactEmail,
         contactPhone,
-        hodId: hodId || undefined
+        isActive,
+        hodId: hodId || null
       }).unwrap();
 
-      showToast('Department created successfully', 'success');
+      showToast('Department updated successfully', 'success');
       onClose();
     } catch (err) {
       const errData = err?.data || {};
@@ -73,7 +78,7 @@ export function CreateDepartmentModal({ isOpen, onClose }) {
           showToast('A duplicate entry error occurred.', 'error');
         }
       } else {
-        showToast(errData.error || errData.message || 'Failed to create department', 'error');
+        showToast(errData.error || errData.message || 'Failed to update department', 'error');
       }
 
       setFieldErrors(newErrors);
@@ -81,28 +86,28 @@ export function CreateDepartmentModal({ isOpen, onClose }) {
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Create Department">
+    <Modal isOpen={isOpen} onClose={onClose} title="Edit Department">
       <form onSubmit={handleSubmit} className={styles.form}>
         <div className={styles.formIntro}>
           <div className={styles.introIcon}>
             <Layers size={18} />
           </div>
           <div className={styles.introText}>
-            <p className={styles.introTitle}>Academic Department</p>
+            <p className={styles.introTitle}>Configure Department</p>
             <p className={styles.introDesc}>
-              Define an academic faculty branch to organize courses, professors, and students.
+              Update department details, active availability status, and HOD leadership.
             </p>
           </div>
         </div>
 
         <div className={styles.field}>
-          <label htmlFor="deptName" className={styles.label}>
+          <label htmlFor="editDeptName" className={styles.label}>
             Department Name <span className={styles.required}>*</span>
           </label>
           <div className={styles.inputWithIcon}>
             <Building2 size={16} className={styles.inputIcon} />
             <input
-              id="deptName"
+              id="editDeptName"
               className={`${styles.input} ${fieldErrors.name ? styles.inputError : ''}`}
               type="text"
               required
@@ -119,13 +124,13 @@ export function CreateDepartmentModal({ isOpen, onClose }) {
         </div>
 
         <div className={styles.field}>
-          <label htmlFor="deptCode" className={styles.label}>
+          <label htmlFor="editDeptCode" className={styles.label}>
             Department Code <span className={styles.required}>*</span>
           </label>
           <div className={styles.inputWithIcon}>
             <Hash size={16} className={styles.inputIcon} />
             <input
-              id="deptCode"
+              id="editDeptCode"
               className={`${styles.input} ${fieldErrors.code ? styles.inputError : ''}`}
               type="text"
               required
@@ -140,17 +145,16 @@ export function CreateDepartmentModal({ isOpen, onClose }) {
             />
           </div>
           {fieldErrors.code && <span className={styles.errorText}>{fieldErrors.code}</span>}
-          <span className={styles.helpText}>Short uppercase identifier unique within your college.</span>
         </div>
 
         <div className={styles.field}>
-          <label htmlFor="deptDesc" className={styles.label}>
+          <label htmlFor="editDeptDesc" className={styles.label}>
             Description
           </label>
           <div className={styles.inputWithIcon}>
             <FileText size={16} className={styles.inputIcon} />
             <input
-              id="deptDesc"
+              id="editDeptDesc"
               className={styles.input}
               type="text"
               value={description}
@@ -163,13 +167,13 @@ export function CreateDepartmentModal({ isOpen, onClose }) {
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 'var(--spacing-3)' }}>
           <div className={styles.field}>
-            <label htmlFor="deptEmail" className={styles.label}>
+            <label htmlFor="editDeptEmail" className={styles.label}>
               Contact Email
             </label>
             <div className={styles.inputWithIcon}>
               <Mail size={16} className={styles.inputIcon} />
               <input
-                id="deptEmail"
+                id="editDeptEmail"
                 className={styles.input}
                 type="email"
                 value={contactEmail}
@@ -181,13 +185,13 @@ export function CreateDepartmentModal({ isOpen, onClose }) {
           </div>
 
           <div className={styles.field}>
-            <label htmlFor="deptPhone" className={styles.label}>
+            <label htmlFor="editDeptPhone" className={styles.label}>
               Contact Phone
             </label>
             <div className={styles.inputWithIcon}>
               <Phone size={16} className={styles.inputIcon} />
               <input
-                id="deptPhone"
+                id="editDeptPhone"
                 className={styles.input}
                 type="tel"
                 value={contactPhone}
@@ -200,20 +204,20 @@ export function CreateDepartmentModal({ isOpen, onClose }) {
         </div>
 
         <div className={styles.field}>
-          <label htmlFor="deptHod" className={styles.label}>
-            Assign Head of Department (HOD)
+          <label htmlFor="editDeptHod" className={styles.label}>
+            Head of Department (HOD)
           </label>
           <div className={styles.inputWithIcon}>
             <UserCheck size={16} className={styles.inputIcon} />
             <select
-              id="deptHod"
+              id="editDeptHod"
               className={styles.input}
               value={hodId}
               onChange={(e) => setHodId(e.target.value)}
               disabled={isLoading}
               style={{ appearance: 'auto', paddingLeft: '38px' }}
             >
-              <option value="">-- No HOD assigned (assign later) --</option>
+              <option value="">-- No HOD assigned --</option>
               {potentialHods.map((u) => (
                 <option key={u._id} value={u._id}>
                   {u.name} ({u.email})
@@ -221,7 +225,25 @@ export function CreateDepartmentModal({ isOpen, onClose }) {
               ))}
             </select>
           </div>
-          <span className={styles.helpText}>You can also appoint or reassign an HOD at any time.</span>
+        </div>
+
+        {/* Active status toggle switch */}
+        <div className={styles.statusRow}>
+          <div className={styles.statusLabel}>
+            <p className={styles.statusTitle}>Department Status</p>
+            <p className={styles.statusDesc}>
+              {isActive ? 'Department is active and accepting registrations/enrollments.' : 'Department is inactive and hidden from new enrollments.'}
+            </p>
+          </div>
+          <label className={styles.switch}>
+            <input
+              type="checkbox"
+              checked={isActive}
+              onChange={(e) => setIsActive(e.target.checked)}
+              disabled={isLoading}
+            />
+            <span className={styles.slider}></span>
+          </label>
         </div>
 
         <div className={styles.actions}>
@@ -229,11 +251,10 @@ export function CreateDepartmentModal({ isOpen, onClose }) {
             Cancel
           </Button>
           <Button type="submit" variant="primary" disabled={isLoading}>
-            {isLoading ? 'Creating...' : 'Create Department'}
+            {isLoading ? 'Saving Changes...' : 'Save Changes'}
           </Button>
         </div>
       </form>
     </Modal>
   );
 }
-
