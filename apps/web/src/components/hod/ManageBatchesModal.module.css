@@ -1,0 +1,281 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+  max-height: 75vh;
+  overflow-y: auto;
+  padding-right: var(--spacing-2);
+}
+
+.headerNote {
+  background: var(--color-surface-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 0.75rem 1rem;
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.headerNote strong {
+  color: var(--color-text);
+}
+
+.batchTabs {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: 0.75rem;
+}
+
+.batchTab {
+  padding: 0.45rem 0.85rem;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: all var(--transition);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.batchTab:hover {
+  background: var(--color-surface-elevated);
+  color: var(--color-text);
+}
+
+.batchTabActive {
+  background: color-mix(in srgb, var(--color-primary) 15%, var(--color-surface));
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.countBadge {
+  font-size: 0.75rem;
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+  background: var(--color-surface-elevated);
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+}
+
+.batchTabActive .countBadge {
+  background: var(--color-primary);
+  color: #ffffff;
+  border-color: var(--color-primary);
+}
+
+.addBatchBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: var(--text-sm);
+  padding: 0.45rem 0.75rem;
+  border-radius: var(--radius-sm);
+  border: 1px dashed var(--color-primary);
+  background: transparent;
+  color: var(--color-primary);
+  cursor: pointer;
+  font-weight: 600;
+  transition: all var(--transition);
+}
+
+.addBatchBtn:hover {
+  background: color-mix(in srgb, var(--color-primary) 10%, transparent);
+}
+
+.editorCard {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.fieldRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  flex: 1 1 240px;
+}
+
+.label {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.input {
+  padding: 0.6rem 0.85rem;
+  background: var(--color-surface-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  font-size: var(--text-sm);
+  outline: none;
+  transition: border-color var(--transition);
+}
+
+.input:focus {
+  border-color: var(--color-primary);
+}
+
+.rosterHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-top: 0.5rem;
+}
+
+.rosterTitle {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-text);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.rosterControls {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.searchBox {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.searchInput {
+  padding: 0.45rem 0.75rem 0.45rem 2rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-elevated);
+  font-size: var(--text-xs);
+  color: var(--color-text);
+  outline: none;
+  width: 180px;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 0.6rem;
+  color: var(--color-text-muted);
+  pointer-events: none;
+}
+
+.rosterTableWrapper {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  max-height: 280px;
+  overflow-y: auto;
+  background: var(--color-surface-elevated);
+}
+
+.rosterTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-xs);
+  text-align: left;
+}
+
+.rosterTable th {
+  position: sticky;
+  top: 0;
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  padding: 0.55rem 0.75rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  z-index: 1;
+}
+
+.rosterTable td {
+  padding: 0.55rem 0.75rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--color-border) 60%, transparent);
+  color: var(--color-text);
+}
+
+.rowDisabled {
+  opacity: 0.6;
+  background: color-mix(in srgb, var(--color-bg) 50%, transparent);
+}
+
+.rowSelected {
+  background: color-mix(in srgb, var(--color-primary) 8%, transparent);
+}
+
+.assignedBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  background: rgba(234, 179, 8, 0.15);
+  border: 1px solid rgba(234, 179, 8, 0.35);
+  color: #ca8a04;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.currentBatchBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  background: rgba(99, 102, 241, 0.15);
+  border: 1px solid rgba(99, 102, 241, 0.35);
+  color: #6366f1;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.unassignedBadge {
+  color: var(--color-text-muted);
+  font-size: 0.7rem;
+}
+
+.actionsBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+.rightActions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.emptyRoster {
+  padding: 2rem;
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}

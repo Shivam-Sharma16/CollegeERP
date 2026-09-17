@@ -1,10 +1,12 @@
 /**
  * academicApi — RTK Query slice for academic structure.
  *
- * Endpoint:  /api/academic/*
+ * Endpoints: /api/years, /api/semesters, /api/sections, /api/subjects, /api/batches
+ *            Batches nested under sections: /api/sections/:id/batches
+ *            Rollover: /api/academic/rollover
  * Gateway:   academic-service:4003
  *
- * tagTypes:  Year | Semester | Section | Subject
+ * tagTypes:  Year | Semester | Section | Subject | Batch
  *
  * Hierarchy: Department → Year → Semester → Section → Subject
  * Each level's mutations invalidate the `DeptTree` tag in departmentsApi
@@ -18,7 +20,7 @@ import { baseQuery } from './baseQuery';
 export const academicApi = createApi({
   reducerPath: 'academicApi',
   baseQuery,
-  tagTypes: ['Year', 'Semester', 'Section', 'Subject'],
+  tagTypes: ['Year', 'Semester', 'Section', 'Subject', 'Batch'],
   keepUnusedDataFor: 600,
 
   endpoints: (builder) => ({
@@ -26,7 +28,7 @@ export const academicApi = createApi({
     // ── YEARS ─────────────────────────────────────────────────────────────────
 
     listYears: builder.query({
-      query: (params = {}) => ({ url: '/api/academic/years', params }),
+      query: (params = {}) => ({ url: '/api/years', params }),
       providesTags: (r) =>
         r?.data
           ? [...r.data.map(({ _id }) => ({ type: 'Year', id: _id })), { type: 'Year', id: 'LIST' }]
@@ -34,24 +36,24 @@ export const academicApi = createApi({
     }),
 
     createYear: builder.mutation({
-      query: (body) => ({ url: '/api/academic/years', method: 'POST', body }),
+      query: (body) => ({ url: '/api/years', method: 'POST', body }),
       invalidatesTags: [{ type: 'Year', id: 'LIST' }],
     }),
 
     updateYear: builder.mutation({
-      query: ({ id, ...body }) => ({ url: `/api/academic/years/${id}`, method: 'PATCH', body }),
+      query: ({ id, ...body }) => ({ url: `/api/years/${id}`, method: 'PATCH', body }),
       invalidatesTags: (_r, _e, { id }) => [{ type: 'Year', id }, { type: 'Year', id: 'LIST' }],
     }),
 
     deleteYear: builder.mutation({
-      query: (id) => ({ url: `/api/academic/years/${id}`, method: 'DELETE' }),
+      query: (id) => ({ url: `/api/years/${id}`, method: 'DELETE' }),
       invalidatesTags: [{ type: 'Year', id: 'LIST' }],
     }),
 
     // ── SEMESTERS ─────────────────────────────────────────────────────────────
 
     listSemesters: builder.query({
-      query: (params = {}) => ({ url: '/api/academic/semesters', params }),
+      query: (params = {}) => ({ url: '/api/semesters', params }),
       providesTags: (r) =>
         r?.data
           ? [...r.data.map(({ _id }) => ({ type: 'Semester', id: _id })), { type: 'Semester', id: 'LIST' }]
@@ -59,24 +61,24 @@ export const academicApi = createApi({
     }),
 
     createSemester: builder.mutation({
-      query: (body) => ({ url: '/api/academic/semesters', method: 'POST', body }),
+      query: (body) => ({ url: '/api/semesters', method: 'POST', body }),
       invalidatesTags: [{ type: 'Semester', id: 'LIST' }],
     }),
 
     updateSemester: builder.mutation({
-      query: ({ id, ...body }) => ({ url: `/api/academic/semesters/${id}`, method: 'PATCH', body }),
+      query: ({ id, ...body }) => ({ url: `/api/semesters/${id}`, method: 'PATCH', body }),
       invalidatesTags: (_r, _e, { id }) => [{ type: 'Semester', id }, { type: 'Semester', id: 'LIST' }],
     }),
 
     deleteSemester: builder.mutation({
-      query: (id) => ({ url: `/api/academic/semesters/${id}`, method: 'DELETE' }),
+      query: (id) => ({ url: `/api/semesters/${id}`, method: 'DELETE' }),
       invalidatesTags: [{ type: 'Semester', id: 'LIST' }],
     }),
 
     // ── SECTIONS ──────────────────────────────────────────────────────────────
 
     listSections: builder.query({
-      query: (params = {}) => ({ url: '/api/academic/sections', params }),
+      query: (params = {}) => ({ url: '/api/sections', params }),
       providesTags: (r) =>
         r?.data
           ? [...r.data.map(({ _id }) => ({ type: 'Section', id: _id })), { type: 'Section', id: 'LIST' }]
@@ -84,24 +86,24 @@ export const academicApi = createApi({
     }),
 
     createSection: builder.mutation({
-      query: (body) => ({ url: '/api/academic/sections', method: 'POST', body }),
+      query: (body) => ({ url: '/api/sections', method: 'POST', body }),
       invalidatesTags: [{ type: 'Section', id: 'LIST' }],
     }),
 
     updateSection: builder.mutation({
-      query: ({ id, ...body }) => ({ url: `/api/academic/sections/${id}`, method: 'PATCH', body }),
+      query: ({ id, ...body }) => ({ url: `/api/sections/${id}`, method: 'PATCH', body }),
       invalidatesTags: (_r, _e, { id }) => [{ type: 'Section', id }, { type: 'Section', id: 'LIST' }],
     }),
 
     deleteSection: builder.mutation({
-      query: (id) => ({ url: `/api/academic/sections/${id}`, method: 'DELETE' }),
+      query: (id) => ({ url: `/api/sections/${id}`, method: 'DELETE' }),
       invalidatesTags: [{ type: 'Section', id: 'LIST' }],
     }),
 
     // ── SUBJECTS ──────────────────────────────────────────────────────────────
 
     listSubjects: builder.query({
-      query: (params = {}) => ({ url: '/api/academic/subjects', params }),
+      query: (params = {}) => ({ url: '/api/subjects', params }),
       providesTags: (r) =>
         r?.data
           ? [...r.data.map(({ _id }) => ({ type: 'Subject', id: _id })), { type: 'Subject', id: 'LIST' }]
@@ -109,24 +111,65 @@ export const academicApi = createApi({
     }),
 
     createSubject: builder.mutation({
-      query: (body) => ({ url: '/api/academic/subjects', method: 'POST', body }),
+      query: (body) => ({ url: '/api/subjects', method: 'POST', body }),
       invalidatesTags: [{ type: 'Subject', id: 'LIST' }],
     }),
 
     updateSubject: builder.mutation({
-      query: ({ id, ...body }) => ({ url: `/api/academic/subjects/${id}`, method: 'PATCH', body }),
+      query: ({ id, ...body }) => ({ url: `/api/subjects/${id}`, method: 'PATCH', body }),
       invalidatesTags: (_r, _e, { id }) => [{ type: 'Subject', id }, { type: 'Subject', id: 'LIST' }],
     }),
 
     deleteSubject: builder.mutation({
-      query: (id) => ({ url: `/api/academic/subjects/${id}`, method: 'DELETE' }),
+      query: (id) => ({ url: `/api/subjects/${id}`, method: 'DELETE' }),
       invalidatesTags: [{ type: 'Subject', id: 'LIST' }],
     }),
 
     // ── CC SPECIFIC ───────────────────────────────────────────────────────────
     getMySection: builder.query({
-      query: () => '/api/academic/sections/my-section',
+      query: () => '/api/sections/my-section',
       providesTags: ['Section'],
+    }),
+
+    // ── BATCHES (Phase 84/88) ──────────────────────────────────────────────────
+    listBatches: builder.query({
+      query: (sectionId) => ({
+        url: sectionId ? `/api/sections/${sectionId}/batches` : '/api/batches',
+      }),
+      providesTags: (r) =>
+        Array.isArray(r)
+          ? [
+              ...r.map(({ _id }) => ({ type: 'Batch', id: _id })),
+              { type: 'Batch', id: 'LIST' },
+            ]
+          : [{ type: 'Batch', id: 'LIST' }],
+      transformResponse: (response) => response?.data?.batches || response?.batches || response?.data || response || [],
+    }),
+
+    createBatch: builder.mutation({
+      query: ({ sectionId, ...body }) => ({
+        url: `/api/sections/${sectionId}/batches`,
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: [{ type: 'Batch', id: 'LIST' }],
+    }),
+
+    updateBatch: builder.mutation({
+      query: ({ id, ...body }) => ({
+        url: `/api/batches/${id}`,
+        method: 'PATCH',
+        body,
+      }),
+      invalidatesTags: (_r, _e, { id }) => [{ type: 'Batch', id }, { type: 'Batch', id: 'LIST' }],
+    }),
+
+    deleteBatch: builder.mutation({
+      query: (id) => ({
+        url: `/api/batches/${id}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: [{ type: 'Batch', id: 'LIST' }],
     }),
 
     // ── ROLLOVER ───────────────────────────────────────────────────────────────
@@ -158,6 +201,11 @@ export const {
   useCreateSectionMutation,
   useUpdateSectionMutation,
   useDeleteSectionMutation,
+  // Batches
+  useListBatchesQuery,
+  useCreateBatchMutation,
+  useUpdateBatchMutation,
+  useDeleteBatchMutation,
   // Subjects
   useListSubjectsQuery,
   useCreateSubjectMutation,

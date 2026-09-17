@@ -228,9 +228,63 @@ const deleteTeachingAssignment = async (req, res) => {
   }
 };
 
+/**
+ * GET /faculty-load/:facultyId
+ * Returns a summary of all teaching assignments for a faculty member:
+ * { sessions, subjects: [], sections: [], assignments: [] }
+ */
+const getFacultyLoad = async (req, res) => {
+  try {
+    const tenantId = req.tenantId || req.headers['x-tenant-id'] || req.user?.institutionId;
+    const { facultyId } = req.params;
+
+    if (!facultyId) {
+      return res.status(400).json(fail('facultyId is required'));
+    }
+
+    const filter = { facultyId };
+    if (tenantId && !req.user?.roles?.includes('SUPERADMIN')) {
+      filter.institutionId = tenantId;
+    }
+
+    const assignments = await TeachingAssignment.find(filter)
+      .populate('subjectId', 'name code type credits')
+      .populate('sectionId', 'name capacity')
+      .populate('batchId', 'name studentIds');
+
+    const subjects = [];
+    const sections = [];
+    const seenSubjects = new Set();
+    const seenSections = new Set();
+
+    for (const a of assignments) {
+      if (a.subjectId && !seenSubjects.has(a.subjectId._id?.toString())) {
+        subjects.push(a.subjectId);
+        seenSubjects.add(a.subjectId._id?.toString());
+      }
+      if (a.sectionId && !seenSections.has(a.sectionId._id?.toString())) {
+        sections.push(a.sectionId);
+        seenSections.add(a.sectionId._id?.toString());
+      }
+    }
+
+    res.json(success({
+      facultyId,
+      sessions: assignments.length,
+      subjects,
+      sections,
+      assignments
+    }));
+  } catch (err) {
+    console.error(err);
+    res.status(500).json(fail('Internal server error'));
+  }
+};
+
 module.exports = {
   createTeachingAssignment,
   listTeachingAssignments,
   updateTeachingAssignment,
-  deleteTeachingAssignment
+  deleteTeachingAssignment,
+  getFacultyLoad
 };

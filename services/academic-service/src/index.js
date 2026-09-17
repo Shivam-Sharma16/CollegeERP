@@ -41,6 +41,9 @@ app.use('/api/sections', sectionRoute);
 app.use('/api/batches', batchRoute);
 app.use('/api/subjects', subjectRoute);
 app.use('/api/teaching-assignments', teachingRoute);
+app.use('/api/teaching/assignments', teachingRoute);  // Phase 88: frontend teachingApi uses /api/teaching/assignments
+app.use('/api/teaching/section-assignments', sectionAssignmentRoute);  // Phase 88: frontend uses /api/teaching/section-assignments
+app.use('/api/teaching',             teachingRoute);  // Phase 88: catch-all for /api/teaching/faculty-load/*
 app.use('/api/section-assignments', sectionAssignmentRoute);
 app.use('/api/academic', rolloverRoute);
 app.use('/api/rollover', rolloverRoute);

@@ -15,11 +15,12 @@ export const NAV_ITEMS = [
   { key: "inst-notices",         label: "Institution Notices",  icon: "Megaphone",  path: "/admin/notices",           roles: ["admin"] },
 
   // HOD
-  { key: "hod-dashboard",        label: "Dashboard",           icon: "Home",       path: "/hod/dashboard",           roles: ["hod"] },
-  { key: "hod-management",       label: "Staff Management",     icon: "Users",      path: "/hod/management",          roles: ["hod"] },
-  { key: "academic",             label: "Academic Structure",   icon: "Layers",     path: "/hod/academic-structure",  roles: ["hod"] },
-  { key: "assignments",          label: "Teaching Assignments", icon: "Link",       path: "/hod/assignments",         roles: ["hod"] },
-  { key: "hod-reports",          label: "Reports",             icon: "BarChart",   path: "/hod/reports",             roles: ["hod"] },
+  { key: "hod-dashboard",        label: "Dashboard",           icon: "Home",          path: "/hod/dashboard",           roles: ["hod"] },
+  { key: "hod-management",       label: "Staff Management",     icon: "Users",         path: "/hod/management",          roles: ["hod"] },
+  { key: "academic",             label: "Academic Structure",   icon: "Layers",        path: "/hod/academic-structure",  roles: ["hod"] },
+  { key: "assignments",          label: "Teaching Assignments", icon: "Link",          path: "/hod/assignments",         roles: ["hod"] },
+  { key: "escalated-disputes",   label: "Escalated Disputes",   icon: "AlertTriangle", path: "/hod/disputes",            roles: ["hod"] },
+  { key: "hod-reports",          label: "Reports",             icon: "BarChart",      path: "/hod/reports",             roles: ["hod"] },
 
   // CC
   { key: "cc-dashboard",         label: "Dashboard",           icon: "Home",       path: "/cc/dashboard",            roles: ["cc"] },

@@ -1,0 +1,212 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-text);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.header p {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+  margin-top: var(--spacing-2);
+}
+
+.card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.25rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  gap: 1.5rem;
+  overflow: hidden;
+  transition: border-color var(--transition);
+}
+
+.card:hover {
+  border-color: color-mix(in srgb, var(--color-primary) 40%, var(--color-border));
+}
+
+.cardInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  flex: 1 1 auto;
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.studentName {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.rollNumber {
+  font-size: 0.8rem;
+  font-family: var(--font-mono, monospace);
+  color: var(--color-text-muted);
+  background: var(--color-surface-elevated);
+  border: 1px solid var(--color-border);
+  padding: 0.15rem 0.5rem;
+  border-radius: var(--radius-sm);
+}
+
+.sectionBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  background: rgba(99, 102, 241, 0.12);
+  border: 1px solid rgba(99, 102, 241, 0.35);
+  color: #818cf8;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.ccBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  color: #f59e0b;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.metaRow {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  flex-wrap: wrap;
+}
+
+.metaItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.metaItem strong {
+  color: var(--color-text);
+}
+
+.reasonsContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-top: 0.25rem;
+}
+
+.flagReason {
+  font-size: var(--text-xs);
+  color: #f87171;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  padding: 0.45rem 0.75rem;
+  border-radius: var(--radius-sm);
+  line-height: 1.4;
+}
+
+.escalationReason {
+  font-size: var(--text-xs);
+  color: #fbbf24;
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  padding: 0.45rem 0.75rem;
+  border-radius: var(--radius-sm);
+  line-height: 1.4;
+}
+
+.actions {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.approveBtn {
+  background: #10b981 !important;
+  color: #ffffff !important;
+  border-color: #10b981 !important;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.approveBtn:hover:not(:disabled) {
+  background: #059669 !important;
+  border-color: #059669 !important;
+}
+
+.rejectBtn {
+  color: #ef4444 !important;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.rejectBtn:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.1) !important;
+}
+
+.loading {
+  padding: 3rem;
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3.5rem 1.5rem;
+  background: var(--color-surface);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text-muted);
+  gap: 0.75rem;
+  text-align: center;
+}
+
+.emptyIcon {
+  color: #10b981;
+}

@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { ChevronRight, ChevronDown, Plus, Folder, FolderOpen, Layers } from 'lucide-react';
+import { ChevronRight, ChevronDown, Plus, Folder, FolderOpen, Layers, Users } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { CreateSectionModal } from './CreateSectionModal';
+import { ManageBatchesModal } from './ManageBatchesModal';
 import styles from './AcademicTree.module.css';
 
 function TreeItem({ label, icon, isOpen, onToggle, children, actions }) {
@@ -30,6 +31,7 @@ export function AcademicTree({ department }) {
   const [openNodes, setOpenNodes] = useState({});
   const [activeSemester, setActiveSemester] = useState(null);
   const [isSectionModalOpen, setIsSectionModalOpen] = useState(false);
+  const [activeSectionForBatches, setActiveSectionForBatches] = useState(null);
 
   const toggleNode = (nodeId) => {
     setOpenNodes(prev => ({ ...prev, [nodeId]: !prev[nodeId] }));
@@ -84,9 +86,23 @@ export function AcademicTree({ department }) {
                   {sem.sections?.length > 0 ? (
                     sem.sections.map(sec => (
                       <div key={sec._id} className={styles.leafNode}>
-                        <Layers size={16} color="var(--color-text-muted)" />
-                        <span>Section {sec.name}</span>
-                        <span className={styles.capacity}>(Cap: {sec.capacity})</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flex: 1 }}>
+                          <Layers size={16} color="var(--color-text-muted)" />
+                          <span>Section {sec.name}</span>
+                          <span className={styles.capacity}>(Cap: {sec.capacity})</span>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setActiveSectionForBatches(sec);
+                          }}
+                          style={{ padding: '0.2rem 0.5rem', fontSize: '0.75rem', height: 'auto' }}
+                          title="Manage Lab Batches"
+                        >
+                          <Users size={12} /> Batches
+                        </Button>
                       </div>
                     ))
                   ) : (
@@ -107,6 +123,15 @@ export function AcademicTree({ department }) {
             setActiveSemester(null);
           }}
           semester={activeSemester}
+          departmentId={department._id}
+        />
+      )}
+
+      {activeSectionForBatches && (
+        <ManageBatchesModal
+          isOpen={Boolean(activeSectionForBatches)}
+          onClose={() => setActiveSectionForBatches(null)}
+          section={activeSectionForBatches}
           departmentId={department._id}
         />
       )}

@@ -19,7 +19,7 @@ import { baseQuery } from './baseQuery';
 export const attendanceApi = createApi({
   reducerPath: 'attendanceApi',
   baseQuery,
-  tagTypes: ['Session', 'AttendanceRecord'],
+  tagTypes: ['Session', 'AttendanceRecord', 'EscalatedDisputes'],
   keepUnusedDataFor: 30, // live counts go stale fast
   endpoints: (builder) => ({
     // ── SESSIONS ──────────────────────────────────────────────────────────────
@@ -261,6 +261,48 @@ export const attendanceApi = createApi({
         { type: 'AttendanceRecord', id: 'LIST' },
       ],
     }),
+
+    // ── HOD ESCALATED DISPUTES (Phase 85/88) ───────────────────────────────────
+
+    /**
+     * GET /api/attendance/disputes/escalated
+     * Returns list of escalated attendance disputes across all sections in HOD's department
+     */
+    listEscalatedDisputes: builder.query({
+      query: (params = {}) => ({
+        url: '/api/attendance/disputes/escalated',
+        params,
+      }),
+      keepUnusedDataFor: 10,
+      providesTags: (r) =>
+        Array.isArray(r)
+          ? [
+              ...r.map(({ _id }) => ({ type: 'EscalatedDisputes', id: _id })),
+              { type: 'EscalatedDisputes', id: 'LIST' },
+            ]
+          : [{ type: 'EscalatedDisputes', id: 'LIST' }],
+      transformResponse: (response) => response?.data?.disputes || response?.disputes || response?.data || response || [],
+    }),
+
+    /**
+     * POST /api/attendance/disputes/:disputeId/resolve-escalation
+     * HOD resolves an escalated dispute
+     * Body: { resolution, newStatus }
+     */
+    resolveEscalation: builder.mutation({
+      query: ({ disputeId, ...body }) => ({
+        url: `/api/attendance/disputes/${disputeId}/resolve-escalation`,
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: (_r, _e, { disputeId }) => [
+        { type: 'EscalatedDisputes', id: disputeId },
+        { type: 'EscalatedDisputes', id: 'LIST' },
+        { type: 'AttendanceRecord', id: disputeId },
+        { type: 'AttendanceRecord', id: 'FLAGGED_LIST' },
+        { type: 'AttendanceRecord', id: 'LIST' },
+      ],
+    }),
   }),
 });
 
@@ -284,4 +326,6 @@ export const {
   useGetPendingDisputesCountQuery,
   useListFlaggedRecordsQuery,
   useResolveDisputeMutation,
+  useListEscalatedDisputesQuery,
+  useResolveEscalationMutation,
 } = attendanceApi;

@@ -113,6 +113,7 @@ function registerProxies(app) {
     '/api/sections', '/sections',
     '/api/batches', '/batches',
     '/api/teaching-assignments', '/teaching-assignments',
+    '/api/teaching', '/teaching',           // Phase 88: teachingApi.js uses /api/teaching/assignments
     '/api/section-assignments', '/section-assignments'
   ], (req, res) => forward(env.ACADEMIC_SERVICE_URL, req, res));
 

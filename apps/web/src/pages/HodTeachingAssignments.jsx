@@ -55,6 +55,7 @@ export default function HodTeachingAssignments() {
           subjectId: sub._id,
           subjectName: sub.name,
           subjectCode: sub.code,
+          subjectType: sub.type || 'lecture',
           sectionId: sec._id,
           sectionName: sec.name,
           _label: `${sub.code} - Sec ${sec.name}`

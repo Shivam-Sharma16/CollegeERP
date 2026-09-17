@@ -27,6 +27,7 @@ const HodDashboard = lazy(() => import('./pages/HodDashboard'));
 const HodManagement = lazy(() => import('./pages/HodManagement'));
 const HodAcademicStructure = lazy(() => import('./pages/HodAcademicStructure'));
 const HodTeachingAssignments = lazy(() => import('./pages/HodTeachingAssignments'));
+const HodEscalatedDisputesPage = lazy(() => import('./pages/HodEscalatedDisputesPage'));
 const StudentAttendancePage = lazy(() => import('./pages/StudentAttendancePage'));
 const StudentTranscriptPage = lazy(() => import('./pages/StudentTranscriptPage'));
 const StudentFeesPage = lazy(() => import('./pages/StudentFeesPage'));
@@ -152,6 +153,7 @@ export default function App() {
             <Route path="/inst/:slug/hod/faculty" element={<TenantProvider><ProtectedRoute allowedRoles={['HOD', 'ADMIN', 'SUPERADMIN']}><HodManagement /></ProtectedRoute></TenantProvider>} />
             <Route path="/inst/:slug/hod/academic-structure" element={<TenantProvider><ProtectedRoute allowedRoles={['HOD', 'ADMIN', 'SUPERADMIN']}><HodAcademicStructure /></ProtectedRoute></TenantProvider>} />
             <Route path="/inst/:slug/hod/assignments" element={<TenantProvider><ProtectedRoute allowedRoles={['HOD', 'ADMIN', 'SUPERADMIN']}><HodTeachingAssignments /></ProtectedRoute></TenantProvider>} />
+            <Route path="/inst/:slug/hod/disputes" element={<TenantProvider><ProtectedRoute allowedRoles={['HOD', 'ADMIN', 'SUPERADMIN']}><HodEscalatedDisputesPage /></ProtectedRoute></TenantProvider>} />
             <Route path="/inst/:slug/hod/reports" element={<TenantProvider><ProtectedRoute allowedRoles={['HOD', 'ADMIN', 'SUPERADMIN']}><AdminReports /></ProtectedRoute></TenantProvider>} />
 
             {/* Tenant CC */}
@@ -202,6 +204,7 @@ export default function App() {
             <Route path="/hod/faculty" element={<ProtectedRoute allowedRoles={['HOD', 'ADMIN', 'SUPERADMIN']}><HodManagement /></ProtectedRoute>} />
             <Route path="/hod/academic-structure" element={<ProtectedRoute allowedRoles={['HOD', 'ADMIN', 'SUPERADMIN']}><HodAcademicStructure /></ProtectedRoute>} />
             <Route path="/hod/assignments" element={<ProtectedRoute allowedRoles={['HOD', 'ADMIN', 'SUPERADMIN']}><HodTeachingAssignments /></ProtectedRoute>} />
+            <Route path="/hod/disputes" element={<ProtectedRoute allowedRoles={['HOD', 'ADMIN', 'SUPERADMIN']}><HodEscalatedDisputesPage /></ProtectedRoute>} />
             <Route path="/hod/reports" element={<ProtectedRoute allowedRoles={['HOD', 'ADMIN', 'SUPERADMIN']}><AdminReports /></ProtectedRoute>} />
 
             {/* ── Class Coordinator (/cc/*) ────────────────────────────────── */}

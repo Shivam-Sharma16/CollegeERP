@@ -60,7 +60,8 @@ export default defineConfig({
             './src/pages/HodDashboard.jsx',
             './src/pages/HodManagement.jsx',
             './src/pages/HodAcademicStructure.jsx',
-            './src/pages/HodTeachingAssignments.jsx'
+            './src/pages/HodTeachingAssignments.jsx',
+            './src/pages/HodEscalatedDisputesPage.jsx'
           ],
           'chunk-faculty': [
             './src/pages/FacultyDashboard.jsx',
