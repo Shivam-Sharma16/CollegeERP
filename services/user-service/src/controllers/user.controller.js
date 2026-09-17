@@ -1109,6 +1109,344 @@ const listUsers = async (req, res) => {
   }
 };
 
+const resolveHODDepartmentId = async (req) => {
+  const hodRole = req.effectiveRoles?.find(r => r.role === 'HOD');
+  if (hodRole && hodRole.departmentId) {
+    return hodRole.departmentId.toString();
+  }
+  if (req.user?.departmentId) {
+    return req.user.departmentId.toString();
+  }
+  if (req.user?.userId && mongoose.connection.db) {
+    const ra = await RoleAssignment.findOne({
+      userId: new mongoose.Types.ObjectId(req.user.userId),
+      role: 'HOD',
+      $or: [{ validTo: null }, { validTo: { $gt: new Date() } }]
+    });
+    if (ra && ra.departmentId) {
+      return ra.departmentId.toString();
+    }
+  }
+  if ((req.user?.roles?.includes('SUPERADMIN') || req.user?.roles?.includes('ADMIN')) && req.query.departmentId) {
+    return req.query.departmentId.toString();
+  }
+  return null;
+};
+
+/**
+ * GET /hod/students
+ * HOD-only: department-wide student roster using the resolveDeptTree aggregation pattern.
+ * Supports combined filtering (year, semester, section) and search (name, rollNumber, email).
+ */
+const listHodStudents = async (req, res) => {
+  try {
+    const callerRoles = req.user?.roles || [];
+    const isSuperAdmin = callerRoles.includes('SUPERADMIN');
+    const isAdmin = callerRoles.includes('ADMIN');
+    const isHOD = callerRoles.includes('HOD') || req.effectiveRoles?.some(r => r.role === 'HOD');
+
+    if (!isSuperAdmin && !isAdmin && !isHOD) {
+      return res.status(403).json(fail('Access Denied: Only HOD can view department student roster'));
+    }
+
+    const deptId = await resolveHODDepartmentId(req);
+    if (!deptId) {
+      return res.status(403).json(fail('You are not assigned to a department as HOD'));
+    }
+
+    const tenantId = req.tenantId || req.headers['x-tenant-id'] || req.user?.institutionId;
+    const deptOid = new mongoose.Types.ObjectId(deptId);
+
+    // 1. Department tree query (reusing resolveDeptTree pattern)
+    const yearMatch = { departmentId: deptOid };
+    if (tenantId && !isSuperAdmin && mongoose.Types.ObjectId.isValid(tenantId)) {
+      yearMatch.institutionId = new mongoose.Types.ObjectId(tenantId);
+    }
+    if (req.query.year) {
+      if (mongoose.Types.ObjectId.isValid(req.query.year)) {
+        yearMatch._id = new mongoose.Types.ObjectId(req.query.year);
+      } else if (!isNaN(Number(req.query.year))) {
+        yearMatch.yearNumber = Number(req.query.year);
+      }
+    }
+
+    const tree = await mongoose.connection.db.collection('years').aggregate([
+      { $match: yearMatch },
+      { $sort: { yearNumber: 1 } },
+      {
+        $lookup: {
+          from: 'semesters',
+          let: { yearId: '$_id' },
+          pipeline: [
+            { $match: { $expr: { $eq: ['$yearId', '$$yearId'] } } },
+            { $sort: { semesterNumber: 1 } },
+            {
+              $lookup: {
+                from: 'sections',
+                let: { semesterId: '$_id' },
+                pipeline: [
+                  { $match: { $expr: { $eq: ['$semesterId', '$$semesterId'] } } },
+                  { $sort: { name: 1 } }
+                ],
+                as: 'sections'
+              }
+            }
+          ],
+          as: 'semesters'
+        }
+      }
+    ]).toArray();
+
+    const sectionFilterQuery = (req.query.section || req.query.sectionId || '').trim();
+    const semesterFilterQuery = (req.query.semester || req.query.semesterId || '').trim();
+
+    const sectionDetailsMap = new Map();
+    const matchedSectionIds = [];
+
+    tree.forEach(year => {
+      (year.semesters || []).forEach(sem => {
+        if (semesterFilterQuery) {
+          const matchesSemId = sem._id.toString() === semesterFilterQuery;
+          const matchesSemNum = String(sem.semesterNumber) === semesterFilterQuery;
+          if (!matchesSemId && !matchesSemNum) return;
+        }
+
+        (sem.sections || []).forEach(sec => {
+          if (sectionFilterQuery) {
+            const matchesSecId = sec._id.toString() === sectionFilterQuery;
+            const matchesSecName = sec.name.toLowerCase() === sectionFilterQuery.toLowerCase();
+            if (!matchesSecId && !matchesSecName) return;
+          }
+
+          matchedSectionIds.push(sec._id);
+          sectionDetailsMap.set(sec._id.toString(), {
+            sectionId: sec._id,
+            sectionName: sec.name,
+            semesterId: sem._id,
+            semesterNumber: sem.semesterNumber,
+            yearId: year._id,
+            yearNumber: year.yearNumber,
+            yearName: year.name
+          });
+        });
+      });
+    });
+
+    // If filters were supplied but matched 0 sections, return empty array immediately
+    if (matchedSectionIds.length === 0 && (req.query.year || req.query.semester || req.query.section || req.query.sectionId)) {
+      return res.status(200).json(success({ students: [] }));
+    }
+
+    // 2. Query active student roleassignments in these sections (or department)
+    const raQuery = {
+      role: 'STUDENT',
+      departmentId: deptOid,
+      $or: [{ validTo: null }, { validTo: { $gt: new Date() } }]
+    };
+    if (matchedSectionIds.length > 0) {
+      raQuery.sectionId = { $in: matchedSectionIds };
+    }
+    if (tenantId && !isSuperAdmin && mongoose.Types.ObjectId.isValid(tenantId)) {
+      raQuery.institutionId = new mongoose.Types.ObjectId(tenantId);
+    }
+
+    const assignments = await RoleAssignment.find(raQuery).lean();
+    if (assignments.length === 0) {
+      return res.status(200).json(success({ students: [] }));
+    }
+
+    const studentUserIds = assignments.map(a => a.userId);
+    const assignmentByUser = new Map(assignments.map(a => [a.userId.toString(), a]));
+
+    // 3. Search and user filtering
+    const searchTerm = (req.query.search || req.query.q || req.query.name || req.query.rollNumber || '').trim();
+    const userQuery = {
+      _id: { $in: studentUserIds },
+      isActive: true
+    };
+    if (searchTerm) {
+      const regex = new RegExp(searchTerm.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&'), 'i');
+      userQuery.$or = [
+        { name: regex },
+        { rollNumber: regex },
+        { email: regex }
+      ];
+    }
+
+    const users = await User.find(userQuery)
+      .select('name email rollNumber phone avatarUrl feeGroup isActive createdAt')
+      .sort({ name: 1 })
+      .lean();
+
+    const students = users.map(u => {
+      const a = assignmentByUser.get(u._id.toString());
+      const secMeta = a?.sectionId ? sectionDetailsMap.get(a.sectionId.toString()) : null;
+      return {
+        _id: u._id,
+        name: u.name,
+        email: u.email,
+        rollNumber: u.rollNumber || null,
+        phone: u.phone || null,
+        avatarUrl: u.avatarUrl || null,
+        feeGroup: u.feeGroup || 'general',
+        isActive: u.isActive,
+        departmentId: deptOid,
+        sectionId: a?.sectionId || null,
+        sectionName: secMeta?.sectionName || null,
+        semesterId: secMeta?.semesterId || null,
+        semesterNumber: secMeta?.semesterNumber || null,
+        yearId: secMeta?.yearId || null,
+        yearNumber: secMeta?.yearNumber || null
+      };
+    });
+
+    res.status(200).json(success({ students }));
+  } catch (err) {
+    console.error('[UserController] Failed to list HOD students:', err);
+    res.status(500).json(fail('Internal server error'));
+  }
+};
+
+/**
+ * PATCH /faculty/:id/deactivate
+ * HOD-only: deactivates a faculty account belonging to the HOD's department.
+ */
+const deactivateFaculty = async (req, res) => {
+  try {
+    const callerRoles = req.user?.roles || [];
+    const isSuperAdmin = callerRoles.includes('SUPERADMIN');
+    const isAdmin = callerRoles.includes('ADMIN');
+    const isHOD = callerRoles.includes('HOD') || req.effectiveRoles?.some(r => r.role === 'HOD');
+
+    if (!isSuperAdmin && !isAdmin && !isHOD) {
+      return res.status(403).json(fail('Access Denied: Only HOD can deactivate faculty accounts'));
+    }
+
+    const tenantId = req.tenantId || req.headers['x-tenant-id'] || req.user?.institutionId;
+    const targetUserId = req.params.id;
+
+    if (!mongoose.Types.ObjectId.isValid(targetUserId)) {
+      return res.status(400).json(fail('Invalid user ID'));
+    }
+
+    const user = await User.findById(targetUserId);
+    if (!user) {
+      return res.status(404).json(fail('Faculty account not found'));
+    }
+
+    const raQuery = {
+      userId: user._id,
+      role: 'FACULTY',
+      $or: [{ validTo: null }, { validTo: { $gt: new Date() } }]
+    };
+    if (tenantId && !isSuperAdmin && mongoose.Types.ObjectId.isValid(tenantId)) {
+      raQuery.institutionId = new mongoose.Types.ObjectId(tenantId);
+    }
+    const targetRA = await RoleAssignment.findOne(raQuery);
+    if (!targetRA) {
+      return res.status(404).json(fail('Active faculty assignment not found for this user'));
+    }
+
+    if (!isSuperAdmin && !isAdmin) {
+      const hodDeptId = await resolveHODDepartmentId(req);
+      if (!hodDeptId || targetRA.departmentId?.toString() !== hodDeptId.toString()) {
+        return res.status(403).json(fail('Access Denied: You cannot deactivate an account belonging to a different department'));
+      }
+    }
+
+    user.isActive = false;
+    await user.save();
+
+    targetRA.validTo = new Date();
+    await targetRA.save();
+
+    await logAudit(req, 'FACULTY_DEACTIVATED', user._id.toString(), 'User', {
+      targetUserId: user._id.toString(),
+      departmentId: targetRA.departmentId?.toString(),
+      institutionId: tenantId
+    });
+
+    res.status(200).json(success({
+      message: 'Faculty account deactivated successfully',
+      userId: user._id,
+      isActive: false
+    }));
+  } catch (err) {
+    console.error('[UserController] Failed to deactivate Faculty:', err);
+    res.status(500).json(fail('Internal server error'));
+  }
+};
+
+/**
+ * PATCH /cc/:id/deactivate
+ * HOD-only: deactivates a Class Coordinator account belonging to the HOD's department.
+ */
+const deactivateCC = async (req, res) => {
+  try {
+    const callerRoles = req.user?.roles || [];
+    const isSuperAdmin = callerRoles.includes('SUPERADMIN');
+    const isAdmin = callerRoles.includes('ADMIN');
+    const isHOD = callerRoles.includes('HOD') || req.effectiveRoles?.some(r => r.role === 'HOD');
+
+    if (!isSuperAdmin && !isAdmin && !isHOD) {
+      return res.status(403).json(fail('Access Denied: Only HOD can deactivate CC accounts'));
+    }
+
+    const tenantId = req.tenantId || req.headers['x-tenant-id'] || req.user?.institutionId;
+    const targetUserId = req.params.id;
+
+    if (!mongoose.Types.ObjectId.isValid(targetUserId)) {
+      return res.status(400).json(fail('Invalid user ID'));
+    }
+
+    const user = await User.findById(targetUserId);
+    if (!user) {
+      return res.status(404).json(fail('Class Coordinator account not found'));
+    }
+
+    const raQuery = {
+      userId: user._id,
+      role: 'CC',
+      $or: [{ validTo: null }, { validTo: { $gt: new Date() } }]
+    };
+    if (tenantId && !isSuperAdmin && mongoose.Types.ObjectId.isValid(tenantId)) {
+      raQuery.institutionId = new mongoose.Types.ObjectId(tenantId);
+    }
+    const targetRA = await RoleAssignment.findOne(raQuery);
+    if (!targetRA) {
+      return res.status(404).json(fail('Active CC assignment not found for this user'));
+    }
+
+    if (!isSuperAdmin && !isAdmin) {
+      const hodDeptId = await resolveHODDepartmentId(req);
+      if (!hodDeptId || targetRA.departmentId?.toString() !== hodDeptId.toString()) {
+        return res.status(403).json(fail('Access Denied: You cannot deactivate an account belonging to a different department'));
+      }
+    }
+
+    user.isActive = false;
+    await user.save();
+
+    targetRA.validTo = new Date();
+    await targetRA.save();
+
+    await logAudit(req, 'CC_DEACTIVATED', user._id.toString(), 'User', {
+      targetUserId: user._id.toString(),
+      departmentId: targetRA.departmentId?.toString(),
+      institutionId: tenantId
+    });
+
+    res.status(200).json(success({
+      message: 'Class Coordinator account deactivated successfully',
+      userId: user._id,
+      isActive: false
+    }));
+  } catch (err) {
+    console.error('[UserController] Failed to deactivate CC:', err);
+    res.status(500).json(fail('Internal server error'));
+  }
+};
+
 module.exports = {
   createAdmin,
   createHOD,
@@ -1128,6 +1466,9 @@ module.exports = {
   searchUsers,
   getUserById,
   updateUser,
-  deleteUser
+  deleteUser,
+  listHodStudents,
+  deactivateFaculty,
+  deactivateCC
 };
 

@@ -19,4 +19,7 @@ router.get('/:id([0-9a-fA-F]{24})', ctrl.getRecordById);
 // Faculty-only override — ownership verified inside controller
 router.post('/:id([0-9a-fA-F]{24})/override', ctrl.overrideRecord);
 
+// CC-only escalate — section ownership & CC role verified inside controller
+router.post('/:id([0-9a-fA-F]{24})/escalate', ctrl.escalateRecord);
+
 module.exports = router;

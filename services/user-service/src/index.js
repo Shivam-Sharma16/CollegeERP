@@ -51,6 +51,14 @@ app.use('/api/audit', auditRoute);
 app.use('/api/reports', reportsRoute);
 app.use('/api/settings', settingsRoute);
 
+// Phase 86 direct routes
+const { authenticate } = require('@college-erp/shared-utils');
+const userController = require('./controllers/user.controller');
+
+app.get(['/hod/students', '/api/hod/students'], authenticate, userController.listHodStudents);
+app.patch(['/faculty/:id/deactivate', '/api/faculty/:id/deactivate'], authenticate, userController.deactivateFaculty);
+app.patch(['/cc/:id/deactivate', '/api/cc/:id/deactivate'], authenticate, userController.deactivateCC);
+
 connectDB();
 
 app.listen(env.PORT, () => {

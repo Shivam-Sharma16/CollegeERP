@@ -23,9 +23,14 @@ router.get('/hods', userController.listHods);
 
 router.post('/faculty', requirePermission('write', 'Department'), userController.createFaculty);
 router.get('/faculty', userController.listFaculty);
+router.patch('/faculty/:id/deactivate', userController.deactivateFaculty);
 
 router.post('/cc', requirePermission('write', 'Department'), userController.createCC);
 router.get('/cc', userController.listCC);
+router.patch('/cc/:id/deactivate', userController.deactivateCC);
+
+// Phase 86: HOD Department-Wide Student Roster
+router.get('/hod/students', userController.listHodStudents);
 
 router.post('/students', requirePermission('write', 'Section'), userController.onboardStudent);
 router.get('/students', requirePermission('read', 'Section'), userController.listStudents);

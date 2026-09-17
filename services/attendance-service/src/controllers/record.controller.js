@@ -281,12 +281,114 @@ const getAttendanceTrend = async (req, res) => {
   }
 };
 
+/**
+ * POST /records/:id/escalate
+ * CC-only route to escalate a flagged attendance record.
+ */
+const escalateRecord = async (req, res) => {
+  try {
+    const callerRoles = req.user?.roles || [];
+    const isSuperAdmin = callerRoles.includes('SUPERADMIN');
+    const isAdmin = callerRoles.includes('ADMIN');
+    const isCC = callerRoles.includes('CC') || req.effectiveRoles?.some(r => r.role === 'CC');
+
+    if (!isSuperAdmin && !isAdmin && !isCC) {
+      return res.status(403).json(fail('Access Denied: Only Class Coordinators can escalate attendance disputes'));
+    }
+
+    const tenantId = req.tenantId || req.headers['x-tenant-id'] || req.user?.institutionId;
+    const recordFilter = { _id: req.params.id };
+    if (tenantId && !isSuperAdmin) {
+      recordFilter.institutionId = tenantId;
+    }
+
+    const record = await AttendanceRecord.findOne(recordFilter);
+    if (!record) {
+      return res.status(404).json(fail('Attendance record not found'));
+    }
+
+    if (record.status !== 'flagged') {
+      return res.status(400).json(fail('Only flagged attendance records can be escalated'));
+    }
+
+    if (record.escalation && record.escalation.status === 'pending') {
+      return res.status(400).json(fail('Attendance dispute is already pending escalation'));
+    }
+
+    const { reason } = req.body;
+    if (!reason || !reason.trim()) {
+      return res.status(400).json(fail('Escalation reason is required'));
+    }
+
+    // Verify CC section ownership
+    const session = await LectureSession.findById(record.lectureSessionId);
+    let assignment = null;
+    if (session) {
+      assignment = await mongoose.connection.db
+        .collection('teachingassignments')
+        .findOne({ _id: session.teachingAssignmentId });
+    }
+
+    if (!isSuperAdmin && !isAdmin) {
+      let ccSectionIds = (req.effectiveRoles || [])
+        .filter(r => r.role === 'CC' && r.sectionId)
+        .map(r => r.sectionId.toString());
+
+      if (ccSectionIds.length === 0 && mongoose.connection && mongoose.connection.db) {
+        const raQuery = {
+          userId: new mongoose.Types.ObjectId(req.user.userId),
+          role: 'CC',
+          $or: [{ validTo: null }, { validTo: { $gt: new Date() } }]
+        };
+        if (tenantId && mongoose.Types.ObjectId.isValid(tenantId)) {
+          raQuery.institutionId = new mongoose.Types.ObjectId(tenantId);
+        }
+        const ccAssignments = await mongoose.connection.db
+          .collection('roleassignments')
+          .find(raQuery)
+          .toArray();
+        ccSectionIds = ccAssignments.filter(a => a.sectionId).map(a => a.sectionId.toString());
+      }
+
+      if (assignment && assignment.sectionId && ccSectionIds.length > 0) {
+        if (!ccSectionIds.includes(assignment.sectionId.toString())) {
+          return res.status(403).json(fail('Access Denied: You are not the Class Coordinator for this section'));
+        }
+      }
+    }
+
+    record.escalation = {
+      escalatedBy: new mongoose.Types.ObjectId(req.user.userId),
+      reason: reason.trim(),
+      escalatedAt: new Date(),
+      status: 'pending'
+    };
+
+    await record.save();
+
+    await logAudit(req, 'ATTENDANCE_DISPUTE_ESCALATED', record._id.toString(), 'AttendanceRecord', {
+      escalatedBy: req.user.userId,
+      reason: reason.trim(),
+      studentId: record.studentId?.toString(),
+      lectureSessionId: record.lectureSessionId?.toString(),
+      sectionId: assignment?.sectionId?.toString(),
+      institutionId: tenantId
+    });
+
+    res.status(200).json(success({ record }));
+  } catch (err) {
+    console.error('Failed to escalate attendance record:', err);
+    res.status(500).json(fail('Internal server error'));
+  }
+};
+
 module.exports = { 
   overrideRecord, 
   listOwnRecords, 
   getRecordById, 
   getOwnSummary,
   getInstitutionSummary,
-  getAttendanceTrend
+  getAttendanceTrend,
+  escalateRecord
 };
 

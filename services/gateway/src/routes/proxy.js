@@ -96,7 +96,10 @@ function registerProxies(app) {
     '/api/certificates', '/certificates',
     '/api/audit', '/audit',
     '/api/reports', '/reports',
-    '/api/settings', '/settings'
+    '/api/settings', '/settings',
+    '/api/hod', '/hod',
+    '/api/faculty', '/faculty',
+    '/api/cc', '/cc'
   ], (req, res) => forward(env.USER_SERVICE_URL, req, res));
 
   // 4. Academic Service
@@ -114,7 +117,7 @@ function registerProxies(app) {
   ], (req, res) => forward(env.ACADEMIC_SERVICE_URL, req, res));
 
   // 5. Attendance Service
-  app.use(['/api/attendance', '/sessions', '/records', '/summary'], (req, res) => forward(env.ATTENDANCE_SERVICE_URL, req, res));
+  app.use(['/api/attendance', '/sessions', '/records', '/summary', '/disputes', '/api/disputes'], (req, res) => forward(env.ATTENDANCE_SERVICE_URL, req, res));
 
   // 6. Results Service
   app.use(['/api/results', '/exam-types', '/marks', '/students'], (req, res) => forward(env.RESULTS_SERVICE_URL, req, res));

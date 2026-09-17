@@ -10,6 +10,7 @@ const connectDB = require('./config/db');
 const healthRoute  = require('./routes/health.route');
 const sessionRoute = require('./routes/session.route');
 const recordRoute  = require('./routes/record.route');
+const disputeRoute = require('./routes/dispute.route');
 
 const app = express();
 
@@ -21,13 +22,17 @@ app.use(express.json());
 app.use('/', healthRoute);
 app.use('/sessions', sessionRoute);
 app.use('/records',  recordRoute);
+app.use('/disputes', disputeRoute);
 app.use('/summary',  recordRoute);
 
 app.use('/api/attendance/sessions', sessionRoute);
 app.use('/api/attendance/records',  recordRoute);
+app.use('/api/attendance/disputes', disputeRoute);
+app.use('/api/disputes',            disputeRoute);
 app.use('/api/attendance/summary',  recordRoute);
 app.use('/api/attendance',          recordRoute);
 app.use('/api/attendance',          sessionRoute);
+app.use('/api/attendance',          disputeRoute);
 
 connectDB();
 
