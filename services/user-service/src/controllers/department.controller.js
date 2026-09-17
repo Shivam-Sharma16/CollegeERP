@@ -17,13 +17,36 @@ const createDepartment = async (req, res) => {
       return res.status(400).json(fail('Name and code are required'));
     }
 
+    const trimmedName = String(name).trim();
+    if (trimmedName.length < 2 || trimmedName.length > 100) {
+      return res.status(400).json(fail('Department name must be between 2 and 100 characters'));
+    }
+
+    const normalizedCode = String(code).trim().toUpperCase();
+    if (normalizedCode.length < 2 || normalizedCode.length > 10 || !/^[A-Z0-9_-]+$/.test(normalizedCode)) {
+      return res.status(400).json(fail('Department code must be 2 to 10 uppercase alphanumeric characters (hyphens and underscores allowed)'));
+    }
+
+    const trimmedPhone = contactPhone ? String(contactPhone).trim() : '';
+    if (trimmedPhone && !/^\d{10}$/.test(trimmedPhone)) {
+      return res.status(400).json(fail('Contact phone number must be exactly 10 digits'));
+    }
+
+    const trimmedEmail = contactEmail ? String(contactEmail).trim().toLowerCase() : '';
+    if (trimmedEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+      return res.status(400).json(fail('Please provide a valid email address'));
+    }
+
+    const trimmedDesc = description ? String(description).trim() : '';
+    if (trimmedDesc.length > 500) {
+      return res.status(400).json(fail('Description cannot exceed 500 characters'));
+    }
+
     // Strictly scoped to Admin's own institutionId (ignoring any forged body.institutionId)
     const institutionId = req.user?.institutionId;
     if (!institutionId) {
       return res.status(403).json(fail('Admin must be associated with an institution'));
     }
-
-    const normalizedCode = code.trim().toUpperCase();
 
     const existing = await Department.findOne({ code: normalizedCode, institutionId });
     if (existing) {
@@ -31,11 +54,11 @@ const createDepartment = async (req, res) => {
     }
 
     const department = await Department.create({
-      name: name.trim(),
+      name: trimmedName,
       code: normalizedCode,
-      description: description ? description.trim() : '',
-      contactEmail: contactEmail ? contactEmail.trim().toLowerCase() : '',
-      contactPhone: contactPhone ? contactPhone.trim() : '',
+      description: trimmedDesc,
+      contactEmail: trimmedEmail,
+      contactPhone: trimmedPhone,
       isActive: isActive !== undefined ? Boolean(isActive) : true,
       institutionId,
       createdBy: req.user?.userId || req.user?._id
@@ -223,10 +246,19 @@ const updateDepartment = async (req, res) => {
     }
 
     const updateData = {};
-    if (req.body.name) updateData.name = req.body.name.trim();
+    if (req.body.name !== undefined) {
+      const trimmedName = String(req.body.name).trim();
+      if (trimmedName.length < 2 || trimmedName.length > 100) {
+        return res.status(400).json(fail('Department name must be between 2 and 100 characters'));
+      }
+      updateData.name = trimmedName;
+    }
 
-    if (req.body.code) {
-      const normalizedCode = req.body.code.trim().toUpperCase();
+    if (req.body.code !== undefined) {
+      const normalizedCode = String(req.body.code).trim().toUpperCase();
+      if (normalizedCode.length < 2 || normalizedCode.length > 10 || !/^[A-Z0-9_-]+$/.test(normalizedCode)) {
+        return res.status(400).json(fail('Department code must be 2 to 10 uppercase alphanumeric characters (hyphens and underscores allowed)'));
+      }
       if (normalizedCode !== existingDept.code) {
         const duplicate = await Department.findOne({
           code: normalizedCode,
@@ -240,10 +272,31 @@ const updateDepartment = async (req, res) => {
       }
     }
 
-    if (req.body.description !== undefined) updateData.description = req.body.description.trim();
+    if (req.body.description !== undefined) {
+      const trimmedDesc = String(req.body.description).trim();
+      if (trimmedDesc.length > 500) {
+        return res.status(400).json(fail('Description cannot exceed 500 characters'));
+      }
+      updateData.description = trimmedDesc;
+    }
+
     if (req.body.isActive !== undefined) updateData.isActive = Boolean(req.body.isActive);
-    if (req.body.contactEmail !== undefined) updateData.contactEmail = req.body.contactEmail.trim().toLowerCase();
-    if (req.body.contactPhone !== undefined) updateData.contactPhone = req.body.contactPhone.trim();
+
+    if (req.body.contactEmail !== undefined) {
+      const trimmedEmail = String(req.body.contactEmail).trim().toLowerCase();
+      if (trimmedEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+        return res.status(400).json(fail('Please provide a valid email address'));
+      }
+      updateData.contactEmail = trimmedEmail;
+    }
+
+    if (req.body.contactPhone !== undefined) {
+      const trimmedPhone = String(req.body.contactPhone).trim();
+      if (trimmedPhone && !/^\d{10}$/.test(trimmedPhone)) {
+        return res.status(400).json(fail('Contact phone number must be exactly 10 digits'));
+      }
+      updateData.contactPhone = trimmedPhone;
+    }
 
     // HOD Assignment / Reassignment
     if (req.body.hodId !== undefined) {

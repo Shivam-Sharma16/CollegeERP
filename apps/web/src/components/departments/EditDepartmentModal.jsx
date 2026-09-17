@@ -40,19 +40,81 @@ export function EditDepartmentModal({ isOpen, onClose, department }) {
     }
   }, [department, isOpen]);
 
+  const validateForm = () => {
+    const errors = {};
+    const trimmedName = name.trim();
+    const trimmedCode = code.trim().toUpperCase();
+    const trimmedPhone = contactPhone.trim();
+    const trimmedEmail = contactEmail.trim();
+    const trimmedDesc = description.trim();
+
+    // Name validation
+    if (!trimmedName) {
+      errors.name = 'Department name is required.';
+    } else if (trimmedName.length < 2) {
+      errors.name = 'Department name must be at least 2 characters.';
+    } else if (trimmedName.length > 100) {
+      errors.name = 'Department name cannot exceed 100 characters.';
+    }
+
+    // Code validation
+    if (!trimmedCode) {
+      errors.code = 'Department code is required.';
+    } else if (trimmedCode.length < 2 || trimmedCode.length > 10) {
+      errors.code = 'Department code must be 2 to 10 characters.';
+    } else if (!/^[A-Z0-9_-]+$/.test(trimmedCode)) {
+      errors.code = 'Department code can only contain uppercase letters, numbers, hyphens, and underscores.';
+    }
+
+    // Description validation
+    if (trimmedDesc.length > 500) {
+      errors.description = 'Description cannot exceed 500 characters.';
+    }
+
+    // Contact Email validation
+    if (trimmedEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+      errors.contactEmail = 'Please enter a valid email address (e.g. dept@college.edu).';
+    }
+
+    // Contact Phone validation (must be exactly 10 digits if provided)
+    if (trimmedPhone) {
+      if (!/^\d{10}$/.test(trimmedPhone)) {
+        errors.contactPhone = 'Contact phone number must be exactly 10 digits.';
+      }
+    }
+
+    return errors;
+  };
+
+  const handlePhoneChange = (e) => {
+    // Only allow numbers and limit strictly to at most 10 digits
+    const digitsOnly = e.target.value.replace(/\D/g, '').slice(0, 10);
+    setContactPhone(digitsOnly);
+    if (fieldErrors.contactPhone) {
+      setFieldErrors((prev) => ({ ...prev, contactPhone: null }));
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!department) return;
+
+    const validationErrors = validateForm();
+    if (Object.keys(validationErrors).length > 0) {
+      setFieldErrors(validationErrors);
+      return;
+    }
+
     setFieldErrors({});
 
     try {
       await updateDepartment({
         id: department._id,
-        name,
-        code,
-        description,
-        contactEmail,
-        contactPhone,
+        name: name.trim(),
+        code: code.trim().toUpperCase(),
+        description: description.trim(),
+        contactEmail: contactEmail.trim().toLowerCase(),
+        contactPhone: contactPhone.trim(),
         isActive,
         hodId: hodId || null
       }).unwrap();
@@ -87,7 +149,7 @@ export function EditDepartmentModal({ isOpen, onClose, department }) {
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Edit Department">
-      <form onSubmit={handleSubmit} className={styles.form}>
+      <form onSubmit={handleSubmit} className={styles.form} noValidate>
         <div className={styles.formIntro}>
           <div className={styles.introIcon}>
             <Layers size={18} />
@@ -118,6 +180,7 @@ export function EditDepartmentModal({ isOpen, onClose, department }) {
               }}
               disabled={isLoading}
               placeholder="e.g. Computer Science & Engineering"
+              maxLength={100}
             />
           </div>
           {fieldErrors.name && <span className={styles.errorText}>{fieldErrors.name}</span>}
@@ -145,6 +208,7 @@ export function EditDepartmentModal({ isOpen, onClose, department }) {
             />
           </div>
           {fieldErrors.code && <span className={styles.errorText}>{fieldErrors.code}</span>}
+          <span className={styles.helpText}>Short uppercase identifier (2-10 characters) unique within your college.</span>
         </div>
 
         <div className={styles.field}>
@@ -155,14 +219,19 @@ export function EditDepartmentModal({ isOpen, onClose, department }) {
             <FileText size={16} className={styles.inputIcon} />
             <input
               id="editDeptDesc"
-              className={styles.input}
+              className={`${styles.input} ${fieldErrors.description ? styles.inputError : ''}`}
               type="text"
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              onChange={(e) => {
+                setDescription(e.target.value);
+                if (fieldErrors.description) setFieldErrors({ ...fieldErrors, description: null });
+              }}
               disabled={isLoading}
               placeholder="e.g. Department focused on software systems and computing"
+              maxLength={500}
             />
           </div>
+          {fieldErrors.description && <span className={styles.errorText}>{fieldErrors.description}</span>}
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 'var(--spacing-3)' }}>
@@ -174,14 +243,18 @@ export function EditDepartmentModal({ isOpen, onClose, department }) {
               <Mail size={16} className={styles.inputIcon} />
               <input
                 id="editDeptEmail"
-                className={styles.input}
+                className={`${styles.input} ${fieldErrors.contactEmail ? styles.inputError : ''}`}
                 type="email"
                 value={contactEmail}
-                onChange={(e) => setContactEmail(e.target.value)}
+                onChange={(e) => {
+                  setContactEmail(e.target.value);
+                  if (fieldErrors.contactEmail) setFieldErrors({ ...fieldErrors, contactEmail: null });
+                }}
                 disabled={isLoading}
                 placeholder="dept@college.edu"
               />
             </div>
+            {fieldErrors.contactEmail && <span className={styles.errorText}>{fieldErrors.contactEmail}</span>}
           </div>
 
           <div className={styles.field}>
@@ -192,14 +265,17 @@ export function EditDepartmentModal({ isOpen, onClose, department }) {
               <Phone size={16} className={styles.inputIcon} />
               <input
                 id="editDeptPhone"
-                className={styles.input}
+                className={`${styles.input} ${fieldErrors.contactPhone ? styles.inputError : ''}`}
                 type="tel"
+                inputMode="numeric"
+                maxLength={10}
                 value={contactPhone}
-                onChange={(e) => setContactPhone(e.target.value)}
+                onChange={handlePhoneChange}
                 disabled={isLoading}
-                placeholder="+1 555 0199"
+                placeholder="10-digit phone (e.g. 9876543210)"
               />
             </div>
+            {fieldErrors.contactPhone && <span className={styles.errorText}>{fieldErrors.contactPhone}</span>}
           </div>
         </div>
 
