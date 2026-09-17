@@ -163,6 +163,15 @@ describe('PHASE 83 — Labs & Lab Batches Schema Retrofit [academic-service]', (
     const studentS3 = new mongoose.Types.ObjectId();
     const studentS4 = new mongoose.Types.ObjectId();
 
+    beforeAll(async () => {
+      await mongoose.connection.db.collection('roleassignments').insertMany([
+        { userId: studentS1, role: 'STUDENT', sectionId: sectionA._id, institutionId: tenantId, validTo: null },
+        { userId: studentS2, role: 'STUDENT', sectionId: sectionA._id, institutionId: tenantId, validTo: null },
+        { userId: studentS3, role: 'STUDENT', sectionId: sectionA._id, institutionId: tenantId, validTo: null },
+        { userId: studentS4, role: 'STUDENT', sectionId: sectionA._id, institutionId: tenantId, validTo: null }
+      ]);
+    });
+
     it('creates Batch 1 and Batch 2 under Section A with distinct students', async () => {
       const res1 = await request(app)
         .post('/batches')
@@ -214,6 +223,14 @@ describe('PHASE 83 — Labs & Lab Batches Schema Retrofit [academic-service]', (
 
     it('updates batch students', async () => {
       const studentS5 = new mongoose.Types.ObjectId();
+      await mongoose.connection.db.collection('roleassignments').insertOne({
+        userId: studentS5,
+        role: 'STUDENT',
+        sectionId: sectionA._id,
+        institutionId: tenantId,
+        validTo: null
+      });
+
       const res = await request(app)
         .put(`/batches/${batch1Id}`)
         .send({
@@ -252,19 +269,31 @@ describe('PHASE 83 — Labs & Lab Batches Schema Retrofit [academic-service]', (
       expect(res.body.error).toMatch(/batchId is required for lab subjects/i);
     });
 
-    it('creates lecture assignment and forces batchId to null (whole section)', async () => {
-      const res = await request(app)
+    it('rejects lecture assignment if batchId is provided, and succeeds without batchId', async () => {
+      const resBad = await request(app)
         .post('/teaching-assignments')
         .send({
           facultyId: faculty1,
           subjectId: lectureSubject._id,
           sectionId: sectionA._id,
-          batchId: batch1._id, // Even if passed, lecture forces null
+          batchId: batch1._id,
           academicYearLabel: '2026-2027'
         });
 
-      expect(res.status).toBe(201);
-      expect(res.body.data.assignment.batchId).toBeNull();
+      expect(resBad.status).toBe(400);
+      expect(resBad.body.error).toContain('batchId cannot be provided for lecture subjects');
+
+      const resOk = await request(app)
+        .post('/teaching-assignments')
+        .send({
+          facultyId: faculty1,
+          subjectId: lectureSubject._id,
+          sectionId: sectionA._id,
+          academicYearLabel: '2026-2027'
+        });
+
+      expect(resOk.status).toBe(201);
+      expect(resOk.body.data.assignment.batchId).toBeNull();
     });
 
     it('assigns Faculty 1 to Section A + Lab + Batch 1 successfully', async () => {

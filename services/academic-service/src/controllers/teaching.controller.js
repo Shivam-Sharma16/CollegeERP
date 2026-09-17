@@ -54,7 +54,10 @@ const createTeachingAssignment = async (req, res) => {
       }
       finalBatchId = batch._id;
     } else {
-      // For lecture subjects, batchId stays null (whole section)
+      // For lecture subjects, batchId must not be provided
+      if (batchId) {
+        return res.status(400).json(fail('batchId cannot be provided for lecture subjects'));
+      }
       finalBatchId = null;
     }
 
@@ -164,6 +167,9 @@ const updateTeachingAssignment = async (req, res) => {
         }
         assignment.batchId = b._id;
       } else {
+        if (batchId) {
+          return res.status(400).json(fail('batchId cannot be provided for lecture subjects'));
+        }
         assignment.batchId = null;
       }
     }
