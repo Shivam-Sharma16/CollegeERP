@@ -630,3 +630,54 @@
   font-size: 0.75rem;
   color: var(--color-primary);
 }
+
+/* ── Dedicated HOD Portal Login Theme ──────────────────────────────────────── */
+.hodMode .logoMark,
+.hodLogoMark {
+  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 55%, #9333ea 100%) !important;
+  box-shadow: 0 4px 22px rgba(99, 102, 241, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.16) inset !important;
+}
+
+.hodBadge {
+  background: rgba(99, 102, 241, 0.22) !important;
+  border-color: rgba(165, 180, 252, 0.42) !important;
+  color: #e0e7ff !important;
+  box-shadow: 0 4px 16px rgba(79, 70, 229, 0.35) !important;
+}
+
+.hodBadge .badgeIcon {
+  color: #a5b4fc !important;
+}
+
+.hodImageOverlay {
+  background: linear-gradient(
+    180deg,
+    rgba(15, 23, 42, 0.45) 0%,
+    rgba(30, 27, 75, 0.72) 42%,
+    rgba(15, 13, 48, 0.96) 100%
+  ) !important;
+}
+
+.hodWelcomeBack {
+  color: #818cf8 !important;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.hodNoticePill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-top: 0.5rem;
+  margin-bottom: 0.25rem;
+  padding: 0.35rem 0.85rem;
+  border-radius: 999px;
+  background: rgba(99, 102, 241, 0.12);
+  border: 1px solid rgba(129, 140, 248, 0.32);
+  color: #818cf8;
+  font-size: 0.76rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+

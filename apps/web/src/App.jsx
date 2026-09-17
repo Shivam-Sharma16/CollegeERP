@@ -80,6 +80,8 @@ export default function App() {
           <Routes>
             {/* ── Public ──────────────────────────────────────────────────── */}
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/hod/login" element={<LoginPage isHodMode={true} />} />
+            <Route path="/hod-login" element={<LoginPage isHodMode={true} />} />
             <Route path="/register" element={<StudentRegisterPage />} />
             <Route path="/unauthorized" element={<UnauthorizedPage />} />
 
@@ -127,6 +129,8 @@ export default function App() {
             {/* ── Whitelabeled Tenant Portals (/inst/:slug/*) ──────────────── */}
             <Route path="/inst/:slug" element={<TenantProvider><TenantRootRedirect /></TenantProvider>} />
             <Route path="/inst/:slug/login" element={<TenantProvider><LoginPage /></TenantProvider>} />
+            <Route path="/inst/:slug/hod/login" element={<TenantProvider><LoginPage isHodMode={true} /></TenantProvider>} />
+            <Route path="/inst/:slug/hod-login" element={<TenantProvider><LoginPage isHodMode={true} /></TenantProvider>} />
             <Route path="/inst/:slug/register" element={<TenantProvider><StudentRegisterPage /></TenantProvider>} />
 
             {/* Tenant Admin */}

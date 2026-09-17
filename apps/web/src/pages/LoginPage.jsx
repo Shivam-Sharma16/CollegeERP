@@ -27,26 +27,33 @@ import {
 } from '../features/ui/themeSlice';
 import { useTenant } from '../context/TenantContext';
 import usePageMeta from '../hooks/usePageMeta';
+import { getUserRoleDashboard } from '../utils/domain';
 import { PageTransition } from '../components/ui/PageTransition';
 import { StaggerList, StaggerItem } from '../components/ui/StaggerList';
 import styles from './LoginPage.module.css';
 
-export default function LoginPage({ isSuperAdminMode = false }) {
+export default function LoginPage({ isSuperAdminMode = false, isHodMode = false }) {
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useAppDispatch();
   const { slug } = useParams();
   const { tenant, isTenantPortal, isLoading: isTenantLoading, error: tenantError } = useTenant();
 
+  const isHod = isHodMode || location.pathname.includes('/hod/login') || location.pathname.includes('/hod-login');
+
   const title = isTenantPortal
-    ? `${tenant?.name || 'Institution'} Portal Login`
+    ? (isHod ? `${tenant?.name || 'Institution'} - HOD Leadership Portal` : `${tenant?.name || 'Institution'} Portal Login`)
     : isSuperAdminMode
     ? 'SuperAdmin Platform Console'
+    : isHod
+    ? 'HOD Department Leadership Portal'
     : 'Portal Login';
 
   usePageMeta({
     title,
-    description: 'Log in to the College ERP system to access your dashboard.',
+    description: isHod
+      ? 'Secure login for Heads of Department to access department academic oversight and faculty management.'
+      : 'Log in to the College ERP system to access your dashboard.',
     isPublic: true
   });
 
@@ -96,36 +103,18 @@ export default function LoginPage({ isSuperAdminMode = false }) {
 
       // Determine redirect path
       const roles = user.roles || [];
-      if (isTenantPortal && slug) {
-        if (roles.includes('ADMIN')) {
-          navigate(`/inst/${slug}/admin/dashboard`, { replace: true });
-        } else if (roles.includes('HOD')) {
-          navigate(`/inst/${slug}/hod/dashboard`, { replace: true });
-        } else if (roles.includes('FACULTY')) {
-          navigate(`/inst/${slug}/faculty/dashboard`, { replace: true });
-        } else if (roles.includes('CC')) {
-          navigate(`/inst/${slug}/cc/dashboard`, { replace: true });
-        } else {
-          navigate(`/inst/${slug}/student/dashboard`, { replace: true });
-        }
-      } else if (roles.includes('SUPERADMIN')) {
-        navigate('/superadmin/dashboard', { replace: true });
+      const from = location.state?.from?.pathname;
+      const isFromIgnored = !from || from === '/' || from === '/login' || from.includes('/login') || from === '/unauthorized';
+
+      if (!isFromIgnored) {
+        navigate(from, { replace: true });
       } else {
-        const from = location.state?.from?.pathname;
-        if (from && from !== '/' && from !== '/login' && from !== '/unauthorized') {
-          navigate(from, { replace: true });
+        // If logged in via HOD portal, prioritize HOD dashboard if user possesses HOD role
+        if (isHod && roles.includes('HOD')) {
+          navigate(slug ? `/inst/${slug}/hod/dashboard` : '/hod/dashboard', { replace: true });
         } else {
-          if (roles.includes('ADMIN')) {
-            navigate('/admin/dashboard', { replace: true });
-          } else if (roles.includes('HOD')) {
-            navigate('/hod/dashboard', { replace: true });
-          } else if (roles.includes('FACULTY')) {
-            navigate('/faculty/dashboard', { replace: true });
-          } else if (roles.includes('CC')) {
-            navigate('/cc/dashboard', { replace: true });
-          } else {
-            navigate('/student/dashboard', { replace: true });
-          }
+          // Fall back to canonical role dashboard (e.g. Faculty -> /faculty/dashboard)
+          navigate(getUserRoleDashboard(user, slug), { replace: true });
         }
       }
     } catch { /* error handled by RTK error state */ }
@@ -175,7 +164,7 @@ export default function LoginPage({ isSuperAdminMode = false }) {
 
   return (
     <PageTransition>
-      <div className={styles.page}>
+      <div className={`${styles.page} ${isHod ? styles.hodMode : ''}`}>
 
         {/* ── Left: College campus hero panel ── */}
         <div className={styles.imagePanelWrap}>
@@ -183,31 +172,56 @@ export default function LoginPage({ isSuperAdminMode = false }) {
             className={styles.imagePanel}
             style={collegeImage ? { backgroundImage: `url("${collegeImage}")` } : undefined}
           />
-          <div className={styles.imagePanelOverlay}>
-            <div className={styles.imageHeaderBadge}>
-              <Sparkles size={16} className={styles.badgeIcon} />
-              <span>{isTenantPortal ? institutionName : 'Next-Generation Academic ERP'}</span>
+          <div className={`${styles.imagePanelOverlay} ${isHod ? styles.hodImageOverlay : ''}`}>
+            <div className={`${styles.imageHeaderBadge} ${isHod ? styles.hodBadge : ''}`}>
+              {isHod ? <Building2 size={16} className={styles.badgeIcon} /> : <Sparkles size={16} className={styles.badgeIcon} />}
+              <span>{isHod ? 'Department Leadership Portal' : isTenantPortal ? institutionName : 'Next-Generation Academic ERP'}</span>
             </div>
 
             <div className={styles.imageContent}>
-              <h2 className={styles.imageTagline}>
-                Empowering Education,{' '}
-                <span className={styles.imageTaglineAccent}>Streamlining Success.</span>
-              </h2>
-              <p className={styles.imageSubtext}>
-                An integrated, intelligent campus management platform designed for students, faculty, and administrators.
-              </p>
+              {isHod ? (
+                <>
+                  <h2 className={styles.imageTagline}>
+                    Academic Leadership,{' '}
+                    <span className={styles.imageTaglineAccent}>Department Excellence.</span>
+                  </h2>
+                  <p className={styles.imageSubtext}>
+                    Dedicated management workspace for Heads of Department: oversee faculty, curricula, lab batches, and department-wide academic performance.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <h2 className={styles.imageTagline}>
+                    Empowering Education,{' '}
+                    <span className={styles.imageTaglineAccent}>Streamlining Success.</span>
+                  </h2>
+                  <p className={styles.imageSubtext}>
+                    An integrated, intelligent campus management platform designed for students, faculty, and administrators.
+                  </p>
+                </>
+              )}
 
               <div className={styles.featurePills}>
-                <span className={styles.pill}><BookOpen size={14} /> Academics & LMS</span>
-                <span className={styles.pill}><CalendarCheck2 size={14} /> Smart Attendance</span>
-                <span className={styles.pill}><BarChart3 size={14} /> Real-time Analytics</span>
-                <span className={styles.pill}><Building2 size={14} /> Multi-Department</span>
+                {isHod ? (
+                  <>
+                    <span className={styles.pill}><Building2 size={14} /> Dept Operations</span>
+                    <span className={styles.pill}><BookOpen size={14} /> Labs & Batches</span>
+                    <span className={styles.pill}><CalendarCheck2 size={14} /> Dispute Escalations</span>
+                    <span className={styles.pill}><BarChart3 size={14} /> Faculty Roster</span>
+                  </>
+                ) : (
+                  <>
+                    <span className={styles.pill}><BookOpen size={14} /> Academics & LMS</span>
+                    <span className={styles.pill}><CalendarCheck2 size={14} /> Smart Attendance</span>
+                    <span className={styles.pill}><BarChart3 size={14} /> Real-time Analytics</span>
+                    <span className={styles.pill}><Building2 size={14} /> Multi-Department</span>
+                  </>
+                )}
               </div>
             </div>
 
             <div className={styles.imageFooterQuote}>
-              <p>"Transforming campus workflow into an effortless digital experience."</p>
+              <p>{isHod ? '"Empowering department heads with complete academic and faculty governance."' : '"Transforming campus workflow into an effortless digital experience."'}</p>
             </div>
           </div>
         </div>
@@ -221,9 +235,11 @@ export default function LoginPage({ isSuperAdminMode = false }) {
               {institutionLogo ? (
                 <img src={institutionLogo} alt={institutionName} className={styles.institutionLogo} />
               ) : (
-                <div className={styles.logoMark} aria-hidden="true">
+                <div className={`${styles.logoMark} ${isHod ? styles.hodLogoMark : ''}`} aria-hidden="true">
                   {isSuperAdminMode ? (
                     <ShieldCheck size={28} color="#ffffff" />
+                  ) : isHod ? (
+                    <Building2 size={28} color="#ffffff" />
                   ) : isTenantPortal ? (
                     <School size={28} color="#ffffff" />
                   ) : (
@@ -231,15 +247,25 @@ export default function LoginPage({ isSuperAdminMode = false }) {
                   )}
                 </div>
               )}
-              <span className={styles.welcomeBack}>Welcome back</span>
+              <span className={`${styles.welcomeBack} ${isHod ? styles.hodWelcomeBack : ''}`}>
+                {isHod ? 'Academic Leadership' : 'Welcome back'}
+              </span>
               <h1 className={styles.appName}>{institutionName}</h1>
               <p className={styles.tagline}>
-                {isTenantPortal
+                {isHod
+                  ? 'Head of Department (HOD) Portal Login'
+                  : isTenantPortal
                   ? `Campus Portal • ${tenant?.code || 'Sign in to your portal'}`
                   : isSuperAdminMode
                   ? 'Central SuperAdmin Control Center'
                   : 'Enter your credentials to access your portal'}
               </p>
+              {isHod && (
+                <div className={styles.hodNoticePill} role="status">
+                  <Building2 size={13} />
+                  <span>HOD Department Portal</span>
+                </div>
+              )}
             </div>
 
             {/* Form */}
