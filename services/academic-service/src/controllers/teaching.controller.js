@@ -2,13 +2,14 @@ const TeachingAssignment = require('../models/TeachingAssignment.model');
 const Section = require('../models/Section.model');
 const Semester = require('../models/Semester.model');
 const Subject = require('../models/Subject.model');
+const Batch = require('../models/Batch.model');
 const { success, fail, logAudit } = require('@college-erp/shared-utils');
 const { assertHODOwns } = require('../utils/assertOwnership');
 
 const createTeachingAssignment = async (req, res) => {
   try {
     const tenantId = req.tenantId || req.headers['x-tenant-id'] || req.user?.institutionId;
-    const { facultyId, subjectId, sectionId, academicYearLabel } = req.body;
+    const { facultyId, subjectId, sectionId, batchId, academicYearLabel } = req.body;
 
     if (!facultyId || !subjectId || !sectionId || !academicYearLabel) {
       return res.status(400).json(fail('facultyId, subjectId, sectionId, and academicYearLabel are required'));
@@ -30,11 +31,39 @@ const createTeachingAssignment = async (req, res) => {
     if (!semester) return res.status(404).json(fail('Parent semester not found'));
     if (!assertHODOwns(req, res, semester.departmentId)) return;
 
+    // Verify Subject exists and determine batch requirement
+    const subFilter = { _id: subjectId };
+    if (tenantId && !req.user?.roles?.includes('SUPERADMIN')) {
+      subFilter.institutionId = tenantId;
+    }
+    const subject = await Subject.findOne(subFilter);
+    if (!subject) return res.status(404).json(fail('Subject not found'));
+
+    let finalBatchId = null;
+    if (subject.type === 'lab') {
+      if (!batchId) {
+        return res.status(400).json(fail('batchId is required for lab subjects'));
+      }
+      const batchFilter = { _id: batchId, sectionId };
+      if (tenantId && !req.user?.roles?.includes('SUPERADMIN')) {
+        batchFilter.institutionId = tenantId;
+      }
+      const batch = await Batch.findOne(batchFilter);
+      if (!batch) {
+        return res.status(404).json(fail('Batch not found in the specified section'));
+      }
+      finalBatchId = batch._id;
+    } else {
+      // For lecture subjects, batchId stays null (whole section)
+      finalBatchId = null;
+    }
+
     // Invariant 1: Reject duplicate assignment
     const query = {
       facultyId,
       subjectId,
       sectionId,
+      batchId: finalBatchId,
       academicYearLabel
     };
     if (tenantId) query.institutionId = tenantId;
@@ -43,7 +72,7 @@ const createTeachingAssignment = async (req, res) => {
 
     if (existing) {
       return res.status(409).json(fail(
-        `Duplicate assignment: faculty already teaches this subject in this section for ${academicYearLabel}. Existing assignment ID: ${existing._id}`
+        `Duplicate assignment: faculty already teaches this subject${finalBatchId ? ' (batch)' : ''} in this section for ${academicYearLabel}. Existing assignment ID: ${existing._id}`
       ));
     }
 
@@ -51,12 +80,13 @@ const createTeachingAssignment = async (req, res) => {
       facultyId,
       subjectId,
       sectionId,
+      batchId: finalBatchId,
       academicYearLabel,
       ...(tenantId ? { institutionId: tenantId } : {})
     });
 
     await logAudit(req, 'TEACHING_ASSIGNMENT_CREATED', assignment._id.toString(), 'TeachingAssignment', {
-      facultyId, subjectId, sectionId, academicYearLabel, institutionId: tenantId
+      facultyId, subjectId, sectionId, batchId: finalBatchId, academicYearLabel, institutionId: tenantId
     });
 
     res.status(201).json(success({ assignment }));
@@ -69,12 +99,13 @@ const createTeachingAssignment = async (req, res) => {
 const listTeachingAssignments = async (req, res) => {
   try {
     const tenantId = req.tenantId || req.headers['x-tenant-id'] || req.user?.institutionId;
-    const { sectionId, facultyId, academicYearLabel, departmentId, subjectId } = req.query;
+    const { sectionId, facultyId, academicYearLabel, departmentId, subjectId, batchId } = req.query;
     const filter = {};
     if (sectionId) filter.sectionId = sectionId;
     if (facultyId) filter.facultyId = facultyId;
     if (academicYearLabel) filter.academicYearLabel = academicYearLabel;
     if (subjectId) filter.subjectId = subjectId;
+    if (batchId) filter.batchId = batchId;
     if (tenantId && !req.user?.roles?.includes('SUPERADMIN')) {
       filter.institutionId = tenantId;
     }
@@ -118,14 +149,31 @@ const updateTeachingAssignment = async (req, res) => {
     const semester = semFilter ? await Semester.findOne(semFilter) : null;
     if (!semester || !assertHODOwns(req, res, semester.departmentId)) return;
 
-    const { academicYearLabel } = req.body;
+    const { academicYearLabel, batchId } = req.body;
     if (academicYearLabel) assignment.academicYearLabel = academicYearLabel;
+
+    if (batchId !== undefined) {
+      const sub = await Subject.findById(assignment.subjectId);
+      if (sub && sub.type === 'lab') {
+        if (!batchId) {
+          return res.status(400).json(fail('batchId is required for lab subjects'));
+        }
+        const b = await Batch.findOne({ _id: batchId, sectionId: assignment.sectionId });
+        if (!b) {
+          return res.status(404).json(fail('Batch not found in the specified section'));
+        }
+        assignment.batchId = b._id;
+      } else {
+        assignment.batchId = null;
+      }
+    }
 
     // Duplicate check after modification
     const conflictQuery = {
       facultyId: assignment.facultyId,
       subjectId: assignment.subjectId,
       sectionId: assignment.sectionId,
+      batchId: assignment.batchId,
       academicYearLabel: assignment.academicYearLabel,
       _id: { $ne: assignment._id }
     };

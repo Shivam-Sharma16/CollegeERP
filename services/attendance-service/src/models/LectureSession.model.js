@@ -8,6 +8,7 @@ const lectureSessionSchema = new mongoose.Schema({
     index: true 
   },
   teachingAssignmentId: { type: mongoose.Schema.Types.ObjectId, required: true },
+  batchId: { type: mongoose.Schema.Types.ObjectId, default: null },
   date: { type: Date, required: true },
   timeSlot: { type: String, required: true },
   topic: { type: String },
@@ -23,6 +24,6 @@ const lectureSessionSchema = new mongoose.Schema({
   timestamps: true
 });
 
-lectureSessionSchema.index({ institutionId: 1, teachingAssignmentId: 1, date: 1 });
+lectureSessionSchema.index({ institutionId: 1, teachingAssignmentId: 1, batchId: 1, date: 1 });
 
 module.exports = mongoose.model('LectureSession', lectureSessionSchema);

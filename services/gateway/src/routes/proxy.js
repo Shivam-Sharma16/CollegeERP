@@ -108,6 +108,7 @@ function registerProxies(app) {
     '/api/years', '/years',
     '/api/semesters', '/semesters',
     '/api/sections', '/sections',
+    '/api/batches', '/batches',
     '/api/teaching-assignments', '/teaching-assignments',
     '/api/section-assignments', '/section-assignments'
   ], (req, res) => forward(env.ACADEMIC_SERVICE_URL, req, res));

@@ -54,6 +54,29 @@ const verifyCheckIn = async ({ lectureSessionId, studentId, qrToken, deviceFinge
     throw new Error('Invalid or expired QR token');
   }
 
+  // 1b. Validate Batch eligibility for lab sessions -> reject cross-batch check-ins
+  if (session.batchId) {
+    const batchQuery = {
+      _id: new mongoose.Types.ObjectId(session.batchId)
+    };
+    if (session.institutionId && mongoose.Types.ObjectId.isValid(session.institutionId)) {
+      batchQuery.institutionId = new mongoose.Types.ObjectId(session.institutionId);
+    }
+    const batch = await mongoose.connection.db.collection('batches').findOne(batchQuery);
+    if (!batch) {
+      throw new Error('Lab batch not found for this session');
+    }
+
+    const studentObjectIdStr = studentId.toString();
+    const isStudentInBatch = Array.isArray(batch.studentIds) && batch.studentIds.some(
+      sId => sId.toString() === studentObjectIdStr
+    );
+
+    if (!isStudentInBatch) {
+      throw new Error('Student is not eligible for this lab batch session');
+    }
+  }
+
   let status = 'present';
   let verificationMethod = 'qr+geofence';
 

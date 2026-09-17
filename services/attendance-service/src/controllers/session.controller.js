@@ -29,13 +29,13 @@ const verifyFacultyOwnsAssignment = async (facultyId, teachingAssignmentId, tena
   const assignment = await mongoose.connection.db
     .collection('teachingassignments')
     .findOne(query);
-  return assignment !== null;
+  return assignment;
 };
 
 // POST /sessions
 const createSession = async (req, res) => {
   try {
-    const { teachingAssignmentId, date, timeSlot, topic, geofence } = req.body;
+    const { teachingAssignmentId, date, timeSlot, topic, geofence, batchId } = req.body;
     const facultyId = req.user.userId;
     const tenantId = req.tenantId || req.headers['x-tenant-id'] || req.user?.institutionId || req.body.institutionId;
 
@@ -44,8 +44,8 @@ const createSession = async (req, res) => {
     }
 
     // Gate: verify faculty owns this teaching assignment BEFORE creating session
-    const owns = await verifyFacultyOwnsAssignment(facultyId, teachingAssignmentId, tenantId);
-    if (!owns) {
+    const assignment = await verifyFacultyOwnsAssignment(facultyId, teachingAssignmentId, tenantId);
+    if (!assignment) {
       return res.status(403).json(fail('You do not have a TeachingAssignment for this subject/section'));
     }
 
@@ -55,6 +55,7 @@ const createSession = async (req, res) => {
     const session = await LectureSession.create({
       institutionId: tenantId,
       teachingAssignmentId,
+      batchId: assignment.batchId || batchId || null,
       date: new Date(date),
       timeSlot,
       topic,
@@ -65,7 +66,7 @@ const createSession = async (req, res) => {
     });
 
     await logAudit(req, 'SESSION_CREATED', session._id.toString(), 'LectureSession', {
-      teachingAssignmentId, date, timeSlot, institutionId: tenantId
+      teachingAssignmentId, batchId: session.batchId, date, timeSlot, institutionId: tenantId
     });
 
     res.status(201).json(success({
@@ -165,6 +166,9 @@ const checkIn = async (req, res) => {
     // verifyCheckIn throws descriptive errors (invalid QR, expired, etc.)
     if (err.message.includes('Invalid or expired QR token')) {
       return res.status(400).json(fail(err.message));
+    }
+    if (err.message.includes('not eligible') || err.message.includes('batch')) {
+      return res.status(403).json(fail(err.message));
     }
     if (err.message.includes('not found')) {
       return res.status(404).json(fail(err.message));

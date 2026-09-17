@@ -10,7 +10,13 @@ const subjectSchema = new mongoose.Schema({
   departmentId: { type: mongoose.Schema.Types.ObjectId, required: true },
   name: { type: String, required: true },
   code: { type: String, required: true },
-  credits: { type: Number, required: true, min: 1 }
+  credits: { type: Number, required: true, min: 1 },
+  type: { 
+    type: String, 
+    enum: ['lecture', 'lab'], 
+    default: 'lecture', 
+    required: true 
+  }
 }, {
   timestamps: true
 });

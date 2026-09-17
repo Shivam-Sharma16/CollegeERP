@@ -10,6 +10,7 @@ const teachingAssignmentSchema = new mongoose.Schema({
   facultyId: { type: mongoose.Schema.Types.ObjectId, required: true },
   subjectId: { type: mongoose.Schema.Types.ObjectId, ref: 'Subject', required: true },
   sectionId: { type: mongoose.Schema.Types.ObjectId, ref: 'Section', required: true },
+  batchId: { type: mongoose.Schema.Types.ObjectId, ref: 'Batch', default: null },
   academicYearLabel: { type: String, required: true }
 }, {
   timestamps: true
@@ -20,6 +21,7 @@ teachingAssignmentSchema.index({
   facultyId: 1,
   subjectId: 1,
   sectionId: 1,
+  batchId: 1,
   academicYearLabel: 1
 });
 

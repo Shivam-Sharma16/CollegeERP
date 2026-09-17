@@ -10,9 +10,14 @@ const createSubject = async (req, res) => {
     const departmentId = getHODDepartmentId(req);
     if (!assertHODOwns(req, res, departmentId)) return;
 
-    const { name, code, credits } = req.body;
+    const { name, code, credits, type } = req.body;
     if (!name || !code || !credits) {
       return res.status(400).json(fail('name, code, and credits are required'));
+    }
+
+    const subjectType = type || 'lecture';
+    if (!['lecture', 'lab'].includes(subjectType)) {
+      return res.status(400).json(fail("type must be either 'lecture' or 'lab'"));
     }
 
     const query = { code };
@@ -26,10 +31,11 @@ const createSubject = async (req, res) => {
       name,
       code,
       credits,
+      type: subjectType,
       ...(tenantId ? { institutionId: tenantId } : {})
     });
 
-    await logAudit(req, 'SUBJECT_CREATED', subject._id.toString(), 'Subject', { departmentId, name, code, institutionId: tenantId });
+    await logAudit(req, 'SUBJECT_CREATED', subject._id.toString(), 'Subject', { departmentId, name, code, type: subjectType, institutionId: tenantId });
     res.status(201).json(success({ subject }));
   } catch (err) {
     console.error(err);
@@ -43,6 +49,9 @@ const listSubjects = async (req, res) => {
     const departmentId = getHODDepartmentId(req) || req.query.departmentId;
     const filter = {};
     if (departmentId) filter.departmentId = departmentId;
+    if (req.query.type) {
+      filter.type = req.query.type;
+    }
     if (tenantId && !req.user?.roles?.includes('SUPERADMIN')) {
       filter.institutionId = tenantId;
     }
@@ -84,9 +93,15 @@ const updateSubject = async (req, res) => {
     if (!subject) return res.status(404).json(fail('Subject not found'));
     if (!assertHODOwns(req, res, subject.departmentId)) return;
 
-    const { name, credits } = req.body;
+    const { name, credits, type } = req.body;
     if (name) subject.name = name;
     if (credits) subject.credits = credits;
+    if (type) {
+      if (!['lecture', 'lab'].includes(type)) {
+        return res.status(400).json(fail("type must be either 'lecture' or 'lab'"));
+      }
+      subject.type = type;
+    }
     await subject.save();
     res.json(success({ subject }));
   } catch (err) {
