@@ -17,6 +17,7 @@ export const NAV_ITEMS = [
   // HOD
   { key: "hod-dashboard",        label: "Dashboard",           icon: "Home",          path: "/hod/dashboard",           roles: ["hod"] },
   { key: "hod-management",       label: "Staff Management",     icon: "Users",         path: "/hod/management",          roles: ["hod"] },
+  { key: "hod-roster",           label: "Student Roster",       icon: "ClipboardList", path: "/hod/roster",              roles: ["hod"] },
   { key: "academic",             label: "Academic Structure",   icon: "Layers",        path: "/hod/academic-structure",  roles: ["hod"] },
   { key: "assignments",          label: "Teaching Assignments", icon: "Link",          path: "/hod/assignments",         roles: ["hod"] },
   { key: "escalated-disputes",   label: "Escalated Disputes",   icon: "AlertTriangle", path: "/hod/disputes",            roles: ["hod"] },

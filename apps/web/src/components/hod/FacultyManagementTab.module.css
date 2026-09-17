@@ -1,3 +1,5 @@
+/* ── FacultyManagementTab.module.css ──────────────────────────────────────── */
+
 .container {
   display: flex;
   flex-direction: column;
@@ -14,6 +16,14 @@
   font-size: var(--text-lg);
   font-weight: 600;
   color: var(--color-text);
+  margin: 0;
+}
+
+/* Legacy grid kept in case FacultyCard is reused elsewhere */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--spacing-4);
 }
 
 .empty {
@@ -30,8 +40,25 @@
   padding: var(--spacing-4);
 }
 
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: var(--spacing-4);
+/* Action column */
+.actionButtons {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  flex-wrap: wrap;
+}
+
+/* Danger-coloured ghost button override */
+.dangerBtn {
+  color: var(--color-danger) !important;
+}
+.dangerBtn:hover {
+  background: color-mix(in srgb, var(--color-danger) 8%, transparent) !important;
+}
+
+/* Inline loading indicator */
+.loadingDot {
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+  letter-spacing: 2px;
 }

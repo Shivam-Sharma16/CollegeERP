@@ -14,4 +14,21 @@
   font-size: var(--text-lg);
   font-weight: 600;
   color: var(--color-text);
+  margin: 0;
+}
+
+/* Action column */
+.actionButtons {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  flex-wrap: wrap;
+}
+
+/* Danger-coloured ghost button override */
+.dangerBtn {
+  color: var(--color-danger) !important;
+}
+.dangerBtn:hover {
+  background: color-mix(in srgb, var(--color-danger) 8%, transparent) !important;
 }

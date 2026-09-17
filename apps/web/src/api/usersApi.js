@@ -4,7 +4,12 @@
  * Endpoint:  /api/users/*
  * Gateway:   user-service:4002
  *
- * tagTypes:  Admin | Hod | Faculty | Cc
+ * tagTypes:  Admin | Hod | Faculty | Cc | Student
+ *
+ * Phase 89 additions:
+ *   - listDepartmentStudents  GET  /api/users/department-students
+ *   - deactivateFaculty       PATCH /api/users/faculty/:id/deactivate
+ *   - deactivateCc            PATCH /api/users/cc/:id/deactivate
  *
  * Scoping rule: every list query is scoped server-side to the caller's
  * permissions (e.g. HOD only sees faculty in their own department).
@@ -249,6 +254,66 @@ export const usersApi = createApi({
       invalidatesTags: ['Admin', 'Hod', 'Faculty', 'Cc', 'Student'],
       transformResponse: (response) => response?.data ?? response,
     }),
+
+    // ── PHASE 89 — HOD: Department Roster & Account Management ────────────────
+
+    /**
+     * GET /api/users/department-students
+     * Optional query params: { year?, semester?, section? }
+     * Scoped server-side to the calling HOD's department.
+     */
+    listDepartmentStudents: builder.query({
+      query: (params = {}) => ({ url: '/api/users/department-students', params }),
+      providesTags: (result) =>
+        result?.data
+          ? [
+              ...result.data.map(({ _id }) => ({ type: 'Student', id: _id })),
+              { type: 'Student', id: 'DEPT_LIST' },
+            ]
+          : [{ type: 'Student', id: 'DEPT_LIST' }],
+      transformResponse: (response) => response?.data ?? response,
+    }),
+
+    /**
+     * PATCH /api/users/faculty/:id/deactivate — HOD-initiated faculty deactivation.
+     * Removes system access and unlinks active teaching assignments.
+     */
+    deactivateFaculty: builder.mutation({
+      query: (id) => ({
+        url: `/api/users/faculty/${id}/deactivate`,
+        method: 'PATCH',
+      }),
+      invalidatesTags: (_r, _e, id) => [
+        { type: 'Faculty', id },
+        { type: 'Faculty', id: 'LIST' },
+      ],
+      async onQueryStarted(_arg, { dispatch, queryFulfilled }) {
+        try {
+          await queryFulfilled;
+          dispatch(
+            departmentsApi.util.invalidateTags([
+              { type: 'Department', id: 'LIST' },
+              { type: 'DeptTree', id: 'TREE' },
+            ])
+          );
+        } catch {}
+      },
+    }),
+
+    /**
+     * PATCH /api/users/cc/:id/deactivate — HOD-initiated CC deactivation.
+     * Removes system access and unlinks the section assignment.
+     */
+    deactivateCc: builder.mutation({
+      query: (id) => ({
+        url: `/api/users/cc/${id}/deactivate`,
+        method: 'PATCH',
+      }),
+      invalidatesTags: (_r, _e, id) => [
+        { type: 'Cc', id },
+        { type: 'Cc', id: 'LIST' },
+      ],
+    }),
   }),
 });
 
@@ -271,4 +336,8 @@ export const {
   useAssignCustomRoleMutation,
   useSearchUsersQuery,
   useBulkImportMutation,
+  // Phase 89
+  useListDepartmentStudentsQuery,
+  useDeactivateFacultyMutation,
+  useDeactivateCcMutation,
 } = usersApi;
