@@ -42,9 +42,17 @@ const createUser = async (req, res, targetRole, enforceHierarchyCallback, extrac
       name: name.trim(),
       email: email.toLowerCase().trim(),
       passwordHash,
-      roles: [], // Managed purely by RoleAssignment except for SUPERADMIN
+      roles: [targetRole],
       institutionId
     });
+
+    // If appointing an HOD to a department, retire previous active HOD assignments for that department
+    if (targetRole === 'HOD' && scope.departmentId) {
+      await RoleAssignment.updateMany(
+        { departmentId: scope.departmentId, role: 'HOD', validTo: null },
+        { $set: { validTo: new Date() } }
+      );
+    }
 
     // 7. Create Role Assignment
     await RoleAssignment.create({
@@ -369,22 +377,48 @@ const listHods = async (req, res) => {
     }
 
     const assignments = await RoleAssignment.find(filter)
-      .populate('userId', 'name email isActive avatarUrl')
+      .populate('userId', 'name email isActive avatarUrl phone createdAt')
       .populate('departmentId', 'name code');
 
-    const hods = assignments
-      .filter(a => a.userId && a.userId.isActive)
-      .map(a => ({
-        _id: a.userId._id,
-        name: a.userId.name,
-        email: a.userId.email,
-        departmentId: a.departmentId ? {
-          _id: a.departmentId._id,
-          name: a.departmentId.name,
-          code: a.departmentId.code
-        } : null,
-        role: 'HOD'
-      }));
+    const validAssignments = assignments.filter(a => a.userId && a.userId.isActive !== false);
+
+    // Compute real-time faculty count per department
+    const deptIds = validAssignments
+      .map(a => a.departmentId?._id)
+      .filter(Boolean);
+
+    let deptFacultyMap = {};
+    if (deptIds.length > 0) {
+      const facultyAssignments = await RoleAssignment.find({
+        departmentId: { $in: deptIds },
+        role: 'FACULTY',
+        $or: [{ validTo: null }, { validTo: { $gt: new Date() } }]
+      }).lean();
+
+      facultyAssignments.forEach(f => {
+        const dId = f.departmentId?.toString();
+        if (dId) {
+          deptFacultyMap[dId] = (deptFacultyMap[dId] || 0) + 1;
+        }
+      });
+    }
+
+    const hods = validAssignments.map(a => ({
+      _id: a.userId._id,
+      name: a.userId.name,
+      email: a.userId.email,
+      phone: a.userId.phone || '',
+      avatarUrl: a.userId.avatarUrl || null,
+      isActive: a.userId.isActive !== false,
+      departmentId: a.departmentId ? {
+        _id: a.departmentId._id,
+        name: a.departmentId.name,
+        code: a.departmentId.code
+      } : null,
+      facultyCount: a.departmentId ? (deptFacultyMap[a.departmentId._id.toString()] || 0) : 0,
+      role: 'HOD',
+      createdAt: a.userId.createdAt || a.createdAt || new Date()
+    }));
 
     res.status(200).json(success(hods));
   } catch (err) {
@@ -552,7 +586,19 @@ const getUserById = async (req, res) => {
     if (!user) {
       return res.status(404).json(fail('User not found'));
     }
-    res.status(200).json(success(user));
+
+    const activeAssignment = await RoleAssignment.findOne({
+      userId: user._id,
+      $or: [{ validTo: null }, { validTo: { $gt: new Date() } }]
+    }).populate('departmentId', 'name code').lean();
+
+    const enriched = {
+      ...user,
+      departmentId: activeAssignment?.departmentId || null,
+      role: activeAssignment?.role || user.roles?.[0] || 'HOD'
+    };
+
+    res.status(200).json(success(enriched));
   } catch (err) {
     console.error('[UserController] Failed to get user:', err);
     res.status(500).json(fail('Internal server error'));
@@ -625,19 +671,78 @@ const updateUser = async (req, res) => {
     }
 
     const updateData = {};
-    if (req.body.name) updateData.name = req.body.name.trim();
-    if (req.body.email) {
+    if (req.body.name !== undefined) {
+      const trimmedName = req.body.name.trim();
+      if (trimmedName.length < 2 || trimmedName.length > 100) {
+        return res.status(400).json(fail('Name must be between 2 and 100 characters'));
+      }
+      updateData.name = trimmedName;
+    }
+
+    if (req.body.email !== undefined) {
       const newEmail = req.body.email.trim().toLowerCase();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail)) {
+        return res.status(400).json(fail('Please provide a valid email address'));
+      }
       if (newEmail !== targetUser.email) {
-        const existing = await User.findOne({ email: newEmail, _id: { $ne: targetUser._id } });
+        const existing = await User.findOne({ email: newEmail, institutionId: targetUser.institutionId, _id: { $ne: targetUser._id } });
         if (existing) {
           return res.status(409).json(fail('Email already in use by another user'));
         }
         updateData.email = newEmail;
       }
     }
+
+    if (req.body.phone !== undefined) {
+      const trimmedPhone = req.body.phone ? String(req.body.phone).trim() : '';
+      if (trimmedPhone && !/^\d{10}$/.test(trimmedPhone)) {
+        return res.status(400).json(fail('Phone number must be exactly 10 digits'));
+      }
+      updateData.phone = trimmedPhone;
+    }
+
+    if (req.body.password) {
+      if (String(req.body.password).length < 6) {
+        return res.status(400).json(fail('Password must be at least 6 characters'));
+      }
+      updateData.passwordHash = await bcrypt.hash(req.body.password, BCRYPT_COST);
+    }
+
     if (req.body.avatarUrl !== undefined) updateData.avatarUrl = req.body.avatarUrl;
-    if (req.body.isActive !== undefined) updateData.isActive = req.body.isActive;
+    if (req.body.isActive !== undefined) updateData.isActive = Boolean(req.body.isActive);
+
+    // Department reassignment (e.g. for HOD or Faculty)
+    if (req.body.departmentId !== undefined) {
+      const newDeptId = req.body.departmentId ? req.body.departmentId.toString() : null;
+
+      // Retire current active HOD assignments for this target user
+      await RoleAssignment.updateMany(
+        { userId: targetUser._id, role: 'HOD', validTo: null },
+        { $set: { validTo: new Date() } }
+      );
+
+      if (newDeptId) {
+        const dept = await Department.findOne({ _id: newDeptId, institutionId: targetUser.institutionId });
+        if (!dept) {
+          return res.status(404).json(fail('Department not found in this institution'));
+        }
+
+        // Retire any other active HOD on that department
+        await RoleAssignment.updateMany(
+          { departmentId: newDeptId, role: 'HOD', validTo: null },
+          { $set: { validTo: new Date() } }
+        );
+
+        // Assign user as the active HOD for this department
+        await RoleAssignment.create({
+          userId: targetUser._id,
+          role: 'HOD',
+          departmentId: newDeptId,
+          institutionId: targetUser.institutionId,
+          validFrom: new Date()
+        });
+      }
+    }
 
     const updatedUser = await User.findByIdAndUpdate(targetUser._id, updateData, { new: true })
       .select('-passwordHash')

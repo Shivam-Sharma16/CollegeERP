@@ -14,6 +14,7 @@
 
 import { createApi } from '@reduxjs/toolkit/query/react';
 import { baseQuery } from './baseQuery';
+import { departmentsApi } from './departmentsApi';
 
 export const usersApi = createApi({
   reducerPath: 'usersApi',
@@ -32,6 +33,13 @@ export const usersApi = createApi({
       transformResponse: (response) => response?.data ?? response,
     }),
 
+    /** GET /api/users/:id */
+    getUser: builder.query({
+      query: (id) => `/api/users/${id}`,
+      providesTags: (_r, _e, id) => [{ type: 'Hod', id }, { type: 'Faculty', id }],
+      transformResponse: (response) => response?.data ?? response,
+    }),
+
     /** PATCH /api/users/me */
     updateOwnProfile: builder.mutation({
       query: (body) => ({ url: '/api/users/me', method: 'PATCH', body }),
@@ -46,6 +54,17 @@ export const usersApi = createApi({
         body,
       }),
       invalidatesTags: ['Admin', 'Hod', 'Faculty', 'Cc', 'Student'],
+      async onQueryStarted(arg, { dispatch, queryFulfilled }) {
+        try {
+          await queryFulfilled;
+          dispatch(
+            departmentsApi.util.invalidateTags([
+              { type: 'Department', id: 'LIST' },
+              { type: 'DeptTree', id: 'TREE' },
+            ])
+          );
+        } catch {}
+      },
     }),
 
     /** POST /api/users/admins  — SUPERADMIN only */
@@ -58,6 +77,17 @@ export const usersApi = createApi({
     createHod: builder.mutation({
       query: (body) => ({ url: '/api/users/hods', method: 'POST', body }),
       invalidatesTags: [{ type: 'Hod', id: 'LIST' }],
+      async onQueryStarted(arg, { dispatch, queryFulfilled }) {
+        try {
+          await queryFulfilled;
+          dispatch(
+            departmentsApi.util.invalidateTags([
+              { type: 'Department', id: 'LIST' },
+              { type: 'DeptTree', id: 'TREE' },
+            ])
+          );
+        } catch {}
+      },
     }),
 
     /**
@@ -68,6 +98,17 @@ export const usersApi = createApi({
     createFaculty: builder.mutation({
       query: (body) => ({ url: '/api/users/faculty', method: 'POST', body }),
       invalidatesTags: [{ type: 'Faculty', id: 'LIST' }],
+      async onQueryStarted(arg, { dispatch, queryFulfilled }) {
+        try {
+          await queryFulfilled;
+          dispatch(
+            departmentsApi.util.invalidateTags([
+              { type: 'Department', id: 'LIST' },
+              { type: 'DeptTree', id: 'TREE' },
+            ])
+          );
+        } catch {}
+      },
     }),
 
     /** POST /api/users/cc  — ADMIN/SUPERADMIN (Class Coordinator) */
@@ -154,6 +195,17 @@ export const usersApi = createApi({
         method: 'DELETE',
       }),
       invalidatesTags: ['Admin', 'Hod', 'Faculty', 'Cc', 'Student'],
+      async onQueryStarted(arg, { dispatch, queryFulfilled }) {
+        try {
+          await queryFulfilled;
+          dispatch(
+            departmentsApi.util.invalidateTags([
+              { type: 'Department', id: 'LIST' },
+              { type: 'DeptTree', id: 'TREE' },
+            ])
+          );
+        } catch {}
+      },
     }),
 
     /** POST /api/users/:id/assign-custom-role — assign a custom role to user */
@@ -164,6 +216,17 @@ export const usersApi = createApi({
         body: { customRoleId, departmentId, sectionId, validFrom, validTo },
       }),
       invalidatesTags: ['Admin', 'Hod', 'Faculty', 'Cc', 'Student', { type: 'CustomRole', id: 'LIST' }],
+      async onQueryStarted(arg, { dispatch, queryFulfilled }) {
+        try {
+          await queryFulfilled;
+          dispatch(
+            departmentsApi.util.invalidateTags([
+              { type: 'Department', id: 'LIST' },
+              { type: 'DeptTree', id: 'TREE' },
+            ])
+          );
+        } catch {}
+      },
       transformResponse: (response) => response?.data ?? response,
     }),
 
@@ -191,6 +254,7 @@ export const usersApi = createApi({
 
 export const {
   useGetOwnProfileQuery,
+  useGetUserQuery,
   useUpdateOwnProfileMutation,
   useUpdateUserMutation,
   useDeleteUserMutation,

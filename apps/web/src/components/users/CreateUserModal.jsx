@@ -63,7 +63,7 @@ export function CreateUserModal({
       showToast(`${roleLabel} created successfully`, 'success');
       onClose();
     } catch (err) {
-      showToast(err?.data?.message || `Failed to create ${roleLabel}`, 'error');
+      showToast(err?.data?.error || err?.data?.message || err?.message || `Failed to create ${roleLabel}`, 'error');
     }
   };
 

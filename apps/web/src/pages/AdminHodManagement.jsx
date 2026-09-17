@@ -4,21 +4,29 @@ import { Table } from '../components/ui/Table';
 import { Button } from '../components/ui/Button';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import { CreateHodModal } from '../components/users/CreateHodModal';
+import { HodDetailModal } from '../components/users/HodDetailModal';
+import { EditHodModal } from '../components/users/EditHodModal';
 import { EmptyState } from '../components/ui/EmptyState';
 import { FadeIn } from '../components/ui/FadeIn';
 import { Skeleton } from '../components/ui/Skeleton';
 import { useListHodsQuery } from '../api/usersApi';
 import { useToast } from '../components/ui/ToastContext';
-import { UserX, Eye } from 'lucide-react';
+import { UserX, Eye, Edit2 } from 'lucide-react';
 import { PageTransition } from '../components/ui/PageTransition';
 import styles from './AdminHodManagement.module.css';
 
 export default function AdminHodManagement() {
-  const { data: hodsData, isLoading } = useListHodsQuery();
+  const { data: hodsData, isLoading } = useListHodsQuery(undefined, {
+    refetchOnMountOrArgChange: true,
+  });
   const { showToast } = useToast();
 
   const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [viewModalOpen, setViewModalOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
   const [deactivateConfirmOpen, setDeactivateConfirmOpen] = useState(false);
+
+  const [selectedHod, setSelectedHod] = useState(null);
   const [hodToDeactivate, setHodToDeactivate] = useState(null);
 
   const [search, setSearch] = useState('');
@@ -26,6 +34,16 @@ export default function AdminHodManagement() {
   const [sortDir, setSortDir] = useState('asc');
 
   const hods = hodsData?.data || [];
+
+  const handleViewHod = (hod) => {
+    setSelectedHod(hod);
+    setViewModalOpen(true);
+  };
+
+  const handleEditHod = (hod) => {
+    setSelectedHod(hod);
+    setEditModalOpen(true);
+  };
 
   const handleDeactivateClick = (hod) => {
     setHodToDeactivate(hod);
@@ -42,27 +60,32 @@ export default function AdminHodManagement() {
     }, 500);
   };
 
-  const handleViewDepartment = (hod) => {
-    // Lightweight toast/alert for "View Department Detail" action
-    const deptName = hod.departmentId?.name || 'Unknown Department';
-    const deptCode = hod.departmentId?.code || 'N/A';
-    showToast(`Department Details: ${deptName} (${deptCode})`, 'info');
-  };
-
   const columns = [
     { key: 'name', label: 'Name', sortable: true },
     { key: 'department', label: 'Department Name', sortable: true, render: (_, row) => row.departmentId?.name || 'N/A' },
     // We assume backend returns facultyCount; if not, we default to 0
     { key: 'facultyCount', label: 'Faculty Count', sortable: true, render: (_, row) => row.facultyCount || 0 },
-    { key: 'createdAt', label: 'Created Date', sortable: true, render: (val) => new Date(val).toLocaleDateString() },
+    {
+      key: 'createdAt',
+      label: 'Created Date',
+      sortable: true,
+      render: (val) => {
+        if (!val) return '—';
+        const d = new Date(val);
+        return isNaN(d.getTime()) ? '—' : d.toLocaleDateString();
+      },
+    },
     {
       key: 'actions',
       label: 'Actions',
       sortable: false,
       render: (_, row) => (
         <div className={styles.actionButtons}>
-          <Button variant="ghost" onClick={() => handleViewDepartment(row)} title="View Department Detail">
+          <Button variant="ghost" onClick={() => handleViewHod(row)} title="View HOD Details">
             <Eye size={16} color="var(--color-primary)" />
+          </Button>
+          <Button variant="ghost" onClick={() => handleEditHod(row)} title="Edit HOD">
+            <Edit2 size={16} color="var(--color-text-muted)" />
           </Button>
           <Button variant="ghost" onClick={() => handleDeactivateClick(row)} title="Deactivate HOD">
             <UserX size={16} color="var(--color-danger)" />
@@ -99,6 +122,12 @@ export default function AdminHodManagement() {
       if (sortCol === 'department') {
         aVal = a.departmentId?.name || '';
         bVal = b.departmentId?.name || '';
+      }
+
+      if (sortCol === 'createdAt') {
+        const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return sortDir === 'asc' ? aTime - bTime : bTime - aTime;
       }
 
       if (sortCol === 'facultyCount') {
@@ -164,6 +193,19 @@ export default function AdminHodManagement() {
         </FadeIn>
 
         <CreateHodModal isOpen={createModalOpen} onClose={() => setCreateModalOpen(false)} />
+
+        <HodDetailModal 
+          isOpen={viewModalOpen} 
+          onClose={() => setViewModalOpen(false)} 
+          hod={selectedHod}
+          onEdit={handleEditHod}
+        />
+
+        <EditHodModal 
+          isOpen={editModalOpen} 
+          onClose={() => setEditModalOpen(false)} 
+          hod={selectedHod}
+        />
 
         <ConfirmDialog 
           isOpen={deactivateConfirmOpen}

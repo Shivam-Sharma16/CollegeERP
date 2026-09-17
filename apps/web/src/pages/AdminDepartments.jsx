@@ -32,7 +32,9 @@ import {
 import styles from './AdminDepartments.module.css';
 
 export default function AdminDepartments() {
-  const { data: deptsRes, isLoading, refetch } = useListDepartmentsQuery();
+  const { data: deptsRes, isLoading, refetch } = useListDepartmentsQuery(undefined, {
+    refetchOnMountOrArgChange: true,
+  });
   const [deleteDepartment, { isLoading: isDeleting }] = useDeleteDepartmentMutation();
   const { showToast } = useToast();
 

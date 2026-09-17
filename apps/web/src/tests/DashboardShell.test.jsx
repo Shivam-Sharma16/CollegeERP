@@ -34,6 +34,10 @@ vi.mock('../api/notificationApi', () => ({
   useMarkAllReadMutation: vi.fn(() => [vi.fn(), {}]),
 }));
 
+vi.mock('../api/usersApi', () => ({
+  useGetOwnProfileQuery: vi.fn(() => ({ data: null, isLoading: false })),
+}));
+
 // ── Mock child components that have their own heavy deps ──
 vi.mock('../components/ui/NotificationDropdown', () => ({
   NotificationDropdown: () => <div data-testid="notification-dropdown" />,
