@@ -9,7 +9,7 @@ const mongoose = require('mongoose');
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '../services/user-service/.env') });
 
-const BASE_MONGO_URI = process.env.MONGO_URI || 'mongodb+srv://shivamsharmait27_db_user:v98lK1beZGiJQ0jf@collegeerp.p6ixsac.mongodb.net/user-service';
+const BASE_MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/user-service';
 
 // Service databases to migrate
 const SERVICE_DBS = [

@@ -59,10 +59,10 @@ async function callService(url, context, { method = 'GET', body } = {}) {
 
 function svcUrl(context, service) {
   const map = {
-    attendance: context.serviceUrls?.attendanceService ?? 'http://attendance-service:4004',
-    results:    context.serviceUrls?.resultsService    ?? 'http://results-service:4005',
-    fees:       context.serviceUrls?.feesService       ?? 'http://fees-service:4006',
-    notice:     context.serviceUrls?.noticeService     ?? 'http://notice-service:4007',
+    attendance: context.serviceUrls?.attendanceService ?? process.env.ATTENDANCE_SERVICE_URL ?? 'http://attendance-service:4004',
+    results:    context.serviceUrls?.resultsService    ?? process.env.RESULTS_SERVICE_URL ?? 'http://results-service:4005',
+    fees:       context.serviceUrls?.feesService       ?? process.env.FEES_SERVICE_URL ?? 'http://fees-service:4006',
+    notice:     context.serviceUrls?.noticeService     ?? process.env.NOTICE_SERVICE_URL ?? 'http://notice-service:4007',
   };
   return map[service];
 }

@@ -34,8 +34,8 @@ export default function LiveAttendanceSession() {
   
   // 3. Socket Connection
   useEffect(() => {
-    // In a real app, URL comes from config. For now, matching standard setup.
-    const newSocket = io('http://localhost:4004', {
+    const socketUrl = import.meta.env.VITE_ATTENDANCE_SOCKET_URL || 'http://localhost:4004';
+    const newSocket = io(socketUrl, {
       transports: ['websocket'],
       query: { sessionId }
     });

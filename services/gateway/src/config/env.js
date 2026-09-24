@@ -14,7 +14,7 @@ const env = cleanEnv(process.env, {
   INSTITUTION_SERVICE_URL: str({ default: 'http://institution-service:4010' }),
   REDIS_URL: str({ default: 'redis://127.0.0.1:6379' }),
   INTERNAL_SERVICE_KEY: str({ default: '/^FdEq-yhAvZ|c!g*O9dF:!on:9qZ1*1+G&*5_(v@p=' }),
-  MONGO_URI: str({ default: 'mongodb+srv://shivamsharmait27_db_user:v98lK1beZGiJQ0jf@collegeerp.p6ixsac.mongodb.net/user-service' }),
+  MONGO_URI: str({ default: 'mongodb://127.0.0.1:27017/user-service' }),
 });
 
 module.exports = env;

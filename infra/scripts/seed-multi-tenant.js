@@ -24,7 +24,7 @@ dotenv.config({ path: path.join(__dirname, '../../.env') });
 
 const MONGO_URI =
   process.env.MONGO_URI ||
-  'mongodb+srv://shivamsharmait27_db_user:v98lK1beZGiJQ0jf@collegeerp.p6ixsac.mongodb.net/user-service';
+  'mongodb://127.0.0.1:27017/user-service';
 
 const BCRYPT_ROUNDS = 10;
 const TEST_PASSWORD = 'Password123!';

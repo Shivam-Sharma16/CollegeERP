@@ -12,6 +12,8 @@ const externalReporting = require('../services/externalReporting.service');
 const jwt = require('jsonwebtoken');
 const JWT_SECRET = 'ny+cq<I;(UL.LR#vzDM2j4>*Xc8^|4l^woMWm#|.iD0';
 
+jest.setTimeout(30000);
+
 describe('Phase 77: Institution Analytics & Reporting Backend Tests', () => {
   let mongoServer;
   let app;

@@ -21,7 +21,11 @@ services:
 
   gateway:
     build:
-      context: ./services/gateway
+      context: .
+      dockerfile: ./infra/docker/service.Dockerfile
+      args:
+        - SERVICE_NAME=gateway
+        - SERVICE_PORT=4000
     ports:
       - "4000:4000"
     environment:
@@ -51,7 +55,11 @@ services:
 
   auth-service:
     build:
-      context: ./services/auth-service
+      context: .
+      dockerfile: ./infra/docker/service.Dockerfile
+      args:
+        - SERVICE_NAME=auth-service
+        - SERVICE_PORT=4001
     ports:
       - "4001:4001"
     environment:
@@ -67,7 +75,11 @@ services:
 
   user-service:
     build:
-      context: ./services/user-service
+      context: .
+      dockerfile: ./infra/docker/service.Dockerfile
+      args:
+        - SERVICE_NAME=user-service
+        - SERVICE_PORT=4002
     ports:
       - "4002:4002"
     environment:
@@ -81,7 +93,11 @@ services:
 
   academic-service:
     build:
-      context: ./services/academic-service
+      context: .
+      dockerfile: ./infra/docker/service.Dockerfile
+      args:
+        - SERVICE_NAME=academic-service
+        - SERVICE_PORT=4003
     ports:
       - "4003:4003"
     environment:
@@ -95,7 +111,11 @@ services:
 
   attendance-service:
     build:
-      context: ./services/attendance-service
+      context: .
+      dockerfile: ./infra/docker/service.Dockerfile
+      args:
+        - SERVICE_NAME=attendance-service
+        - SERVICE_PORT=4004
     ports:
       - "4004:4004"
     environment:
@@ -113,7 +133,11 @@ services:
 
   results-service:
     build:
-      context: ./services/results-service
+      context: .
+      dockerfile: ./infra/docker/service.Dockerfile
+      args:
+        - SERVICE_NAME=results-service
+        - SERVICE_PORT=4005
     ports:
       - "4005:4005"
     environment:
@@ -127,7 +151,11 @@ services:
 
   fees-service:
     build:
-      context: ./services/fees-service
+      context: .
+      dockerfile: ./infra/docker/service.Dockerfile
+      args:
+        - SERVICE_NAME=fees-service
+        - SERVICE_PORT=4006
     ports:
       - "4006:4006"
     environment:
@@ -141,7 +169,11 @@ services:
 
   notice-service:
     build:
-      context: ./services/notice-service
+      context: .
+      dockerfile: ./infra/docker/service.Dockerfile
+      args:
+        - SERVICE_NAME=notice-service
+        - SERVICE_PORT=4007
     ports:
       - "4007:4007"
     environment:
@@ -154,7 +186,11 @@ services:
 
   notification-service:
     build:
-      context: ./services/notification-service
+      context: .
+      dockerfile: ./infra/docker/service.Dockerfile
+      args:
+        - SERVICE_NAME=notification-service
+        - SERVICE_PORT=4008
     ports:
       - "4008:4008"
     environment:
@@ -172,7 +208,11 @@ services:
 
   ai-agent-service:
     build:
-      context: ./services/ai-agent-service
+      context: .
+      dockerfile: ./infra/docker/service.Dockerfile
+      args:
+        - SERVICE_NAME=ai-agent-service
+        - SERVICE_PORT=4009
     ports:
       - "4009:4009"
     environment:
@@ -191,7 +231,11 @@ services:
 
   institution-service:
     build:
-      context: ./services/institution-service
+      context: .
+      dockerfile: ./infra/docker/service.Dockerfile
+      args:
+        - SERVICE_NAME=institution-service
+        - SERVICE_PORT=4010
     ports:
       - "4010:4010"
     environment:

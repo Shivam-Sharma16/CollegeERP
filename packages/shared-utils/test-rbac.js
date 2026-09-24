@@ -16,7 +16,7 @@ const mockRes = () => {
 };
 
 async function runTest() {
-  const uri = 'mongodb://127.0.0.1:27017/college-erp-dev';
+  const uri = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/college-erp-dev';
   await mongoose.connect(uri);
   console.log('Connected to DB for RBAC testing');
 
